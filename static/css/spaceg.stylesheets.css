@@ -143,19 +143,11 @@ i.fa.fa-rss.fa-stack-1x.fa-inverse {
 background: white;
 color: gray;
 }
-i.fa.fa-twitter.fa-stack-1x.fa-inverse {
-background: white;
-color: gray;
-}
-i.fa.fa-google-plus.fa-stack-1x.fa-inverse {
-background: white;
-color: gray;
-}
 i.fa.fa-github.fa-stack-1x.fa-inverse {
 background: white;
 color: gray;
 }
-i.fa.fa-instagram.fa-stack-1x.fa-inverse {
+i.fa.fa-linkedin.fa-stack-1x.fa-inverse {
   background: white;
   color: gray;
 }
@@ -167,21 +159,13 @@ i.fa.fa-rss.fa-stack-1x.fa-inverse:hover {
 background: white;
 color: rgb(194, 194, 194);
 }
-i.fa.fa-twitter.fa-stack-1x.fa-inverse:hover {
-background: white;
-color: rgb(194, 194, 194);
-}
-i.fa.fa-google-plus.fa-stack-1x.fa-inverse:hover {
-background: white;
-color: rgb(194, 194, 194);
-}
 i.fa.fa-github.fa-stack-1x.fa-inverse:hover {
 background: white;
 color: rgb(194, 194, 194);
 }
-i.fa.fa-instagram.fa-stack-1x.fa-inverse:hover {
-  background: white;
-  color: gray;
+i.fa.fa-linkedin.fa-stack-1x.fa-inverse:hover {
+background: white;
+color: rgb(194, 194, 194);
 }
 
 

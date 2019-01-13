@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
-import           Data.Monoid (mappend)
+import           Data.Monoid ((<>))
 import           Hakyll
 import           Text.Pandoc
 
@@ -31,8 +31,8 @@ main = hakyll $ do
         compile $ do
             posts <- recentFirst =<< loadAll "posts/*"
             let archiveCtx =
-                    listField "posts" postCtx (return posts) `mappend`
-                    constField "title" "Archives"            `mappend`
+                    listField "posts" postCtx (return posts) <>
+                    constField "title" "Archives"            <>
                     siteCtx
 
             makeItem ""
@@ -46,8 +46,8 @@ main = hakyll $ do
         compile $ do
             posts <- recentFirst =<< loadAll "posts/*"
             let indexCtx =
-                    listField "posts" postCtx (return posts) `mappend`
-                    constField "title" "Home"                `mappend`
+                    listField "posts" postCtx (return posts) <>
+                    constField "title" "Home"                <>
                     siteCtx
 
             getResourceBody
@@ -61,15 +61,18 @@ main = hakyll $ do
 --------------------------------------------------------------------------------
 postCtx :: Context String
 postCtx =
-    dateField "date" "%B %e, %Y" `mappend`
+    dateField "date" "%B %e, %Y" <>
     siteCtx
 
 siteCtx :: Context String
 siteCtx =
-    constField "baseurl" "http://localhost:8000" `mappend`
-    constField "site_description" "my beautiful blog" `mappend`
-    constField "instagram_username" "katychuang.nyc" `mappend`
-    constField "twitter_username" "katychuang" `mappend`
-    constField "github_username" "katychuang" `mappend`
-    constField "google_username" "katychuang" `mappend`
+    constField "baseurl" "http://localhost:8000" <>
+    -- delete these TODO
+    constField "twitter_username" "katychuang" <>
+    constField "google_username" "katychuang" <>
+    constField "instagram_username" "katychuang" <>
+    --
+    constField "site_description" "my beautiful blog" <>
+    constField "linkedin_username" "fabiolabella" <>
+    constField "github_username" "SystemFw" <>
     defaultContext
