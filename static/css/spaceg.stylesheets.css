@@ -858,5 +858,13 @@ h1.font-style-inline-small-h1{
 }
  img.img-circle.portfolio-link.img-responsive {
      cursor: pointer;
-}
+ }
  
+
+ header.my-header {
+     margin-top: 30px;
+ }
+ .myimage {
+     height: 90%;
+     width: 100%;
+ }
