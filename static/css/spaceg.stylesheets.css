@@ -818,11 +818,9 @@ h1.font-style-inline-small-h1{
      cursor: pointer;
  }
  
-
- header.my-header {
+ header.std-header {
      margin-top: 30px;
  }
- .myimage {
-     height: 90%;
+ .intro-image {
      width: 100%;
  }
