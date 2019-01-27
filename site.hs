@@ -67,12 +67,7 @@ postCtx =
 siteCtx :: Context String
 siteCtx =
     constField "baseurl" "http://localhost:8000" <>
-    -- delete these TODO
-    constField "twitter_username" "katychuang" <>
-    constField "google_username" "katychuang" <>
-    constField "instagram_username" "katychuang" <>
-    --
-    constField "site_description" "my beautiful blog" <>
+    constField "site_description" "SystemFw FP blog" <>
     constField "linkedin_username" "fabiolabella" <>
     constField "github_username" "SystemFw" <>
     defaultContext
