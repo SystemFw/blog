@@ -13,34 +13,34 @@ main = hakyll $ do
         compile copyFileCompiler
 
     match "content/about.md" $ do
-        route $ contentRoute
+        route contentRoute
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/page.html" siteCtx
             >>= loadAndApplyTemplate "templates/default.html" siteCtx
             >>= relativizeUrls
 
     match "content/posts/*" $ do
-        route $ contentRoute
+        route contentRoute
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls
           
     create ["archive.html"] $ do
-        route $ idRoute
+        route idRoute
         compile $ do
-            archiveCtx <- allPosts "Archives"
+            archiveCtx <- allPosts
             makeItem ""
                 >>= loadAndApplyTemplate "templates/archive.html" archiveCtx
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-    match "templates/index.html" $ do
-        route $ gsubRoute "templates/" (const "")
+    create ["index.html"] $ do
+        route idRoute
         compile $ do
-            indexCtx <- allPosts "Home"
-            getResourceBody
-                >>= applyAsTemplate indexCtx
+            indexCtx <- allPosts
+            makeItem ""
+                >>= loadAndApplyTemplate "templates/index.html" indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
                 >>= relativizeUrls
 
@@ -66,11 +66,8 @@ siteCtx =
 contentRoute :: Routes
 contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "html"
 
-allPosts :: String -> Compiler (Context String)
-allPosts title = do
+allPosts :: Compiler (Context String)
+allPosts = do
     posts <- loadAll "content/posts/*" >>= recentFirst
-    pure $ mconcat [
-       listField "posts" postCtx (pure posts),
-       constField "title" title,
-       siteCtx
-     ]
+    pure $ listField "posts" postCtx (pure posts) <>
+           siteCtx
