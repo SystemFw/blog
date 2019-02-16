@@ -1,5 +1,6 @@
 ---
 title: S.P.Q.R.
+date: 2012-08-12
 ---
 
 Mauris in lorem nisl. Maecenas tempus facilisis ante, eget viverra nisl

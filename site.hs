@@ -25,14 +25,6 @@ main = hakyll $ do
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls
-
-    let allPosts title = do
-         posts <- loadAll "content/posts/*" >>= recentFirst
-         pure $ mconcat [
-            listField "posts" postCtx (pure posts),
-            constField "title" title,
-            siteCtx
-          ]
           
     create ["archive.html"] $ do
         route $ idRoute
@@ -73,3 +65,12 @@ siteCtx =
 
 contentRoute :: Routes
 contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "html"
+
+allPosts :: String -> Compiler (Context String)
+allPosts title = do
+    posts <- loadAll "content/posts/*" >>= recentFirst
+    pure $ mconcat [
+       listField "posts" postCtx (pure posts),
+       constField "title" title,
+       siteCtx
+     ]
