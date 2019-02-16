@@ -12,44 +12,41 @@ main = hakyll $ do
         route idRoute
         compile copyFileCompiler
 
-    match (fromList ["about.md", "contact.markdown"]) $ do
-        route   $ setExtension "html"
+    match "content/about.md" $ do
+        route $ contentRoute
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/page.html" siteCtx
             >>= loadAndApplyTemplate "templates/default.html" siteCtx
             >>= relativizeUrls
 
-    match "posts/*" $ do
-        route $ setExtension "html"
+    match "content/posts/*" $ do
+        route $ contentRoute
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls
 
+    let allPosts title = do
+         posts <- loadAll "content/posts/*" >>= recentFirst
+         pure $ mconcat [
+            listField "posts" postCtx (pure posts),
+            constField "title" title,
+            siteCtx
+          ]
+          
     create ["archive.html"] $ do
-        route idRoute
+        route $ idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
-            let archiveCtx =
-                    listField "posts" postCtx (return posts) <>
-                    constField "title" "Archives"            <>
-                    siteCtx
-
+            archiveCtx <- allPosts "Archives"
             makeItem ""
                 >>= loadAndApplyTemplate "templates/archive.html" archiveCtx
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-
     match "index.html" $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
-            let indexCtx =
-                    listField "posts" postCtx (return posts) <>
-                    constField "title" "Home"                <>
-                    siteCtx
-
+            indexCtx <- allPosts "Home"
             getResourceBody
                 >>= applyAsTemplate indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
@@ -59,6 +56,8 @@ main = hakyll $ do
 
 
 --------------------------------------------------------------------------------
+
+
 postCtx :: Context String
 postCtx =
     dateField "date" "%B %e, %Y" <>
@@ -71,3 +70,6 @@ siteCtx =
     constField "linkedin_username" "fabiolabella" <>
     constField "github_username" "SystemFw" <>
     defaultContext
+
+contentRoute :: Routes
+contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "html"
