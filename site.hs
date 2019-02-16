@@ -35,8 +35,8 @@ main = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-    match "index.html" $ do
-        route idRoute
+    match "templates/index.html" $ do
+        route $ gsubRoute "templates/" (const "")
         compile $ do
             indexCtx <- allPosts "Home"
             getResourceBody
