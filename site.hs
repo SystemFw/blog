@@ -52,17 +52,19 @@ main = hakyll $ do
               >>= relativizeUrls
 
     create ["talks.html"] $ do
-      compile $ getMetadata "content/talks.md" >> makeItem ()
+      route idRoute
+      compile $
+        makeItem ""
+              >>= loadAndApplyTemplate "templates/talks.html" talks
+              >>= loadAndApplyTemplate "templates/default.html" talks
+              >>= relativizeUrls
 
     match "templates/*" $ compile templateCompiler
 
 
 --------------------------------------------------------------------------------
-
-post :: Context String
-post =
-    dateField "date" "%B %e, %Y" <>
-    site
+contentRoute :: Routes
+contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "html"
 
 site :: Context String
 site =
@@ -72,15 +74,15 @@ site =
     constField "github_username" "SystemFw" <>
     defaultContext
 
-contentRoute :: Routes
-contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "html"
+post :: Context String
+post =
+    dateField "date" "%B %e, %Y" <>
+    site
 
 allPosts :: Context String
 allPosts =
   listField "posts" post (loadAll "content/posts/*" >>= recentFirst) <>
   site
-
-----------------------------------------------------------------------------------
 
 talks :: Context String
 talks = listField "talks" talk talkMetadata <> site
@@ -93,11 +95,16 @@ talks = listField "talks" talk talkMetadata <> site
 
 talk :: Context Yaml.Object
 talk =
-  foldMap mandatoryField ["title", "video", "year", "conf"] <> optionalField "slides"
-  where
-    mandatoryField name = talkField name $ \o -> o .: Text.pack name
-    optionalField name = talkField name $ \o -> o .:? Text.pack name .!= "N/A"
-    talkField name parser =  field name $ \item -> yamlParser parser $ itemBody item
+  foldMap mandatoryField ["title", "video", "conf"] <>
+  optionalField "slides" <>
+  numberField "year"
+ where
+   mandatoryField name = talkField name $ \o -> o .: Text.pack name
+   optionalField name = talkField name $ \o -> o .:? Text.pack name .!= "N/A"
+   numberField name = talkField name $ \o -> do
+     n :: Integer <- o .: Text.pack name
+     pure $ show n
+   talkField name parser = field name $ \item -> yamlParser parser $ itemBody item
 
 yamlParser :: (Yaml.Object -> Yaml.Parser a) -> Yaml.Object -> Compiler a
 yamlParser p = \o -> liftEither . first pure $ Yaml.parseEither p o
