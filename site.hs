@@ -4,6 +4,7 @@
 
 import           Data.Monoid ((<>))
 import           Data.Bifunctor (first)
+import           Control.Applicative (empty)
 import           Control.Monad.Except (liftEither)
 import           Hakyll
 import           Text.Pandoc
@@ -99,12 +100,19 @@ talk =
   optionalField "slides" <>
   numberField "year"
  where
-   mandatoryField name = talkField name $ \o -> o .: Text.pack name
-   optionalField name = talkField name $ \o -> o .:? Text.pack name .!= "N/A"
-   numberField name = talkField name $ \o -> do
+   talkField name runParse parser =
+     field name $ \item -> runParse parser $ itemBody item
+
+   mandatoryField name =
+     talkField name yamlParser $ \o -> o .: Text.pack name
+
+   numberField name = talkField name yamlParser $ \o -> do
      n :: Integer <- o .: Text.pack name
      pure $ show n
-   talkField name parser = field name $ \item -> yamlParser parser $ itemBody item
+
+   optionalField name = talkField name
+      (\parser o -> maybe empty pure =<< yamlParser parser o)
+      (\o -> o .:? Text.pack name)
 
 yamlParser :: (Yaml.Object -> Yaml.Parser a) -> Yaml.Object -> Compiler a
 yamlParser p = \o -> liftEither . first pure $ Yaml.parseEither p o
