@@ -11,4 +11,6 @@ executable site
                        hakyll,
                        pandoc,
                        aeson,
-                       text
+                       text,
+                       mtl,
+                       bifunctors

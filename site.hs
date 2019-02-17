@@ -2,13 +2,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-
 import           Data.Monoid ((<>))
+import           Data.Bifunctor (first)
+import           Control.Monad.Except (liftEither)
 import           Hakyll
 import           Text.Pandoc
 import qualified Data.Aeson as Yaml
 import qualified Data.Aeson.Types as Yaml
 import           Data.Aeson ((.:), (.:?), (.!=))
+
 import qualified Data.Text as Text
 import           Data.String
 
@@ -32,7 +34,7 @@ main = hakyll $ do
             >>= loadAndApplyTemplate "templates/post.html" post
             >>= loadAndApplyTemplate "templates/default.html" post
             >>= relativizeUrls
-          
+
     create ["archive.html"] $ do
         route idRoute
         compile $ do
@@ -51,7 +53,7 @@ main = hakyll $ do
 
     create ["talks.html"] $ do
       compile $ getMetadata "content/talks.md" >> makeItem ()
-  
+
     match "templates/*" $ compile templateCompiler
 
 
@@ -80,18 +82,22 @@ allPosts =
 
 ----------------------------------------------------------------------------------
 
-yo :: Compiler Yaml.Object
-yo = do
-  md <- getMetadata "content/talks.md"
-  pure md
+talks :: Context String
+talks = listField "talks" talk talkMetadata <> site
+ where
+   talkMetadata :: Compiler [Item Yaml.Object]
+   talkMetadata = do
+       md <- getMetadata "content/talks.md"
+       items <- yamlParser (\o -> o .: "talks") md
+       traverse makeItem items
 
-talk :: Yaml.Object -> Yaml.Parser (Context String)
-talk t = do
-  let fetch ctx name = fmap (ctx name) (t .: Text.pack name)
-  fields <- traverse (fetch constField) ["title", "video", "year", "conf"]
-  slides :: Maybe String <- t .:? "slides"
-  pure $ maybe mempty (constField "slides") slides <> 
-         mconcat fields <>
-         site
-  
+talk :: Context Yaml.Object
+talk =
+  foldMap mandatoryField ["title", "video", "year", "conf"] <> optionalField "slides"
+  where
+    mandatoryField name = talkField name $ \o -> o .: Text.pack name
+    optionalField name = talkField name $ \o -> o .:? Text.pack name .!= "N/A"
+    talkField name parser =  field name $ \item -> yamlParser parser $ itemBody item
 
+yamlParser :: (Yaml.Object -> Yaml.Parser a) -> Yaml.Object -> Compiler a
+yamlParser p = \o -> liftEither . first pure $ Yaml.parseEither p o
