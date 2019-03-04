@@ -60,6 +60,15 @@ main = hakyll $ do
               >>= loadAndApplyTemplate "templates/default.html" talks
               >>= relativizeUrls
 
+    create ["writings.html"] $ do
+      route idRoute
+      compile $
+        makeItem ""
+              >>= loadAndApplyTemplate "templates/writings.html" writings
+              >>= loadAndApplyTemplate "templates/default.html" writings
+              >>= relativizeUrls
+
+
     match "templates/*" $ compile templateCompiler
 
 
@@ -99,20 +108,33 @@ talk =
   foldMap mandatoryField ["title", "video", "conf"] <>
   optionalField "slides" <>
   numberField "year"
+
+
+writings :: Context String
+writings = listField "writings" writing writingMetadata <> site
  where
-   talkField name runParse parser =
-     field name $ \item -> runParse parser $ itemBody item
+   writingMetadata :: Compiler [Item Yaml.Object]
+   writingMetadata = do
+       md <- getMetadata "content/writings.md"
+       items <- yamlParser (\o -> o .: "writings") md
+       traverse makeItem items
 
-   mandatoryField name =
-     talkField name yamlParser $ \o -> o .: Text.pack name
+writing :: Context Yaml.Object
+writing = foldMap  mandatoryField ["title", "link"]
 
-   numberField name = talkField name yamlParser $ \o -> do
-     n :: Integer <- o .: Text.pack name
-     pure $ show n
+yamlField name runParse parser =
+  field name $ \item -> runParse parser $ itemBody item
 
-   optionalField name = talkField name
-      (\parser o -> maybe empty pure =<< yamlParser parser o)
-      (\o -> o .:? Text.pack name)
+mandatoryField name =
+  yamlField name yamlParser $ \o -> o .: Text.pack name
+
+numberField name = yamlField name yamlParser $ \o -> do
+  n :: Integer <- o .: Text.pack name
+  pure $ show n
+
+optionalField name = yamlField name
+   (\parser o -> maybe empty pure =<< yamlParser parser o)
+   (\o -> o .:? Text.pack name)
 
 yamlParser :: (Yaml.Object -> Yaml.Parser a) -> Yaml.Object -> Compiler a
 yamlParser p = \o -> liftEither . first pure $ Yaml.parseEither p o
