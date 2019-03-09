@@ -32,7 +32,7 @@ main = hakyll $ do
     match "content/posts/*" $ do
         route contentRoute
         compile $ pandocCompiler
-            >>= loadAndApplyTemplate "templates/post.html" post
+            >>= loadAndApplyTemplate "templates/page.html" post
             >>= loadAndApplyTemplate "templates/default.html" post
             >>= relativizeUrls
 

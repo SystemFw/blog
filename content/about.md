@@ -1,23 +1,12 @@
 ---
 title: About
-headerImg: beach.jpg
 ---
 
-Nullam imperdiet sodales orci vitae molestie. Nunc quam orci, pharetra a
-rhoncus vitae, eleifend id felis. Suspendisse potenti. Etiam vitae urna orci.
-Quisque pellentesque dignissim felis, egestas tempus urna luctus vitae. In hac
-habitasse platea dictumst. Morbi fringilla mattis odio, et mattis tellus
-accumsan vitae.
+My name is Fabio Labella. I'm a Principal Software Engineer at Ovo Energy in London, specialised in distributed systems and purely functional programming.
 
-1. Amamus Unicode 碁
-2. Interdum nex magna.
+I'm also an Open Source author and speaker as SystemFw: I'm one of the maintainers of fs2, cats-effect, and http4s, and a contributor to cats, shapeless and several other libraries in the Scala FP ecosystem.
 
-Vivamus eget mauris sit amet nulla laoreet lobortis. Nulla in diam elementum
-risus convallis commodo. Cras vehicula varius dui vitae facilisis. Proin
-elementum libero eget leo aliquet quis euismod orci vestibulum. Duis rhoncus
-lorem consequat tellus vestibulum aliquam. Quisque orci orci, malesuada porta
-blandit et, interdum nec magna.
-
+This blog contains articles about purely functional programming in Scala and Haskell, and links to my conference talks. Reach me on Gitter, Github or Linkedin.
 
 
 

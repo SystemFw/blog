@@ -105,7 +105,7 @@ writings:
  title: resource-safe fiber.await (join that returns an exit case)
  link: https://gitter.im/typelevel/cats-effect?at=5c3d11eaf780a1521f0edbe2
 -
- title: Final tagless':' languages as their interpreters
+ title: "Final tagless: languages as their interpreters"
  link: https://gitter.im/scala/scala?at=5c4082dc7a0f4d5b19c31749
 -
  title: Path to learn FP abstractions
