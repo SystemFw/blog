@@ -20,7 +20,7 @@ import           Data.Aeson ((.:), (.:?), (.!=))
 --------------------------------------------------------------------------------
 main :: IO ()
 main = hakyll $ do
-    match "static/**" $ do
+    match ("CNAME" .||. "static/**") $ do
         route idRoute
         compile copyFileCompiler
 
