@@ -6,19 +6,21 @@ import           Data.Monoid ((<>))
 import           Data.Bifunctor (first)
 import           Control.Applicative (empty)
 import           Control.Monad.Except (liftEither)
+
 import           Hakyll
 import           Text.Pandoc
+import qualified Data.Text as Text
+import           Data.String
+
 import qualified Data.Aeson as Yaml
 import qualified Data.Aeson.Types as Yaml
 import           Data.Aeson ((.:), (.:?), (.!=))
 
-import qualified Data.Text as Text
-import           Data.String
 
 --------------------------------------------------------------------------------
 main :: IO ()
 main = hakyll $ do
-    match "static/*/*" $ do
+    match "static/**" $ do
         route idRoute
         compile copyFileCompiler
 
@@ -31,7 +33,7 @@ main = hakyll $ do
 
     match "content/posts/*" $ do
         route contentRoute
-        compile $ pandocCompiler
+        compile $ noHighlightingCompiler
             >>= loadAndApplyTemplate "templates/page.html" post
             >>= loadAndApplyTemplate "templates/default.html" post
             >>= relativizeUrls
@@ -48,7 +50,7 @@ main = hakyll $ do
         route idRoute
         compile $
           makeItem ""
-              >>= loadAndApplyTemplate "templates/index.html" allPosts
+          >>= loadAndApplyTemplate "templates/index.html" allPosts
               >>= loadAndApplyTemplate "templates/default.html" allPosts
               >>= relativizeUrls
 
@@ -73,6 +75,14 @@ main = hakyll $ do
 
 
 --------------------------------------------------------------------------------
+
+noHighlightingCompiler :: Compiler (Item String)
+noHighlightingCompiler =
+  pandocCompilerWith
+     defaultHakyllReaderOptions
+   $ defaultHakyllWriterOptions { writerHighlightStyle = Nothing }
+
+
 contentRoute :: Routes
 contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "html"
 
@@ -86,6 +96,7 @@ site =
 post :: Context String
 post =
     dateField "date" "%B %e, %Y" <>
+    constField "syntax_style" "zenburn" <>
     site
 
 allPosts :: Context String
