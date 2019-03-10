@@ -38,7 +38,7 @@
 
     <meta name="keywords" content="Fabio Labella, SystemFw, Functional Programming, Haskell, Scala">
     <!-- Favicon -->
-    <link rel="shortcut icon" href="$baseurl$/static/img/avatar.jpg" type="image/jpeg-icon" />
+    <link rel="shortcut icon" href="static/img/avatar.jpg" type="image/jpeg-icon" />
     <!-- Blog Title -->
     $if(title)$
     <title>$title$</title>
@@ -46,7 +46,7 @@
     <title>My blog </title>
     $endif$
     <!-- Property Metas -->
-    <meta property="og:image" content="$baseurl$/static/img/ix.png" />
+    <meta property="og:image" content="static/img/ix.png" />
     $if(site_description)$
     <meta property="og:title" content="$site_description$" />
     <meta property="og:site_name" content="$site_description$" />
@@ -54,9 +54,9 @@
     <!-- Canonical -->
     <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
     <!-- StyleSheet -->
-    <link rel="stylesheet" href="$baseurl$/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="$baseurl$/static/css/spaceg.stylesheets.css">
-    <link rel="stylesheet" href="$baseurl$/static/css/syntax.css">
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/spaceg.stylesheets.css">
+    <link rel="stylesheet" href="static/css/syntax.css">
     <!-- Fonts -->
     <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
@@ -109,7 +109,6 @@
             border-color: #FFFFFF;
         }
     </style>
-    <!--link rel="stylesheet" href="$baseurl$/static/css/prettify.css"-->
     <style>
         header.intro-header {
             background: #6f5499;

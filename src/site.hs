@@ -78,7 +78,6 @@ contentRoute = gsubRoute "content/" (const "") `composeRoutes` setExtension "htm
 
 site :: Context String
 site =
-    constField "baseurl" "http://localhost:8000" <>
     constField "site_description" "SystemFw FP blog" <>
     constField "linkedin_username" "fabiolabella" <>
     constField "github_username" "SystemFw" <>
