@@ -115,8 +115,8 @@ talks = listField "talks" talk talkMetadata <> site
 
 talk :: Context Yaml.Object
 talk =
-  foldMap mandatoryField ["title", "video", "conf"] <>
-  optionalField "slides" <>
+  foldMap mandatoryField ["title", "conf"] <>
+  foldMap optionalField ["video", "slides"] <>
   numberField "year"
 
 

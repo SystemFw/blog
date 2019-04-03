@@ -1,6 +1,11 @@
 ---
 talks: # Displayed in the order they are written
 -
+   title: "Ref + Deferred: from counters to concurrent FSMs"
+   slides: http://systemfw.org/TL-Summit-Philly-2019/#/
+   year: 2019
+   conf: Typelevel Summit at North Eastern Scala Symposium
+-
    title: "Shared State in Pure FP: when a State Monad won't do"
    video: https://player.vimeo.com/video/294736344
    slides: https://systemfw.github.io/scala-italy-2018/#/
