@@ -10,7 +10,6 @@ cp -a ../_site/. .
 
 git add -A
 git commit -m "Publish."
-git push
-origin master:master
+git push origin master:master
 
 cd ..
