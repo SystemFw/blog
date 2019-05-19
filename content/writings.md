@@ -114,3 +114,14 @@ writings:
  title: Referential transparency, algebraic thinking, types
  link: https://gitter.im/functional-streams-for-scala/fs2?at=5c75a72d35c01307534273e6
 ---
+ title: Further question on `IO` and purity
+ link: https://gitter.im/typelevel/cats?at=5c7d766f35c01307537529b2
+---
+ title: shapeles HMap limitations and advantages
+ link: https://gitter.im/milessabin/shapeless?at=5c7fee5a1c597e5db693346b
+---
+ title: Free Monad and Operational Monad
+ link: https://gitter.im/typelevel/cats?at=5cb634658446a6023e2843a0
+---
+ title: Explaining Freeness with Monoidal programs
+ link: https://gitter.im/typelevel/cats?at=5cd1d21f2e2caa1aa625b21e

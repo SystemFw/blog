@@ -2,6 +2,7 @@
 talks: # Displayed in the order they are written
 -
    title: "Ref + Deferred: from counters to concurrent FSMs"
+   video: https://www.youtube.com/embed/-dLp3u6y2DQ
    slides: http://systemfw.org/TL-Summit-Philly-2019/#/
    year: 2019
    conf: Typelevel Summit at North Eastern Scala Symposium
