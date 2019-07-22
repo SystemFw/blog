@@ -205,9 +205,188 @@ We used `Ref.modify`, but this principle extends to other scenarios as well:
    a)`, `atomically` to get to `IO (IO a)`, then `join` (Haskell's
    version of `flatten`).
 
-final session on the nature of flatMap
-flatMap runs two programs one after the other, when the structure of the second depends on the resu
-lt of the first (A =>), but if you take apart, map runs the first program and uses the result to decide how the second should look like, and `flatten` actually runs the resulting inner program. More often than not this two things are useful together, but sometimes you might want to decide which program to run differently (like in `modify` with transactionality), or run other operations first (like in `orElse`). Monads are about substitution followed by renormalisation, and sometimes it's useful to manipulate the denormalised F[F[A]] on its own.
-Hope you enjoyed it.
+## Example 2: JSON decoding
+
+For our second example we are going to look at JSON decoding with
+[Circe](https://circe.github.io/circe/), focusing on a specific issue my
+team encountered recently. 
+We have some simple JSON, representing our two different types of users:
+```scala mdoc
+import io.circe._
+import io.circe.parser._
+import io.circe.generic.semiauto._
+
+def json(s: String): Json = parse(s).getOrElse(Json.Null)
+
+def named = json {
+ """
+  {
+    "named" : {
+      "name": "Dotty",
+      "surname" : "McDotFace"
+   }
+  }
+ """
+}
+
+def unnamed = json {
+ """
+  {
+   "unnamed" : { 
+     "id" : 13355
+   }
+  }
+ """
+}
+```
+
+which maps to the following ADT:
+
+```scala mdoc
+sealed trait User
+case class Unnamed(id: Long) extends User
+case class Named(name: String, surname: String) extends User
+```
+
+So let's go ahead and write a `Decoder` for it
+
+```scala mdoc
+def unnamedDec: Decoder[User] = 
+  deriveDecoder[Unnamed]
+   .prepare(_.downField("unnamed"))
+   .widen[User] 
+
+def namedDec: Decoder[User] = 
+  deriveDecoder[Named]
+   .prepare(_.downField("named"))
+   .widen[User]
+
+def userDec = unnamedDec orElse namedDec
+
+userDec.decodeJson(named)
+userDec.decodeJson(unnamed)
+```
+
+A few points about the code above:
+
+- `deriveDecoder` automatically derives a decoder for the individual cases.
+- `prepare` modifies the input json before feeding it to the
+  decoder. In our case we need to access the "unnamed" and "named"
+  json objects before decoding the corresponding data.
+- `widen` changes a `Decoder[B]` into a `Decoder[A]` when `B <: A`. It's the explicit equivalent of covariance.
+- `decA orElse decB` will try `decA`, and fallback on `decB` if `decA` fails.
+
+So far this works great, but look at what happens when we send an incorrect unnamed user:
+
+```scala mdoc
+val incorrectUnnamed: Json = json {
+    """
+    {
+      "unnamed" : {
+        "id" : "not a long"
+      }
+    }
+    """
+  }
+
+userDec.decodeJson(incorrectUnnamed)
+```
+
+As you can see, `Circe` does give back a nice error message, but
+unfortunately it's coming from the wrong branch.
+We know that if the json contains `unnamed`, it's an unnamed user, but
+circe does not: it sees a failure and falls back to the named user
+decoder with `orElse`, which obviously fails to parse, at which point
+you get the error from the last branch.  
+In general, this is ok, but in our specific use case it was a source
+of pain for the users of our API, so we wanted to report errors
+pertinent to the ADT case they were sending to us (assuming they got
+at least the "named/unnamed" tag right).
+
+### flatMap and orElse
+
+To see where the problem lies, it's easy to think of the code above as
+being made of these four components (not 100% true in `Circe` terms,
+but the differences are irrelevant):
+
+- an "unnamed" accessor `Decoder`, of type `unnamedField: Decoder[Json]`
+- a `Decoder` for unnamed users, of type `unnamedData: Json => Decoder[User]`
+- a "named" accessor `Decoder`, of type `namedField: Decoder[Json]`
+- a `Decoder` for named users, of type `namedData: Json => Decoder[User]`
+
+and the whole decoder is
+```scala
+unnamedField.flatMap(unnamedData) orElse namedField.flatMap(namedData)
+```
+
+if you look for example at `unnamedField.flatMap(unnamedData)`, you
+can see that there are two possible sources of error; one is in
+`unnamedField`, which means the tag is not "unnamed", and one is in
+`unnamedData`, which means that the data format is wrong.  
+Crucially, we want `orElse` to only operate on the first source, so we
+have to separate them. One way to do that would be:
+```scala
+unnamedField.orElse(namedField).flatMap { json =>
+   unnamedData(json) orElse namedData(json)
+}
+```
+
+But that's not ideal: first of all there is repetition of `orElse` (in
+our actual scenario there were many more cases), but also it's
+actually weird to have to define `unnamedField` and `unnamedData`
+separately.  
+We somehow want to keep them together, but without triggering the
+second source of errors until _after_ `orElse`, or other words, we
+want to _return_ the second `Decoder` (program), without triggering
+it's errors (running it), which means we need to have a
+`Decoder[Decoder[User]]`, which we can get by:
+
+```scala
+unnamedField.map(unnamedData) orElse namedField.map(namedData)
+```
+
+This will give us `Decoder[Decoder[User]]`, and we can now run the
+inner decoder with... again, `flatten`.  
+And this is our second case of standalone `flatten`, which happens
+when we want *to interleave another operation* (in this case `orElse`)
+in between the `map` and `flatten` parts of `flatMap`.
+
+--------
+
+The full code contains some `Circe` details which aren't super
+relevant conceptually, but I'm leaving it here for the interested
+readers. Note the correct, informative error trail at the end.
+
+```scala mdoc
+implicit class Tagger[A](d: Decoder[A]) {
+  def tag(accessor: String): Decoder[Decoder[A]] = Decoder.instance { inputJson =>
+    inputJson.downField(accessor) match {
+       case innerJson: HCursor => Right(innerJson)
+       case err: FailedCursor => Left(DecodingFailure("Failed cursor", err.history))
+     }
+   }.map(outJson => Decoder.instance(_ => d(outJson)))
+}
+
+def betterDec: Decoder[User] =
+  deriveDecoder[Unnamed]
+   .widen[User]
+   .tag("unnamed")
+   .orElse {
+      deriveDecoder[Named]
+       .widen[User]
+       .tag("named")
+   }.flatten
+
+betterDec.decodeJson(named)
+betterDec.decodeJson(unnamed)
+betterDec.decodeJson(incorrectUnnamed)
+
+```
+
+
+<!-- final session on the nature of flatMap -->
+<!-- flatMap runs two programs one after the other, when the structure of the second depends on the resu -->
+<!-- lt of the first (A =>), but if you take apart, map runs the first program and uses the result to decide how the second should look like, and `flatten` actually runs the resulting inner program. More often than not this two things are useful together, but sometimes you might want to decide which program to run differently (like in `modify` with transactionality), or run other operations first (like in `orElse`). Monads are about substitution followed by renormalisation, and sometimes it's useful to manipulate the denormalised F[F[A]] on its own. -->
+<!-- Hope you enjoyed it. -->
 
 
