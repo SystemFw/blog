@@ -1,6 +1,6 @@
 ---
 title: A case study of flatMap vs flatten
-date: 2019-07-11
+date: 2019-07-24
 ---
 
 The correspondence between `flatMap` and `map + flatten` is well
@@ -90,7 +90,7 @@ def buggySprinter(finishLine: Ref[Int]): IO[Int] =
 ```
 
 This may seem correct at first glance, but note how the first
-`flatMap` is not not safe in the presence of concurrency: a concurrent
+`flatMap` is not safe in the presence of concurrency: a concurrent
 process could change the value of the `Ref` in between `get` and `set`
 (resulting in lost updates) , so we need an atomic `update(f: A => A):
 IO[Unit]`.
@@ -106,7 +106,6 @@ def sprinter(finishLine: Ref[Int]): IO[Int] =
     (pos + 1, pos + 1)
   }
 ```
-
 
 ### Modify, flatten and transactionality
 
@@ -232,7 +231,7 @@ def named = json {
 def unnamed = json {
  """
   {
-   "unnamed" : {
+   "unnamed" : { 
      "id" : 13355
    }
   }
@@ -281,7 +280,7 @@ A few points about the code above:
 So far this works great, but look at what happens when we send an incorrect unnamed user:
 
 ```scala
-val incorrectUnnamed: Json = json {
+def incorrectUnnamed: Json = json {
     """
     {
       "unnamed" : {
@@ -290,11 +289,6 @@ val incorrectUnnamed: Json = json {
     }
     """
   }
-// incorrectUnnamed: Json = JObject(
-//   object[unnamed -> {
-//   "id" : "not a long"
-// }]
-// )
 
 userDec.decodeJson(incorrectUnnamed)
 // res4: Decoder.Result[User] = Left(
@@ -306,8 +300,8 @@ As you can see, `Circe` does give back a nice error message, but
 unfortunately it's coming from the wrong branch.
 We know that if the json contains `unnamed`, it's an unnamed user, but
 circe does not: it sees a failure and falls back to the named user
-decoder with `orElse`, which obviously fails to parse, at which point
-you get the error from the last branch.  
+decoder with `orElse`, which obviously fails to decode as well, at
+which point you get the error from the last branch.  
 In general, this is ok, but in our specific use case it was a source
 of pain for the users of our API, so we wanted to report errors
 pertinent to the ADT case they were sending to us (assuming they got
@@ -324,7 +318,7 @@ but the differences are irrelevant):
 - a "named" accessor `Decoder`, of type `namedField: Decoder[Json]`
 - a `Decoder` for named users, of type `namedData: Json => Decoder[User]`
 
-and the whole decoder is
+where the whole decoder is
 
 ```scala
 unnamedField.flatMap(unnamedData) orElse namedField.flatMap(namedData)
@@ -348,17 +342,18 @@ our actual scenario there were many more cases), but also it's
 actually weird to have to define `unnamedField` and `unnamedData`
 separately.  
 We somehow want to keep them together, but without triggering the
-second source of errors until _after_ `orElse`, or other words, we
-want to _return_ the second `Decoder` (program), without triggering
-it's errors (running it), which means we need to have a
-`Decoder[Decoder[User]]`, which we can get by:
+second source of errors until _after_ `orElse`, or in other words, we
+want to _return_ the second `Decoder` _program_  without _running it_
+(and therefore triggering its errors).  
+Again, this corresponds to `Decoder[Decoder[User]]`, which we can get
+by changing `flatMap` to `map`:
 
 ```scala
 unnamedField.map(unnamedData) orElse namedField.map(namedData)
 ```
 
-This will give us `Decoder[Decoder[User]]`, and we can now run the
-inner decoder with... again, `flatten`.  
+`orElse` will give us another `Decoder[Decoder[User]]`, and we can now
+run the inner decoder with... `flatten`.  
 And this is our second case of standalone `flatten`, which happens
 when we want *to interleave another operation* (in this case `orElse`)
 in between the `map` and `flatten` parts of `flatMap`.
@@ -399,6 +394,30 @@ betterDec.decodeJson(incorrectUnnamed)
 // )
 ```
 
+## Conclusion: the nature of `flatMap`
 
-<!-- final session on the nature of flatMap --><!-- flatMap runs two programs one after the other, when the structure of the second depends on the resu --><!-- lt of the first (A =>), but if you take apart, map runs the first program and uses the result to decide how the second should look like, and `flatten` actually runs the resulting inner program. More often than not this two things are useful together, but sometimes you might want to decide which program to run differently (like in `modify` with transactionality), or run other operations first (like in `orElse`). Monads are about substitution followed by renormalisation, and sometimes it's useful to manipulate the denormalised F[F[A]] on its own. --><!-- Hope you enjoyed it. -->
+Let's look again at the signature of `flatMap`:
+
+```scala
+def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
+```
+
+you can look at `F[A]` as a program that returns `A`s, and at `flatMap`
+as a mode of composition that represents running two programs in
+sequence, using the result of the first to decide the shape of the
+second (`A => F[B]` means exactly "`F[B]` depends on `A`").  
+But as we've seen, there are actually two components at play, `map`
+and `flatten`, so we can now refine our intuition: `map` represents
+running the first program and using its result to decide the shape of
+the second, and `flatten` then actually runs the second program.  
+Most of the time, these two things happen as a unit (hence why
+`flatMap` is more prominent), but not all the time, either because we
+want to take the decision about which program to run in a different
+way (in the case of `modify`, transactionally), or because we need to
+run other operations first (like `orElse`).  
+Slightly more formally, monads are about substitution (`map`) followed
+by renormalisation (`flatten`) and, as we've seen, sometimes you
+need to manipulate the non normalised form `F[F[A]]` on its own.
+
+Hope you enjoyed this post, and see you next time!
 
