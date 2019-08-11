@@ -161,7 +161,7 @@ are values, which means we can return _the action itself_.
 
 ```scala
 modify(f: A => (A, B): IO[B]
-modify(f: DoorState => (DoorState, IO[HttpStatus])): IO[IO[HttpStatus]]
+modify(f: LightSwitch => (LightSwitch, IO[HttpStatus])): IO[IO[HttpStatus]]
 ```
 
 

@@ -131,4 +131,7 @@ writings:
 -
  title: Short explanation about green threads
  link: https://gitter.im/monix/monix?at=5d3716c8e2d1aa6688f62853
+-
+ title: How does shapeless type inequality constraint work
+ link: https://gitter.im/scala/scala?at=5d5093339507182477c01bf4
 ---
