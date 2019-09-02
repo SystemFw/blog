@@ -1,9 +1,14 @@
 ---
 talks: # Displayed in the order they are written
 -
+   title: How do Fibers work. A peek under the hood.
+   slides: https://systemfw.org/Scala-World-2019/#/
+   year: 2019
+   conf: Scala World
+-
    title: "Ref + Deferred: from counters to concurrent FSMs"
    video: https://www.youtube.com/embed/-dLp3u6y2DQ
-   slides: http://systemfw.org/TL-Summit-Philly-2019/#/
+   slides: https://systemfw.org/TL-Summit-Philly-2019/#/
    year: 2019
    conf: Typelevel Summit at North Eastern Scala Symposium
 -
