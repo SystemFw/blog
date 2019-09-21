@@ -1,6 +1,11 @@
 ---
 talks: # Displayed in the order they are written
 -
+   title: Composable concurrency with Ref and Deferred
+   slides: https://systemfw.org/scala-italy-2019/#/
+   year: 2019
+   conf: Scala Italy
+-
    title: How do Fibers work. A peek under the hood.
    video: https://www.youtube.com/embed/x5_MmZVLiSM
    slides: https://systemfw.org/Scala-World-2019/#/
