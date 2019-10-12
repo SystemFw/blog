@@ -134,4 +134,13 @@ writings:
 -
  title: How does shapeless type inequality constraint work
  link: https://gitter.im/scala/scala?at=5d5093339507182477c01bf4
+-
+ title: IO internals, runloop, Async
+ link: https://gitter.im/typelevel/cats-effect?at=5d51ad95029a51607f8099a8
+- 
+ title: Short point on the relationship between Concurrent and Async
+ link: https://gitter.im/typelevel/cats-effect?at=5d84c009b9f8210ed5bbf9e3
+-
+ title: Algebraic thinking, an example with Option
+ link: https://gitter.im/typelevel/cats?at=5d9f9e91464b432fc1f58ccc
 ---
