@@ -2,6 +2,7 @@
 talks: # Displayed in the order they are written
 -
    title: Composable concurrency with Ref and Deferred
+   video: https://player.vimeo.com/video/366191463
    slides: https://systemfw.org/scala-italy-2019/#/
    year: 2019
    conf: Scala Italy
