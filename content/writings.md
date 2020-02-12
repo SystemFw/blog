@@ -143,4 +143,13 @@ writings:
 -
  title: Algebraic thinking, an example with Option
  link: https://gitter.im/typelevel/cats?at=5d9f9e91464b432fc1f58ccc
+-
+ title: Daemon threads
+ link: https://gitter.im/typelevel/cats-effect?at=5dac318add688b6b6700fa94
+-
+ title: Type based reasoning, an http4s example
+ link: https://gitter.im/http4s/http4s?at=5df89c3255d9392300262031
+-
+ title: Evaluation vs execution in functional effects
+ link: https://gitter.im/typelevel/cats-effect?at=5e14b6bd3679536f9625a7a2
 ---
