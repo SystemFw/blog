@@ -15,8 +15,14 @@
     <div class="row">
       <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
         $for(talks)$
-         <div class="anchor"><a name="one">&nbsp;</a></div>
-        <p><b>$conf$ $year$</b>$if(slides)$ - <a href ="$slides$">Slides</a></p>$endif$
+        <div class="anchor"><a name="$id$">&nbsp;</a></div>
+        <p>
+          <b>$conf$ $year$</b>
+          $if(slides)$ -
+          <a href ="$slides$">Slides</a>
+          $endif$ -
+          <a href ="/talks.html#$id$">#</a>
+        </p>
         $if(video)$
         <div class="embed-responsive embed-responsive-16by9">
           <iframe class="embed-responsive-item" src="$video$" allowfullscreen></iframe>
