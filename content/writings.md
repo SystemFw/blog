@@ -152,4 +152,13 @@ writings:
 -
  title: Evaluation vs execution in functional effects
  link: https://gitter.im/typelevel/cats-effect?at=5e14b6bd3679536f9625a7a2
+-
+ title: fs2 `compile` and algebraic design
+ link: https://gitter.im/functional-streams-for-scala/fs2?at=5e962ebb6823cb38acd12ebd
+-
+ title: mini example in recognising type patterns
+ link: https://gitter.im/typelevel/cats?at=5e99abbbc38aa05a1a7d1df0
+-
+ title: async, continuations, monads
+ link: https://gitter.im/typelevel/cats-effect?at=5e9e0ec1d240da24338b7553
 ---
