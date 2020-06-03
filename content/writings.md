@@ -161,4 +161,13 @@ writings:
 -
  title: async, continuations, monads
  link: https://gitter.im/typelevel/cats-effect?at=5e9e0ec1d240da24338b7553
+-
+ title: "Ref + Deferred example: periodic monitor"
+ link: https://gitter.im/typelevel/cats-effect?at=5eb48659d898fe7a3771852c
+-
+ title: fs2 Stream cannot continue on errors
+ link: https://gitter.im/functional-streams-for-scala/fs2?at=5ebbd511faa128031ccbe9e8
+-
+ title: Abstracting over arity with shapeless
+ link: https://www.reddit.com/r/scala/comments/glo160/typelevel_programming_challenge/fqz7wnm?utm_source=share&utm_medium=web2x
 ---
