@@ -12,12 +12,15 @@ I also wish to distinguish programs as values from other approaches to
 functional programming such as __effects and handlers__ as seen in
 Unison, Eff or Koka, which I might talk about in the future.
 
-I will make the following assumptions about my readers, based on my typical audience:
+I will make the following assumptions about my readers, based on my
+typical audience:
 
 - You know Scala syntax, as well as FP basics like ADTs, recursion,
   higher order functions and pattern matching.
 - You're are vaguely aware of the existence of libraries like
-  [cats-effect](https://github.com/typelevel/cats-effect) and [fs2](https://github.com/functional-streams-for-scala/fs2), for example through one of my [talks](https://systemfw.org/talks).
+  [cats-effect](https://github.com/typelevel/cats-effect) and
+  [fs2](https://github.com/functional-streams-for-scala/fs2), for
+  example through one of my [talks](https://systemfw.org/talks).
 - You're looking for a deeper, lasting understanding of the core ideas
   behind programs as values, beyond the specifics of a single library.
 
@@ -25,20 +28,21 @@ I will make the following assumptions about my readers, based on my typical audi
 ## Compositionality
 
 Let's start from the concept of compositionality, which is the idea
-that we can understand the __whole__ by understanding the
-__parts__ and the __rules of composition__.
+that we can understand the __whole__ by understanding the __parts__
+and the __rules of composition__.
 
 The key characteristic of compositional systems is that they can be
 decomposed into parts that still make sense on their own and,
 specularly, they can be built by assembling smaller parts together.  
-This fits well with the limited capacity of our brains: if I asked
-you to build a model of the Colosseum, would you rather assemble it
-with Lego, or sculpt it with marble?
+This fits well with the limited capacity of our brains: if I asked you
+to build a model of the Colosseum, would you rather assemble it with
+Lego, or sculpt it with marble?
 
 To see how the concept applies to software, we will consider this
 simple example program:
 
-> repeatedly print "hello", stopping after 10 iterations, once per second
+> repeatedly print "hello", stopping after 10 iterations, once per
+> second
 
 
 We can implement the above program with:
@@ -52,8 +56,8 @@ while(i < 10) {
 }
 ```
 
-but note how it's not very compositional.
-First of all, two logical subprograms cannot be combined without changes:
+but note how that's not very compositional. First of all, two logical
+subprograms cannot be combined without changes:
 
 ```scala mdoc:compile-only
 def p1 = {
@@ -78,7 +82,8 @@ In the extreme, it will result in spaghetti code, code which has such
 a low level of compositionality that it can't be separated into its
 constituent parts at all.
 
-Compare instead with this alternative solution, which uses `fs2.Stream`:
+Compare instead with this alternative solution, which uses
+`fs2.Stream`:
 
 ```scala
 val p = IO(println("hello"))
@@ -92,9 +97,12 @@ This code is highly compositional, it is made of smaller parts, which
 all make sense as individual programs:
 
 - `IO(println("hello"))` is the program that prints "hello".
-- `repeatEval` is the program that executes another program indefinitely.
-- `take(n)` is the program that evaluates the first `n` iterations of another program.
-- `metered` is the program that executes another program at the given rate.
+- `repeatEval` is the program that executes another program
+  indefinitely.
+- `take(n)` is the program that evaluates the first `n` iterations of
+  another program.
+- `metered` is the program that executes another program at the given
+  rate.
 
 Even without understanding all the details, it should be clear that it
 maintains this compositional quality in the more complex example too:
@@ -120,7 +128,8 @@ The two examples above are rather extreme, and may give the impression
 that compositionality is a binary attribute. In reality, it's on a
 spectrum: the more compositional our software is, the better we can
 cope with its complexity.   
-And that leads me to the main point of this post: what is programs as values about?
+And that leads me to the main point of this post: what is programs as
+values about?
 
 __Programs as values is about removing barriers to compositionality.__
 
@@ -134,37 +143,34 @@ __Programs as values is about removing barriers to compositionality.__
 
 
 definitely non composable, need to find out compositionality example
-basically the parts do not make sense on their own, but only with the context of other parts
+basically the parts do not make sense on their own, but only with the
+context of other parts
 
 then fs2
 
 
-analyis, build small programs, then assemble them
-also show how to decompose, each program makes sense on its own
+analyis, build small programs, then assemble them also show how to
+decompose, each program makes sense on its own
 
-The two examples are rather extreme, gives the impression of a binary property,
-but it's really nuanced, programs are compositional 
+The two examples are rather extreme, gives the impression of a binary
+property, but it's really nuanced, programs are compositional
 
 
-this is series is primarily about effects
-2 fundamental questions
-doing vs being
-recontextualising effects
+this is series is primarily about effects 2 fundamental questions
+doing vs being recontextualising effects
 
-briefly mention the first, lot of talk about it, and we might indeed talk about it as well
-but let's focus on doing vs being
-"hello" + readLine 
-repeat 5 readLine
+briefly mention the first, lot of talk about it, and we might indeed
+talk about it as well but let's focus on doing vs being "hello" +
+readLine repeat 5 readLine
 
 def vs val
 
-doing: sequencing
-being a value: referential transparency
+doing: sequencing being a value: referential transparency
 
-core idea:
-being only, unlink evaluation, data, explicit combination
+core idea: being only, unlink evaluation, data, explicit combination
 
 
 algebraic structure: intro form, combinators, elimination forms
 
-progression: monoid, why F[A], functor, (split here?) monad, monaderror
+progression: monoid, why F[A], functor, (split here?) monad,
+monaderror
