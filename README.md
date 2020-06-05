@@ -4,11 +4,13 @@ Hakyll source code for my blog.
 
 ## Dev flow
 
-| Command                   | Scenario                        |
-|---|---|
-| `stack build`             | Changes to `site.hs`            |
-| `stack exec site build`   | Changes to content              |
-| `stack exec site rebuild` | Changes to content, clean cache |
+| Command                   | Scenario                                |
+|---------------------------|-----------------------------------------|
+| `stack exec site watch`   | Changes to content                      |
+| `stack exec site build`   | Changes to `talks.md` and `writings.md` |
+| `stack exec site rebuild` | build and clean cache                   |
+| `stack build`             | Changes to `site.hs`                    |
+
 
 Make sure you are in the root directory of the blog when running these
 commands.

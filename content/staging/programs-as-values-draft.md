@@ -136,7 +136,7 @@ __Programs as values is about removing barriers to compositionality.__
 
 
 
-## Programs as Values, Part 1: Doing & Being
+## Programs as Values, Part 2: Doing & Being
 
 
 
