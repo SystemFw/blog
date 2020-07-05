@@ -170,4 +170,7 @@ writings:
 -
  title: Abstracting over arity with shapeless
  link: https://www.reddit.com/r/scala/comments/glo160/typelevel_programming_challenge/fqz7wnm?utm_source=share&utm_medium=web2x
+-
+ title: Why `map` doesn't run effects, or, is `flatMap` fundamental?
+ link: https://gitter.im/typelevel/cats-effect?at=5eef29c8c223cc536a27fdd6
 ---
