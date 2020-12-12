@@ -382,6 +382,15 @@ though, we will deep dive into programs as values instead, see you
 next time!.
 
 
+------
+
+Switch up the plan a bit:
+
+for part 3 introduce CPS on execution as evaluation
+then examples of IO not executing stuff, and some preliminary use of flatMap and >> 
+as a prelude for part 4, where we are going to go for the whole algebra thing
+
+
 <!-- algebraic structure: intro form, combinators, elimination forms -->
 
 <!-- Algebras comes from universal algebra -->
