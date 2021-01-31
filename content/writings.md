@@ -138,7 +138,7 @@ writings:
 -
  title: IO internals, runloop, Async
  link: https://gitter.im/typelevel/cats-effect?at=5d51ad95029a51607f8099a8
-- 
+-
  title: Short point on the relationship between Concurrent and Async
  link: https://gitter.im/typelevel/cats-effect?at=5d84c009b9f8210ed5bbf9e3
 -
@@ -174,4 +174,31 @@ writings:
 -
  title: Why `map` doesn't run effects, or, is `flatMap` fundamental?
  link: https://gitter.im/typelevel/cats-effect?at=5eef29c8c223cc536a27fdd6
+-
+ title: CE2 multirace
+ link: https://gitter.im/typelevel/cats-effect?at=5f479a3e89cf2d584b7c65cf
+-
+ title: short point on Free, IO, final tagless
+ link: https://gitter.im/typelevel/cats?at=5f6e03948fe6f119635ee0fc
+-
+ title: Concurrent.background
+ link: https://gitter.im/typelevel/cats-effect?at=5f6e4c77aaff36059b581233
+-
+ title: State Monad breakdown
+ link: https://gitter.im/scala/scala?at=5f7c610b4603547484018a14
+-
+ title: From kinds to final tagless capability classes
+ link: https://gitter.im/typelevel/cats-effect?at=5fad9354b4283c208a5f52b1
+-
+ title: Converting (only )Pure Streams to Iterator
+ link: https://gitter.im/functional-streams-for-scala/fs2?at=5fb27d6406fa0513ddb7698c
+-
+ title: Sharded processing with the fs2
+ link: https://gitter.im/functional-streams-for-scala/fs2?at=5fe3a5f6ac9d8e7463ca156a
+-
+ title: Very short point on families of abstraction
+ link: https://gitter.im/typelevel/cats-effect?at=60130ae332e01b4f715ceca4
+-
+ title: Different flavours of final tagless, and Haskell vs Scala
+ link: https://gitter.im/typelevel/cats-effect?at=60130f4a9d5c644f66362955
 ---
