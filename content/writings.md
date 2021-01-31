@@ -89,7 +89,8 @@ writings:
  link: https://gitter.im/scala/scala?at=5bbf350fc08b8b3067feeadc
 -
  title: Existentials and universals
- link: https://gitter.im/scala/scala?at=5bc499b164cfc273f9ce6d1-
+ link: https://gitter.im/scala/scala?at=5bc499b164cfc273f9ce6d1d
+-
  title: "*> vs >>"
  link: https://gitter.im/typelevel/cats?at=5bbf6d49bbdc0b250523988c
 -
