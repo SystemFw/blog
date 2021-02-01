@@ -190,7 +190,7 @@ writings:
  title: From kinds to final tagless capability classes
  link: https://gitter.im/typelevel/cats-effect?at=5fad9354b4283c208a5f52b1
 -
- title: Converting (only )Pure Streams to Iterator
+ title: Converting (only) Pure Streams to Iterator
  link: https://gitter.im/functional-streams-for-scala/fs2?at=5fb27d6406fa0513ddb7698c
 -
  title: Sharded processing with the fs2
