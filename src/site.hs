@@ -127,7 +127,7 @@ writings = listField "writings" writing writingMetadata <> site
    writingMetadata = do
        md <- getMetadata "content/writings.md"
        items <- yamlParser (\o -> o .: "writings") md
-       traverse makeItem items
+       traverse makeItem $ reverse items
 
 writing :: Context Yaml.Object
 writing = foldMap  mandatoryField ["title", "link"]
