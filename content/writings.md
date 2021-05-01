@@ -201,4 +201,7 @@ writings:
 -
  title: Different flavours of final tagless, and Haskell vs Scala
  link: https://gitter.im/typelevel/cats-effect?at=60130f4a9d5c644f66362955
+-
+ title: Applicative vs Monad in the shape of the arrows
+ link: https://gitter.im/typelevel/cats-effect?at=6053bc59a7dfe1372ee1561c
 ---
