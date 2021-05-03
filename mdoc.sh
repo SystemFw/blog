@@ -1,8 +1,5 @@
-coursier launch org.scalameta:mdoc_2.12:1.3.1 \
-         co.fs2:fs2-core_2.12:1.0.5 \
-         io.circe:circe-core_2.12:0.11.1 \
-         io.circe:circe-generic_2.12:0.11.1 \
-         io.circe:circe-parser_2.12:0.11.1 -- \
+coursier launch org.scalameta:mdoc_2.13:2.2.20 -- \
+         --classpath $(coursier fetch -p co.fs2:fs2-core_2.13:3.0.2) \
          --in content/staging \
          --out content/posts \
          --watch
