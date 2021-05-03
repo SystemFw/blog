@@ -89,7 +89,7 @@ Compare instead with this alternative solution, which uses
 `fs2.Stream`:
 
 ```scala
-val p = IO(println("hello"))
+val p = IO.println("hello")
 
 Stream.repeatEval(p)
       .take(10)
@@ -99,7 +99,7 @@ Stream.repeatEval(p)
 This code is highly compositional, it is made of smaller parts, which
 all make sense as individual programs:
 
-- `IO(println("hello"))` is the program that prints "hello".
+- `IO.println("hello")` is the program that prints "hello".
 - `repeatEval` is the program that executes another program
   indefinitely.
 - `take(n)` is the program that evaluates the first `n` iterations of
@@ -116,7 +116,7 @@ def randomWait =
     .random[IO]
     .evalMap(n => IO.sleep(n.nanos))
 
-def hello = IO(println("hello"))
+def hello = IO.println("hello")
 
 Stream
   .repeatEval(hello)
