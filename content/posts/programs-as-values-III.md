@@ -1,4 +1,7 @@
-# Programs as Values, Part III: Explicit control flow
+---
+title: "Programs as Values, Part III: Explicit Control Flow"
+date: 2021-05-03
+---
 
 At the end of [Part
 II](https://systemfw.org/posts/programs-as-values-II.html), we arrived
@@ -23,7 +26,7 @@ combinators. We don't yet know how to do it in programs as values, so
 we are going to do it in execution as evaluation.
 In particular we are looking to express the following program:
 
-```scala mdoc:compile-only
+```scala
 def p = {
   println("What's your name?")
   Thread.sleep(1000)
@@ -66,7 +69,7 @@ add(two, three)
 
 and add `println`s to trace evaluation:
 
-```scala mdoc
+```scala
 def two = {
  println("Evaluating 2")
  2
@@ -83,13 +86,17 @@ def add(a: Int, b: Int): Int = {
 }
 
 add(two, three)
+// Evaluating 2
+// Evaluating 3
+// Evaluating addition
+// res1: Int = 5
 ```
 
 The execution trace closely resembles sequential control flow, which
 gives us an idea on how we can sequence two instructions by exploiting
 the evaluation order of the arguments of a function:
 
-```scala mdoc
+```scala
 def seq1[A, B](fst: A, snd: B): Unit = ()
 
 seq1(
@@ -99,7 +106,9 @@ seq1(
     println("third")
   )
 )
-
+// first
+// second
+// third
 ```
 
 But that's not general enough: when using the normal
@@ -107,13 +116,15 @@ newline/semicolon, the last expression becomes the overall result. So
 we can slightly modify our `seq1` to return the second argument
 instead:
 
-```scala mdoc
+```scala
 def seq2[A, B](a: A, b: B): B = b
 
 seq2(
   println("one"),
   42
 )
+// one
+// res3: Int = 42
 ```
 
 We are getting there, but we still cannot express the second
@@ -126,11 +137,14 @@ s.length + 1
 ```
 would translate to:
 
-```scala mdoc:fail
+```scala
 seq2(
   scala.io.StdIn.readLine(),
   s.length + 1
 )
+// error: not found: value s
+//   s.length + 1
+//   ^
 ```
 
 To get to the final solution, we need to focus on the role of `val
@@ -173,7 +187,7 @@ seq3(println("hello"))(_ => println("world"))
 ```
 
 which makes sense, normal semicolons can also be seen as a special
-case of named results, i.e.:
+case of named results, i.e.
 
 ```scala
 println("hello")
@@ -189,7 +203,7 @@ val _ = println("world")
 
 **We've solved our problem**, and can now express the original program:
 
-```scala mdoc:compile-only
+```scala
 def seq[A, B](a: A)(f: A => B): B = f(a)
 
 def original = {
@@ -212,15 +226,19 @@ def explicit =
   }
 ```
 
-So, why did we do this? The implementation of `seq` still relies on evaluation, and the effectful building blocks like `println` aren't represented as datatypes/values, but `explicit` shows that we can describe execution through combinators, and that _structure_ can be applied to things which _are_ values, like `cats.effect.IO`:
+So, why did we do this? The implementation of `seq` still relies on
+evaluation, and the effectful building blocks like `println` aren't
+represented as datatypes/values, but `explicit` shows that we can
+describe execution through combinators, and that _structure_ can be
+applied to things which _are_ values, like `cats.effect.IO`:
 
-```scala mdoc:compile-only
+```scala
 import cats.effect.IO
 import scala.concurrent.duration._
 
  // works entirely differently from `seq`,
  // but expresses the same idea
-def seqIO[A, B](a: IO[A])(f: A => IO[B]) =
+def seqIO[A, B](a: IO[A])(f: A => IO[B]): IO[B] =
   a.flatMap(f)
 
 def p2 =
@@ -256,28 +274,30 @@ what does this mean?
 
 Let's take a look at this program:
 
-```scala mdoc:to-string
+```scala
 import cats.effect.IO
 
 val a: IO[Unit] = IO.println("hello")
+// a: IO[Unit] = IO(...)
 ```
 
 As you can see, evaluating `a` doesn't print anything, it literally
 just returns an instance of the `IO` datatype. In fact, it isn't any
 different from:
 
-```scala mdoc
+```scala
 val b: Int = 42
+// b: Int = 42
 ```
 
 `IO` gets translated into actual side-effects only in `main`, and
 cats-effect defines an `IOApp` trait as the entry point of your
 application:
 
-```scala mdoc
+```scala
 import cats.effect.IOApp
 
-object MyApp1 extends IOApp.Simple {
+object MyApp extends IOApp.Simple {
   def run: IO[Unit] = a
 }
 ```
@@ -285,7 +305,7 @@ object MyApp1 extends IOApp.Simple {
 The translation happens when the JVM calls `main`:
 
 ```scala
-MyApp1.main(Array())
+MyApp.main(Array())
 
 // hello
 ```
@@ -302,7 +322,7 @@ val a: IO[Unit] = {
 ```
 
 ```scala
-MyApp1.main(Array())
+MyApp.main(Array())
 
 // hello
 ```
@@ -310,11 +330,12 @@ MyApp1.main(Array())
 Which is very surprising at first, but it's equivalent to saying that
 the number `34` is discarded in:
 
-```scala mdoc
+```scala
 val c = {
   34
   "something"
 }
+// c: String = "something"
 ```
 
 Both `IO.println("hey")` and `34` are just values, and have no effect
@@ -334,14 +355,15 @@ val a: IO[Unit] =
 ```
 
 ```scala
-MyApp1.main(Array())
+MyApp.main(Array())
 
 // hey
 // hello
 ```
 
 And above all, remember that values are _referentially transparent_,
-so the two programs below describe the same behaviour: printing twice.
+so the two programs below describe the same behaviour, which is to
+print twice:
 
 ```scala
 IO.println("hello") >> IO.println("hello")
@@ -362,7 +384,7 @@ x + x
 ```
 
 _You can always give a name to a value, and you can always replace a
-name with its definition_.
+name with its value_.
 
 ## Explicit control flow with values
 
