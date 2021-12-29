@@ -204,4 +204,25 @@ writings:
 -
  title: Applicative vs Monad in the shape of the arrows
  link: https://gitter.im/typelevel/cats-effect?at=6053bc59a7dfe1372ee1561c
+-
+ title: Arguments against `for`
+ link: https://gitter.im/typelevel/cats?at=60907247d261cc4d74a6e62c
+-
+ title: Final tagless again
+ link: https://discord.com/channels/632277896739946517/839263668478672937/847438971969077248
+- 
+ title: Currying, function syntax, eta expansion
+ link: https://discordapp.com/channels/632277896739946517/839899003306901545/883825592619900991
+-
+ title: Why I don't use `for comprehensions` anymore
+ link: https://discord.com/channels/632277896739946517/632727524434247691/890684551918133248
+- 
+ title: Unification
+ link: https://discord.com/channels/632277896739946517/632278570512678923/914537715201093652
+-
+ title: ADTs
+ link: https://discord.com/channels/632150470000902164/632150470000902166/915332985681756250
+-
+ title: Elimination forms
+ link: https://discord.com/channels/632277896739946517/839899003306901545/923559484712960051
 ---
