@@ -31,7 +31,7 @@ An algebra is a structure consisting of four components:
   returns another program in `T`.  
   Combinators are the essential building blocks of programs as values
   we've been talking about so far, they take smaller programs and
-  construct bigger programs, often by explicit describing some form of
+  construct bigger programs, often by explicitly describing some form of
   control flow. Most of the logic in your code will be expressed
   through combinators.
   
@@ -70,7 +70,7 @@ is centred around a document algebra, so let's look at its components
 in more detail.
 
 The carrier type of the algebra is called `Doc`, which means we
-represent documents as programs of type `Doc`, i.e. `val myDoc: Doc`.
+represent documents as programs of type `Doc`, like `val myDoc: Doc`.
 It might sound strange that we're referring to a static artifact such
 as a document as a "program", but you will see that the mindset we're
 working in doesn't change that much once we move to dynamic behavior
@@ -117,12 +117,12 @@ val comma: () => Doc
 
 Let's now look at combinators, functions that take one or more values
 of type `Doc` and return a value of type `Doc`. Combinators will
-express the lion share of our logic, so much so that libraries based
+express the lion's share of our logic, so much so that libraries based
 on algebras are often called _combinator libraries_. Here are a few:
 
 ```scala
 indent: (Doc, Int) => Doc
-lineOrSpace: (Doc, Doc) => Doc
+line: (Doc, Doc) => Doc
 bracketBy: (Doc, Doc, Doc, Int) => Doc
 aligned: Doc => Doc
 stack: Iterable[Doc] => Doc
@@ -135,7 +135,7 @@ fact that at least one of their inputs (`this`) is of type `Doc`:
 ```scala
 sealed trait Doc {
   def indent(i: Int): Doc
-  def lineOrSpace(that: Doc): Doc
+  def line(that: Doc): Doc
   def bracketBy(left: Doc, right: Doc, indent: Int = 2): Doc
   def aligned: Doc
   ... 
@@ -149,6 +149,61 @@ object Doc {
 `Doc` because it operates on a _collection_ of docs. The same
 intuition about combinators applies though: `stack` combines programs
 in the `Doc` algebra into a bigger program in the `Doc` algebra.
+
+Finally, eliminations forms translate `Doc` programs to another type:
+
+```scala
+isEmpty: Doc => Boolean
+maxWidth: Doc => Int
+render: (Doc, Int) => String
+```
+with the usual caveat that they are defined as instance methods:
+
+```scala
+sealed trait Doc {
+  def isEmpty: Boolean
+  def maxWidth: Int
+  def render(width: Int): String
+```
+
+
+Equipped with this knowledge, we can now write `Doc` programs:
+
+```scala mdoc:silent
+import org.typelevel.paiges.Doc
+
+val openBracket: Doc = Doc.char('[')
+val closeBracket: Doc = Doc.char(']')
+
+val north: Doc = Doc.text("NORTH")
+val east: Doc = Doc.text("EAST")
+val south: Doc = Doc.text("SOUTH")
+val west: Doc = Doc.text("WEST")
+
+val directions: Doc = 
+  Doc.stack(List(north, east, south, west))
+     .bracketBy(openBracket, closeBracket)
+```
+
+In the above, I've separated usages of introductions forms from
+combinators for extra clarity, but remember that referential
+transparency holds, so you can inline definitions or abstract them out
+freely. We can keep composing to build more complex programs:
+
+```scala mdoc:silent
+val output: Doc = 
+  Doc.text("Directions:")
+     .line(directions.indent(2))
+     .bracketBy(Doc.space, Doc.space)
+```
+
+and once we're done, we can "run" our `Doc` program by translating it
+to `String` via the `render` elimination form:
+
+```scala mdoc
+output.render(width = 30)
+output.render(width = 15)
+```
 
 
 <!-- The point about derived and primitive things is not important for this article, it's really more about how algebras are implemented. The point of this article is recognising the algebraic structure, so I'm not going to include it -->
