@@ -302,6 +302,8 @@ structure at the heart of programs as values. Next time is when things
 really get interesting, as we're going to enrich our algebras with the
 ability to handle _results_. See you then!
 
+---
+
 ## Appendix on terminology
 
 Terminology can be a source of confusion, since it's used loosely and

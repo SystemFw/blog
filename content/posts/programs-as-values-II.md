@@ -323,6 +323,7 @@ discovering richer datatypes for our effects, and exploring the
 structure of the functions we use to combine them. And that is exactly
 what we are going to do next time.
 
+---
 
 ## Appendix
 
