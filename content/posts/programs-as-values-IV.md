@@ -3,11 +3,18 @@ title: "Programs as Values, Part IV: Algebras"
 date: 2022-01-04
 ---
 
-In the previous instalments of this series, we've introduced two core components of the programs as values paradigm: *datatypes* that represent effects, and *functions*  that combine instances of those datatypes in order to construct programs by describing control flow explicitly.
+In the previous instalments of this series, we've introduced two core
+components of the programs as values paradigm: *datatypes* that
+represent effects, and *functions* that combine instances of those
+datatypes in order to construct programs by describing control flow
+explicitly.
 
-Today we will formalise and clarify this structure, by introducing the concept of an **algebra**.
+Today we will formalise and clarify this structure, by introducing the
+concept of an **algebra**.
 
-> Note: In an unfortunate abuse of notation, the word "algebra" is used with a few different meanings in the FP world. See the Appendix for more details on the terminology.
+> Note: In an unfortunate abuse of notation, the word "algebra" is
+> used with a few different meanings in the FP world. See the Appendix
+> for more details on the terminology.
 
 An algebra is a structure consisting of four components:
 
@@ -348,148 +355,3 @@ The issue is that FP terminology uses the word "algebra" to also mean
 interpreters" which roughly corresponds to "abstractions and
 implementations" (the usage of the word "interpreter" comes from the
 theory of embedded domain specific languages, or eDSLs).
-
-<!-- https://okmij.org/ftp/tagless-final/Algebra.html -->
-<!-- https://books.google.it/books?id=MS2f1AATHIoC&pg=PA267&lpg=PA267&dq=with+a+finite+set+of+total+functions+that+have+the+carrier+set+as+their+common+codomain.&source=bl&ots=rRTtRtO-hY&sig=ACfU3U1b8lOc189R8gaOSEzlFjjmXYHBKA&hl=en&sa=X&ved=2ahUKEwiOpcuh75b1AhUJM-wKHdxBBpoQ6AF6BAgREAM#v=onepage&q=with%20a%20finite%20set%20of%20total%20functions%20that%20have%20the%20carrier%20set%20as%20their%20common%20codomain.&f=false -->
-<!-- https://en.wikibooks.org/wiki/Universal_Algebra/Definitions,_examples -->
-
-<!-- The point about derived and primitive things is not important for this article, it's really more about how algebras are implemented. The point of this article is recognising the algebraic structure, so I'm not going to include it
-
-<!-- Finally, note that some introduction forms might be derived from others: -->
-<!-- ```scala -->
-<!-- val comma: Doc = Doc.char(',') -->
-<!-- ``` -->
-
-<!-- but don't just assume that's the case. For example in `paiges` -->
-<!-- `Doc.line` is _not_ defined as `Doc.text("\n")`, because the -->
-<!-- implementation of the library needs extra structure to deal with line -->
-<!-- breaks. (insert something about high perf?) -->
-
-<!-- The point is, however, that we don't need to know the internal -->
-<!-- structure of an algebra to work with it, and as a matter of fact the -->
-<!-- entire concept of thinking _algebraically_ can be thought as thinking -->
-<!-- in terms of _operations_ instead. In this light, we can also show the -->
-<!-- usefulness of laws as an aid in reasoning, for example the library -->
-<!-- implementor might state, and ensure, that: -->
-
-<!-- ```scala -->
-<!-- Doc.line <-> Doc.text("\n") -->
-<!-- ``` -->
-
-<!-- libraries authors can define laws, which are equivalences between programs, auch -->
-<!-- laws hold, e..g Doc.line <-> Doc.text("\n") (add examples). Sometimes something like line is literally defined as Doc.text, sometimes not -->
-
-<!-- Questions: -->
-<!-- - where to put the idea that some ops are defined in terms of others? -->
-<!-- - talk about reasons to do this like performance? -->
-<!-- - talk about laws? -->
-<!-- - The point about algebraic thinking is important and not really that related -->
-<!--   to the discussion about derived operations, probably put it at the end of the whole article -->
-<!-- - derived ops and laws maybe need to be discussed on their own, not as a throway remark here. -->
-
-
-
-
-
-  
-  
-<!-- We've spent the first few instalments of this series discussing the core idea behind the programs as values paradigm: representing effectful programs as datatypes, and assembling big programs out of smaller one via functions that explicitly describe control flow -->
-
-<!-- In programs as values, effects are represented as datatypes, and today we will be looking at the structure formed by these datatypes, by introducing the concept of an **algebra**. -->
-
-
-<!-- use Doc as first example, then Log, including repeat -->
-
-<!-- algebraic structure: intro form, combinators, elimination forms -->
-
-<!-- Algebras comes from universal algebra -->
-<!-- An algebra is a set (called the carrier) with a finite set of total functions that have the carrier set as their common codomain. -->
-
-<!-- A Sigma algebra (signature algebra) defines the set of typed operator symbols without specifyingfunctions that would be the actual operators. Thus a signature defines a class of algebras, those whose operators conform to the typing contraints (used for typeclasses, ML modules, abstract data type etc) -->
-
-
-
-
-<!-- progression: monoid, why F[A], functor, (split here?) monad, -->
-<!-- monaderror -->
-
-<!-- --- -->
-
-<!-- programs as values notes -->
-<!--   algebra -->
-<!--   type A -- carrier -->
-<!--   intro: SomeOtherThanAType => A, primitives: A (intro form of shape () => A) -->
-<!--   combinators: (something) -> A -> A -->
-<!--   elimination forms: A => (something else) => SomeOtherThanAType -->
-<!--   -- write strings to "stdout" -->
-<!--   type Put -->
-<!--   def string(s: String): Put // String => Put, intro -->
-<!--   def plus(a: Put, b: Put): Put // combinator -->
-<!--   ----- -->
-<!--   def run: Put => List[String] // elimination form -->
-
-<!--   val a: Put = string("hello") -->
-
-<!--   val helloWorld: Put = a.plus(string("world")) -->
-
-<!--   def writeN(in: Put, n: Int): Put = -->
-<!--     n match { -->
-<!--       0 => string("") -->
-<!--       n => in.plus(writeN(in))plus(writeN(in, n - 1), in) -->
-<!--     } -->
-<!--   ----------- -->
-<!--   List[Put] -->
-<!--   ----------- -->
-<!--   type Console[A] <--  output  /// (Put + Read) -->
-<!--         ^^ language -->
-<!--   ----- intro -->
-<!--   def read: Console[String] -->
-<!--   def put(s: String): Console[Unit] -->
-<!--   def pure[A](s: A): Console[A] // lift, with no effect -->
-<!--   ----- combinators -->
-<!--   Console[A] => (A => B) => Console[B] -->
-<!--   (A => B) => (Console[A] => Console[B]), lifting A => B into the Console language -->
-<!--   def transformOutput[A, B](p: Console[A],trasformation: A => B): Console[B] = ??? -->
-<!--       map -->
-<!--   def andThen(p: Console[A], transformation: A => Console[B]): Console[B] = -->
-<!--       flatMap/chaining -->
-<!--   def flatten: Console[Console[A]] => Console[A] -->
-<!--   ----- elim <-- forget -->
-
-<!--   ++,empty Monoid -->
-<!--   map Functor -->
-<!--    (A => B) => F[A] => F[B] -->
-<!--     (A => B => ... => N) => F[A] => F[B] => ... => F[N] -->
-<!--     flatMap -->
-<!--   andThen, pure Monad -->
-
-<!--   andThen -\-> sequential, arbitrary control flow -->
-
-<!--   read a String, count the length, print that -->
-<!--   read, put, tOut -->
-
-<!--   val p: Console[Unit] = read // Console[String] -->
-<!--     .transformOutput(_.length) // Console[Int] -->
-<!--     .transformOutput(_.toString) // Console[String] -->
-<!--     .andThen(put) -->
-<!--   def repeatN(p: Console[A], n: Int): Console[A] = -->
-<!--     n match { -->
-
-<!--     } -->
-<!--   Stream[F[_], A] <-- type, Stream[IO, A] -->
-<!--   ----- intro -->
-<!--   empty: () => Stream[IO, A] -->
-<!--   fromList: List[A] => Stream[IO, A] -->
-<!--   eval(action: IO[A]): Stream[IO, A] -->
-<!--   ---- tons -->
-<!--   flatMap: Stream[F, A] => (A => Stream[F, B]) => Stream[F, B] -->
-<!--   ++: Stream[F, A] => STream[F, A] => Stream[F, A] -->
-<!--   take: Int => Stream[F, A] => Stream[F, A] -->
-<!--   concurrently: Stream[F, A] => Stream[F, Unit] => Stream[F, A] -->
-<!--    .... -->
-<!--    ---- -->
-<!--   compile.drain: Stream[F, A] => IO[Unit] -->
-<!--   compile.list: Stream[F, A] => IO[List[A]] -->
-<!--   compile.fold -->
-
-<!-- } -->
