@@ -1,6 +1,6 @@
 ---
 title: "Programs as Values, Part IV: Algebras"
-date: 2021-12-29
+date: 2022-01-04
 ---
 
 In the previous instalments of this series, we've introduced two core components of the programs as values paradigm: *datatypes* that represent effects, and *functions*  that combine instances of those datatypes in order to construct programs by describing control flow explicitly.
@@ -129,7 +129,7 @@ stack: Iterable[Doc] => Doc
 ... // and more
 ```
 Again, I wrote them as standalone functions to make the types clearer,
-in reality they are written as instance methods which obscures the
+in reality they are written as instance methods, which obscures the
 fact that at least one of their inputs (`this`) is of type `Doc`:
 
 ```scala
@@ -181,8 +181,9 @@ val south: Doc = Doc.text("SOUTH")
 val west: Doc = Doc.text("WEST")
 
 val directions: Doc = 
-  Doc.stack(List(north, east, south, west))
-     .bracketBy(openBracket, closeBracket)
+  Doc
+    .stack(List(north, east, south, west))
+    .bracketBy(openBracket, closeBracket)
 ```
 
 In the above, I've separated usages of introductions forms from
@@ -192,9 +193,10 @@ freely. We can keep composing to build more complex programs:
 
 ```scala
 val output: Doc = 
-  Doc.text("Directions:")
-     .line(directions.indent(2))
-     .bracketBy(Doc.space, Doc.space)
+  Doc
+    .text("Directions:")
+    .line(directions.indent(2))
+    .bracketBy(Doc.space, Doc.space)
 ```
 
 and once we're done, we can "run" our `Doc` program by translating it
@@ -218,8 +220,138 @@ output.render(width = 15)
 //  """
 ```
 
+## The Out algebra
 
-<!-- The point about derived and primitive things is not important for this article, it's really more about how algebras are implemented. The point of this article is recognising the algebraic structure, so I'm not going to include it -->
+Let's now look at a made up algebra we're going to call `Out`, whose
+_only_ capability is to print Strings to stdout. It should provide a
+first, simple example of encoding behaviour, which is more in line
+with how we think about the word "program".
+
+Here's how it looks like:
+
+```scala
+// Carrier type
+Out
+// Introduction forms
+print: String => Out
+// Combinators
+andThen: (Out, Out) => Out
+// Elimination forms
+run: Out => IO[Unit]
+```
+
+except we're going to assume it's written idiomatically, with
+`andThen` as an instance method and `print` as a method in the
+companion object of `Out`.
+
+Let's write a program with it:
+
+```scala
+object Logic {
+  val printNewline: Out = Out.print("\n")
+  
+  val helloWorld: Out = 
+    Out
+      .print("Hello, world!")
+      .andThen(printNewLine)
+      .andThen(Out.print("I'm a program!"))
+}
+
+object Main extends IOApp.Simple {
+  def run: IO[Unit] = Logic.helloWorld.run
+}
+```
+```scala
+Main.main(Array())
+
+// Hello, world!
+// I'm a program!
+```
+
+
+So the `Out` algebra lets us create simple imperative programs that
+are akin to:
+
+```scala
+print("tea")
+print("coffee")
+```
+
+except we're in programs as values, so we can easily write
+compositional code as programs that manipulate other programs.
+Here's a basic example, we will see much more interesting ones once
+we work with algebras that encode complex control flow:
+
+```scala
+def repeat(p: Out, n: Int): Out =
+  if n <= 0 Out.print("")
+  else p.andThen(repeat(p, n - 1))
+```
+
+It's significant that we can use `Out` without any knowledge of its
+internal structure: we only need to know the operations defined on it,
+or, in other words, its algebra. This style of _algebraic thinking_ is
+very valuable, because it scales from datatypes with very simple
+internal structure, such as `Option`, all the way to highly
+sophisticated datatypes such as `IO` or `fs2.Stream`.
+
+Finally, note that there really is no difference in mechanics nor
+mindset between imperative-looking algebras such as `Out`, and
+algebras that encode static data such as `Doc`. In fact, we can
+literally implement `Out` with `Doc`:
+
+```scala
+type Out = Doc
+def print(s: String): Out = Doc.text(s)
+def andThen(this: Out, that: Out): Out = this + that
+def run(p: Out): IO[Unit] = IO.println(p.render(Int.MaxValue))
+```
+
+
+## Conclusion
+
+In this article, we've talked about algebras, the fundamental
+structure at the heart of programs as values. Next time is when things
+really get interesting, as we're going to enrich our algebras with the
+ability to handle _results_. See you then!
+
+## Appendix on terminology
+
+Terminology can be a source of confusion, since it's used loosely and
+inconsistently and mostly reflects historical connections between
+fields and communities.
+
+"Algebra" is a particularly overloaded term: the meaning we used in
+the article, which also appears in "Boolean algebra" and "Algebraic
+Data Types", originates from a branch of Maths called Universal
+Algebra.
+It's defined as:
+
+- A set `A`, called the carrier.
+- Some _finitary operations_ on `A`: functions that take tuples of
+  elements of `A` and return an element of `A`.
+
+which we called "carrier" and "combinators" respectively. The terms
+"introduction forms" and "elimination forms" come from logic via type
+theory instead.
+
+Universal Algebra also introduces the concept of a signature algebra,
+or _sigma algebra_, which defines the set of typed operation symbols
+without specifying the functions that would be the actual operations.
+Sigma algebras correspond roughly to the notion of "interface" in
+programming, and are often encoded in Scala via typeclasses.
+
+The issue is that FP terminology uses the word "algebra" to also mean
+"sigma algebra", for example in the phrase "algebras and
+interpreters" which roughly corresponds to "abstractions and
+implementations" (the usage of the word "interpreter" comes from the
+theory of embedded domain specific languages, or eDSLs).
+
+<!-- https://okmij.org/ftp/tagless-final/Algebra.html -->
+<!-- https://books.google.it/books?id=MS2f1AATHIoC&pg=PA267&lpg=PA267&dq=with+a+finite+set+of+total+functions+that+have+the+carrier+set+as+their+common+codomain.&source=bl&ots=rRTtRtO-hY&sig=ACfU3U1b8lOc189R8gaOSEzlFjjmXYHBKA&hl=en&sa=X&ved=2ahUKEwiOpcuh75b1AhUJM-wKHdxBBpoQ6AF6BAgREAM#v=onepage&q=with%20a%20finite%20set%20of%20total%20functions%20that%20have%20the%20carrier%20set%20as%20their%20common%20codomain.&f=false -->
+<!-- https://en.wikibooks.org/wiki/Universal_Algebra/Definitions,_examples -->
+
+<!-- The point about derived and primitive things is not important for this article, it's really more about how algebras are implemented. The point of this article is recognising the algebraic structure, so I'm not going to include it
 
 <!-- Finally, note that some introduction forms might be derived from others: -->
 <!-- ```scala -->
