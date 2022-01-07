@@ -1,8 +1,19 @@
 ---
-title: "Programs as Values, Part IV: Algebras"
+title: "Programs as Values, Part V: Algebras with results"
 date: 2022-01-04
 ---
 
+
+at some point I should say: no elimination forms in this article
+`In` algebra: read a String, count it's length, return false/true whether it's greater than 10
+introduce the necessity for type params
+
+Console algebra, program 1
+write prompt, then read, convert to upper case
+
+program 2: monads
+
+hello
 In the previous instalments of this series, we've introduced two core components of the programs as values paradigm: *datatypes* that represent effects, and *functions*  that combine instances of those datatypes in order to construct programs by describing control flow explicitly.
 
 Today we will formalise and clarify this structure, by introducing the concept of an **algebra**.
@@ -336,9 +347,6 @@ interpreters" which roughly corresponds to "abstractions and
 implementations" (the usage of the word "interpreter" comes from the
 theory of embedded domain specific languages, or eDSLs).
 
-<!-- https://okmij.org/ftp/tagless-final/Algebra.html -->
-<!-- https://books.google.it/books?id=MS2f1AATHIoC&pg=PA267&lpg=PA267&dq=with+a+finite+set+of+total+functions+that+have+the+carrier+set+as+their+common+codomain.&source=bl&ots=rRTtRtO-hY&sig=ACfU3U1b8lOc189R8gaOSEzlFjjmXYHBKA&hl=en&sa=X&ved=2ahUKEwiOpcuh75b1AhUJM-wKHdxBBpoQ6AF6BAgREAM#v=onepage&q=with%20a%20finite%20set%20of%20total%20functions%20that%20have%20the%20carrier%20set%20as%20their%20common%20codomain.&f=false -->
-<!-- https://en.wikibooks.org/wiki/Universal_Algebra/Definitions,_examples -->
 
 <!-- The point about derived and primitive things is not important for this article, it's really more about how algebras are implemented. The point of this article is recognising the algebraic structure, so I'm not going to include it
 
@@ -480,3 +488,61 @@ theory of embedded domain specific languages, or eDSLs).
 <!--   compile.fold -->
 
 <!-- } -->
+
+<!-- after results: combinator overview up to monad? -->
+<!-- errors -->
+<!-- when do I do traverse? its own article: effectful iteration -->
+<!-- IO & FFI -->
+<!-- Resource? (when? how? do I talk about concurrency/interruption first?) -->
+<!-- combinators overview? (up to Traverse), but then what about parallel? -->
+
+<!-- ---------- -->
+<!-- part ?? : effectful constructors -->
+<!-- trait A { -->
+<!--  def foo: B -->
+<!-- } -->
+<!-- point about how to name these abstractions? remark the point about algebras being overloaded. Probably going to call the interfaces -->
+<!-- class MyA(...) extends A -->
+<!-- def myA(...): A = new A { -->
+<!-- } -->
+<!-- version with IO: -->
+<!-- then show constructors with effects, and resource -->
+<!-- stateful constructors (explain allocation is mutable? or just that you will receive it) -->
+<!-- constructors that initialise a resource -->
+<!-- resource that spawn concurrent processes -->
+<!-- constructors that reuse other constructors that are effectful -->
+<!-- regions of sharing -->
+<!-- --------------- -->
+
+<!-- -------- -->
+<!-- part ??: iteration -->
+<!-- introduce List as abstract, intro form, some combinators (map, -->
+<!-- flatMap, zip, takeWhile), foldRight. Try doing `List(Questions) => -->
+<!-- Console[List[Outputs]]`, show the shape of `traverse` on `List`, -->
+<!-- possibly `sequence` as well, then say we generally don't look at -->
+<!-- implementations, but look no magic: foldRight + `pure/mapN`. Then show -->
+<!-- the same for Option. Make a small point about "You might be wondering -->
+<!-- if these can be abstracted, much the same as with the combinators on -->
+<!-- F-A-M, yes but out of scope for now" > -->
+<!-- -------- -->
+
+<!-- ------- -->
+<!-- possible plan:  -->
+<!-- results, V  -->
+<!-- errors, VI -->
+<!-- iteration, VII -->
+<!-- combinator deluge, VIII -->
+<!-- IO & FFI IX -->
+<!-- basic concurrency? parMapN, race, sleep, timeout (possibly parTraverse)? -->
+<!-- resource (add an example restating referential transparency, possibly right before part XII) XI -->
+<!-- effectful constructors XII -->
+<!-- advanced concurrency/state -\-> should this be a separate series? XIII -->
+<!-- abstraction? should this be a separate series? -->
+<!-- ------- -->
+
+<!-- ------- -->
+<!-- sources for algebras -->
+<!-- https://okmij.org/ftp/tagless-final/Algebra.html -->
+<!-- https://books.google.it/books?id=MS2f1AATHIoC&pg=PA267&lpg=PA267&dq=with+a+finite+set+of+total+functions+that+have+the+carrier+set+as+their+common+codomain.&source=bl&ots=rRTtRtO-hY&sig=ACfU3U1b8lOc189R8gaOSEzlFjjmXYHBKA&hl=en&sa=X&ved=2ahUKEwiOpcuh75b1AhUJM-wKHdxBBpoQ6AF6BAgREAM#v=onepage&q=with%20a%20finite%20set%20of%20total%20functions%20that%20have%20the%20carrier%20set%20as%20their%20common%20codomain.&f=false -->
+<!-- https://en.wikibooks.org/wiki/Universal_Algebra/Definitions,_examples -->
+<!-- ------- -->
