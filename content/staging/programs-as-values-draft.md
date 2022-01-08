@@ -1,21 +1,22 @@
 ---
-title: "Programs as Values, Part V: Algebras with results"
+title: "Programs as Values, Part V: Outputs"
 date: 2022-01-04
 ---
 
 We want to write an algebra that reads from stdin, and use it to write
 the following program:
 
-> read a `String`, compute its length, and output `true` if the length
+> read a `String`, compute its length, and return `true` if the length
 > is greater than 10, or `false` otherwise.
 
-The starting point could be something like:
+To represent the action of reading a line from stdin, we could use a
+simple algebra such as this one:
 
 ```scala
 /*
  * carrier:
  *   In
- * introduction form:
+ * introduction forms:
  *   readLine: In
  */
 sealed trait In {
@@ -24,6 +25,89 @@ object In {
   val readLine: In
   ...
 ```
+
+but obviously that's not enough to write our program: we need to do
+some extra transformations on the line we've read. 
+
+So, your first instinct might be to add an elimination form:
+
+```scala
+/*
+ * carrier:
+ *   In
+ * introduction forms:
+ *   readLine: In
+ * elimination forms:
+ *   nope: In => String
+ */
+sealed trait In {
+  def nope: String
+  ...
+object In {
+  val readLine: In
+  ...
+```
+in order to write:
+```scala
+val out: Boolean = readLine.run.length > 10
+```
+
+but this is not a fruitful direction: we are basically saying that the
+only way to change the output of a program written in the `In` algebra
+is to eliminate the algebra entirely.
+
+Algebras are our unit of composition, therefore with the elimination
+approach any program that needs to change its output can no longer be
+composed, which is a _really_ strong limitation: for example in [Part
+III](https://systemfw.org/posts/programs-as-values-III.html) we saw
+that for `IO`, elimination happens when the JVM calls `main`, it would
+be really weird if we couldn't encode something as simple as
+`String.length` until then.
+
+Instead, we want to have the ability to transform outputs without
+leaving our algebras, and therefore we have to enrich it with a
+_combinator_. Recall that the general shape of a combinator is:
+
+```scala
+changeOutput: (In, ...) => In
+```
+
+and we need to fill the `...` with something that can encode the
+concept of transforming one thing into another. Well, we already have
+a well known concept for this: functions. So, `changeOutput` needs to
+take a function, but we have a problem: what type should this function
+be, in order to fit the possible transformations we want to encode
+such as `_.length` or `_ > 10` ?
+
+Of course, an `Any => Any` fits anything:
+
+```scala
+/*
+ * carrier:
+ *   In
+ * introduction forms:
+ *   readLine: In
+ * combinators:
+ *   changeOutput: (In, Any => Any) => String
+ */
+sealed trait In {
+  def changeOutput(transform: Any => Any): In
+  ...
+object In {
+  val readLine: In
+  ...
+```
+
+but this is also not an acceptable solution: our algebra has gained
+power, but we have lost type safety altogether.
+
+
+What we can do for now is passing an `` function that works e
+```scala
+changeOutput: (In, Any => Any) => In
+```
+
+
 
 you might try with an elim form, but it's not fruitful, the program is about changing the output (where do I put this remark?), and algebra is our unit of composition, so what I'd be saying is that every time I want to change an output I can no longer compose, we will see this point in greater depth once we talk about `cats.effect.IO` and `cats.effect.Resource`
 
