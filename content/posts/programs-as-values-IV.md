@@ -320,7 +320,7 @@ def run(p: Out): IO[Unit] = IO.println(p.render(Int.MaxValue))
 In this article, we've talked about algebras, the fundamental
 structure at the heart of programs as values. Next time is when things
 really get interesting, as we're going to enrich our algebras with the
-ability to handle _results_. See you then!
+ability to handle _outputs_. See you then!
 
 ---
 

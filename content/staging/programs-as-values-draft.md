@@ -3,12 +3,37 @@ title: "Programs as Values, Part V: Algebras with results"
 date: 2022-01-04
 ---
 
+We want to write an algebra that reads from stdin, and use it to write
+the following program:
+
+> read a `String`, compute its length, and output `true` if the length
+> is greater than 10, or `false` otherwise.
+
+The starting point could be something like:
+
+```scala
+/*
+ * carrier:
+ *   In
+ * introduction form:
+ *   readLine: In
+ */
+sealed trait In {
+  ...
+object In {
+  val readLine: In
+  ...
+```
+
+you might try with an elim form, but it's not fruitful, the program is about changing the output (where do I put this remark?), and algebra is our unit of composition, so what I'd be saying is that every time I want to change an output I can no longer compose, we will see this point in greater depth once we talk about `cats.effect.IO` and `cats.effect.Resource`
+
 
 at some point I should say: no elimination forms in this article
 `In` algebra: read a String, count it's length, return false/true whether it's greater than 10
 introduce the necessity for type params
 
 Console algebra, program 1
+You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
 write prompt, then read, convert to upper case
 
 program 2: monads
@@ -51,6 +76,7 @@ talk about laws a bit:
 <!-- implementations, but look no magic: foldRight + `pure/mapN`. Then show -->
 <!-- the same for Option. Make a small point about "You might be wondering -->
 <!-- if these can be abstracted, much the same as with the combinators on -->
+<!-- touch on abstraction -->
 <!-- F-A-M, yes but out of scope for now" > -->
 <!-- -------- -->
 
