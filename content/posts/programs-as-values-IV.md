@@ -295,12 +295,14 @@ def repeat(p: Out, n: Int): Out =
   else p.andThen(repeat(p, n - 1))
 ```
 
-It's significant that we can use `Out` without any knowledge of its
-internal structure: we only need to know the operations defined on it,
-or, in other words, its algebra. This style of _algebraic thinking_ is
-very valuable, because it scales from datatypes with very simple
-internal structure, such as `Option`, all the way to highly
-sophisticated datatypes such as `IO` or `fs2.Stream`.
+It's significant that we can write `Out` programs without any
+knowledge of its internal structure: we didn't do any pattern matching
+on the concrete case classes that form `Out`, but only used the
+operations defined on it, or, in other words, its algebra. This style of
+_algebraic thinking_ is very valuable, because it scales from
+datatypes with very simple internal structure, such as `Option`, all
+the way to highly sophisticated datatypes such as `IO` or
+`fs2.Stream`.
 
 Finally, note that there really is no difference in mechanics nor
 mindset between imperative-looking algebras such as `Out`, and

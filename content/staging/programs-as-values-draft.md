@@ -115,7 +115,8 @@ add an example restating referential transparency at the end, to introduce effec
 <!-- trait A { -->
 <!--  def foo: B -->
 <!-- } -->
-<!-- point about how to name these abstractions? remark the point about algebras being overloaded. Probably going to call the interfaces -->
+<!-- point about how to name these abstractions? remark the point about algebras being overloaded. Probably going to call them interfaces -->
+<!-- remark that trait != sealed trait -->
 <!-- class MyA(...) extends A -->
 <!-- def myA(...): A = new A { -->
 <!-- } -->
