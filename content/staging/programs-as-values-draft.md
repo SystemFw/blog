@@ -9,8 +9,7 @@ the following program:
 > read a `String`, compute its length, and return `true` if the length
 > is greater than 10, or `false` otherwise.
 
-To represent the action of reading a line from stdin, we could use a
-simple algebra such as this one:
+A starting point could be:
 
 ```scala
 /*
@@ -26,8 +25,9 @@ object In {
   ...
 ```
 
-but obviously that's not enough to write our program: we need to do
-some extra transformations on the line we've read. 
+but obviously that's not enough to write our program: we have encoded
+the action of reading a line from stdin, but we still need to do some
+extra transformations on the line we've read.
 
 So, your first instinct might be to add an elimination form:
 
@@ -65,7 +65,7 @@ be really weird if we couldn't encode something as simple as
 `String.length` until then.
 
 Instead, we want to have the ability to transform outputs without
-leaving our algebras, and therefore we have to enrich it with a
+leaving our algebra, and therefore we have to enrich it with a
 _combinator_. Recall that the general shape of a combinator is:
 
 ```scala
@@ -73,11 +73,11 @@ changeOutput: (In, ...) => In
 ```
 
 and we need to fill the `...` with something that can encode the
-concept of transforming one thing into another. Well, we already have
-a well known concept for this: functions. So, `changeOutput` needs to
-take a function, but we have a problem: what type should this function
-be, in order to fit the possible transformations we want to encode
-such as `_.length` or `_ > 10` ?
+concept of transforming one thing into another, which we already have
+a well known concept for: functions. So, `changeOutput` needs to take
+a function, but we have a problem: what type should this function be,
+in order to fit the possible transformations we want to encode such as
+`_.length` or `_ > 10` ?
 
 Of course, an `Any => Any` fits anything:
 
@@ -101,20 +101,51 @@ object In {
 but this is also not an acceptable solution: our algebra has gained
 power, but we have lost type safety altogether.
 
+As it turns out, the issue is with the carrier, specifically that
+these two programs have the same type:
 
-What we can do for now is passing an `` function that works e
 ```scala
-changeOutput: (In, Any => Any) => In
+val readsString: In
+val computesInt: In
+```
+
+which means we cannot link them with a function without casting: we
+know that the function to pass to `changeOutput` should have type
+`String => Int`, but the compiler doesn't.
+
+```scala
+val readsString: In =
+  In.readLine
+val computesInt: In
+  In.changeOutput(str => str.asInstanceOf[String].length)
 ```
 
 
+The key idea out of this problem is that we can add a _type parameter_
+to `In`, which represents the type of its _output_, in order to have:
 
-you might try with an elim form, but it's not fruitful, the program is about changing the output (where do I put this remark?), and algebra is our unit of composition, so what I'd be saying is that every time I want to change an output I can no longer compose, we will see this point in greater depth once we talk about `cats.effect.IO` and `cats.effect.Resource`
+```scala
+val readsString: In[String]
+val computesInt: In[Int]
+```
+
+Note that this doesn't require us to actually perform any action,
+we're still just building a datatype with a sealed trait and case
+classes (see the Appendix), except this datatype now carries enough
+type information to allow for well typed composition. In other words,
+`In[String]` is not a container that contains a `String`, rather it's
+a command to eventually read one, encoded as a datatype.
 
 
-at some point I should say: no elimination forms in this article
-`In` algebra: read a String, count it's length, return false/true whether it's greater than 10
-introduce the necessity for type params
+
+
+
+
+We have to be able to distinguish between the `In` program that will eventually output a `String`, and the `In` program that will even
+In particular, `In` carries no type information about its _output_
+
+
+Our algebra cannot be used without an elimination form, so as usual we will add one that translates to `IO`, but for the next few articles we won't be thinking about elimination forms at all, since the focus will be on writing programs _in_ the `Console` algebra.
 
 Console algebra, program 1
 You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
@@ -124,6 +155,8 @@ program 2: monads
 
 talk about laws a bit:
 
+appendix:
+show the console ADT, but do remark we will mostly ignore the structure. Maaaybe link the fiber talk
 
 <!-- ------- -->
 <!-- possible plan:  -->
