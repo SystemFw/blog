@@ -250,9 +250,22 @@ andThen gives a starting point, recall from part III
 introduce chain
 introduce chainNested
 
-monads
 
-talk about laws a bit:
+talk about laws a bit
+recall the example with `transform output`, functor associativity
+another thing we might say is (identity). Is this seems absolutely obvious, it's because it is. Most laws are just stating: my algebra behaves in the way you expect.
+talk about monad laws, show nested flatMap example
+
+
+not universal truths about the universe that means every program you write is correct "because maths", which is obviously nonsense. Nor ivory tower nonsense. Laws are simply equalities that encode the type of transformation that is guaranteed to be harmless in a given algebra. Most of them will seem absolutely obvious and unremarkable. Under this lens, most laws are a promise from the implementor of the algebra to the user, saying "I'm not doing anything weird".
+^^ Include the above in the note instead?
+### a note on laws
+Note that (very) rarely, an existing law might conflict with the desired behaviour in some corner cases, resulting in overall behaviour that is harder to reason about. In this case, an implementor might consider breaking the law in that corner case, after very carefully considering it. If the implementor is successful, users won't ever notice the law breakage, and just consider the overall behaviour reasonable. We will _not_ look at any such examples in this series, generally they are so subtle that it would require a separate article. Also note that this should be taken as a justification to break laws willy nilly: in most cases where one is tempted to break a law, one is wrong 
+
+
+a rose by any other name
+real names, laws
+rewrite examples with flatMap
 
 appendix:
 show the console ADT, but do remark we will mostly ignore the structure. Maaaybe link the fiber talk
