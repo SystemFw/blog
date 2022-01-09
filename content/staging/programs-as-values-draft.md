@@ -73,7 +73,7 @@ transformOutput: (In, ...) => In
 ```
 
 and we need to fill the `...` with something that can encode the
-concept of transforming one thing into another, which we already have
+idea of transforming one thing into another, which we already have
 a well known concept for: functions. So, `transformOutput` needs to take
 a function, but we have a problem: what type should this function be,
 in order to fit the possible transformations we want to encode such as
@@ -131,7 +131,7 @@ val computesInt: In[Int]
 
 Note that this doesn't require us to actually perform any action,
 we're still just building a datatype with a sealed trait and case
-classes (see the Appendix), except this datatype now carries enough
+classes, except this datatype now carries enough
 type information to allow for well typed composition. In other words,
 `In[String]` is not a container that contains a `String`, rather it's
 a command to eventually read one, encoded as a datatype.
@@ -141,7 +141,22 @@ a command to eventually read one, encoded as a datatype.
 def transformOutput[A, B]: (In[A], A => B) => In[B]
 ```
 
-which means `In` becomes:
+This signature has two _type variables_, `A` and `B`. The rule with
+type variables is that whenever the same type variable is mentioned,
+the relative types have to match: in this case, `(In[A], A => ...`
+means that the input of the function needs to match the output of the
+`In` program, and `... => B) => In[B]` means that the output of the
+resulting program will match the output of the function. Therefore
+in the example above the function we need to pass to
+`transformOutput` to connect `readsString: In[String]` with
+`computesInt: In[Int]` has to have type `String => Int`, just like we expect.
+
+Conversely, whenever _different_ type variables appear, the relative
+types _can_ be different, but they don't have to, or in other words
+`transformOutput` also works if you use it with an `In[String]` and a
+`String => String`, resulting in another `In[String]`.
+
+We can now write a proper version of `In`:
 
 ```scala
 /*
@@ -160,7 +175,7 @@ object In {
   ...
 ```
 
-and we can write our original program:
+and use it to express our original program:
 
 ```scala
 val prog: In[Boolean] =
@@ -169,7 +184,7 @@ val prog: In[Boolean] =
     .transformOutput(length => length > 10)
 ```
 
-We can complete our `In` algebra with an elimination form in order to
+Finally, we complete `In` with an elimination form so that we can
 embed it into bigger programs, as usual we will translate to `IO`:
 
 ```scala
@@ -192,10 +207,78 @@ object In {
   ...
 ```
 
-however, for the next few articles I will omit elimination forms,
-since the focus will be on writing programs _with_ our algebras. We
-will return to the topic of elimination forms once we talk about IO in
-more detail.
+that being said, we won't be thinking about eliminations forms for the
+next few articles, as we focus on writing programs _with_ our
+algebras. We will return to the topic of elimination forms once we
+talk about IO in more detail.
+
+## Laws
+
+You might be wondering why I have written the final program as:
+
+```scala
+val prog1: In[Boolean] =
+  readLine
+    .transformOutput(input => input.length)
+    .transformOutput(length => length > 10)
+```
+
+as opposed to:
+
+```scala
+val prog2: In[Boolean] =
+  readLine.transformOutput(input => input.length > 10)
+```
+
+`prog2` seems less verbose, so should we refactor `prog1` into
+`prog2`? Will the behaviour change? Intuitively, it would feel really
+weird if it did: transforming the output twice ought to be the same of
+transforming it once with the composite transformation.
+
+We can encode this type of assumption as a _law_, something of shape:
+```scala
+expr1 <-> expr2
+```
+where `<->` means that `expr1` can be rewritten into `expr2`, and vice versa.
+In other words, laws are equalities that specify which transformations
+on our programs are harmless, which gives us freedom to refactor.
+
+In our case, we will say that:
+
+```scala
+p.transformOutput(f).transformOutput(g) <-> p.transformOutput(x => g(f(x)))
+
+with
+ p: In[A]
+ f: A => B
+ g: B => C
+```
+
+which means that we can switch between `prog1` and `prog2` at will,
+and not just in the case where `p = readLine`, `f = _.length`, and `g
+= _ > 10`, but for _any_ `p`, `f`, and `g`, as long they have the
+correct type.
+
+Since Scala functions already have an `andThen` method to express
+function composition, the law above can be written as:
+
+```scala
+p.transformOutput(f).transformOutput(g) <-> p.transformOutput(f.andThen(g))
+```
+
+
+
+talk about laws a bit
+recall the example with `transform output`, functor associativity
+another thing we might say is (identity). Is this seems absolutely obvious, it's because it is. Most laws are just stating: my algebra behaves in the way you expect.
+talk about monad laws, show nested flatMap example
+
+not universal truths about the universe that means every program you write is correct "because maths", which is obviously nonsense. Nor ivory tower nonsense. Laws are simply equalities that encode the type of transformation that is guaranteed to be harmless in a given algebra. Most of them will seem absolutely obvious and unremarkable. Under this lens, most laws are a promise from the implementor of the algebra to the user, saying "I'm not doing anything weird".
+^^ Include the above in the note instead?
+### a note on laws
+Note that (very) rarely, an existing law might conflict with the desired behaviour in some corner cases, resulting in overall behaviour that is harder to reason about. In this case, an implementor might consider breaking the law in that corner case, after very carefully considering it. If the implementor is successful, users won't ever notice the law breakage, and just consider the overall behaviour reasonable. We will _not_ look at any such examples in this series, generally they are so subtle that it would require a separate article. Also note that this should be taken as a justification to break laws willy nilly: in most cases where one is tempted to break a law, one is wrong 
+
+## Conclusion
 
 
 ## Chaining
@@ -251,16 +334,7 @@ introduce chain
 introduce chainNested
 
 
-talk about laws a bit
-recall the example with `transform output`, functor associativity
-another thing we might say is (identity). Is this seems absolutely obvious, it's because it is. Most laws are just stating: my algebra behaves in the way you expect.
-talk about monad laws, show nested flatMap example
 
-
-not universal truths about the universe that means every program you write is correct "because maths", which is obviously nonsense. Nor ivory tower nonsense. Laws are simply equalities that encode the type of transformation that is guaranteed to be harmless in a given algebra. Most of them will seem absolutely obvious and unremarkable. Under this lens, most laws are a promise from the implementor of the algebra to the user, saying "I'm not doing anything weird".
-^^ Include the above in the note instead?
-### a note on laws
-Note that (very) rarely, an existing law might conflict with the desired behaviour in some corner cases, resulting in overall behaviour that is harder to reason about. In this case, an implementor might consider breaking the law in that corner case, after very carefully considering it. If the implementor is successful, users won't ever notice the law breakage, and just consider the overall behaviour reasonable. We will _not_ look at any such examples in this series, generally they are so subtle that it would require a separate article. Also note that this should be taken as a justification to break laws willy nilly: in most cases where one is tempted to break a law, one is wrong 
 
 
 a rose by any other name
@@ -273,14 +347,15 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 <!-- ------- -->
 <!-- possible plan:  -->
 <!-- outputs, V  -->
-<!-- errors, VI -->
-<!-- iteration, VII -->
-<!-- combinator deluge VIII --> <!-- maybe swap iteration with deluge? -->
-<!-- IO & FFI IX -->
-<!-- basic concurrency X  -->
-<!-- resource XI  -->
-<!-- effectful constructors XII -->
-<!-- advanced concurrency/state -\-> should this be a separate series? XIII -->
+<!-- outputs, VI  -->
+<!-- errors, VII -->
+<!-- combinators everywhere VIII -->
+<!-- effectful iteration IX -->
+<!-- IO & FFI X -->
+<!-- basic concurrency XI  -->
+<!-- resource XII  -->
+<!-- effectful constructors XIII -->
+<!-- advanced concurrency/state -\-> should this be a separate series? -->
 <!-- abstraction? should this be a separate series? -->
 <!-- ------- -->
 
