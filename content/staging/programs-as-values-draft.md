@@ -6,7 +6,7 @@ date: 2022-01-04
 We want to write an algebra that reads from stdin, and use it to write
 the following program:
 
-> read a `String`, compute its length, and return `true` if the length
+> read a line from stdin, compute its length, and return `true` if the length
 > is greater than 10, or `false` otherwise.
 
 A starting point could be:
@@ -69,12 +69,12 @@ leaving our algebra, and therefore we have to enrich it with a
 _combinator_. Recall that the general shape of a combinator is:
 
 ```scala
-changeOutput: (In, ...) => In
+transformOutput: (In, ...) => In
 ```
 
 and we need to fill the `...` with something that can encode the
 concept of transforming one thing into another, which we already have
-a well known concept for: functions. So, `changeOutput` needs to take
+a well known concept for: functions. So, `transformOutput` needs to take
 a function, but we have a problem: what type should this function be,
 in order to fit the possible transformations we want to encode such as
 `_.length` or `_ > 10` ?
@@ -88,10 +88,10 @@ Of course, an `Any => Any` fits anything:
  * introduction forms:
  *   readLine: In
  * combinators:
- *   changeOutput: (In, Any => Any) => String
+ *   transformOutput: (In, Any => Any) => String
  */
 sealed trait In {
-  def changeOutput(transform: Any => Any): In
+  def transformOutput(transform: Any => Any): In
   ...
 object In {
   val readLine: In
@@ -105,19 +105,19 @@ As it turns out, the issue is with the carrier, specifically that
 these two programs have the same type:
 
 ```scala
-val readsString: In
-val computesInt: In
+val readsLine: In
+val computesLength: In
 ```
 
 which means we cannot link them with a function without casting: we
-know that the function to pass to `changeOutput` should have type
+know that the function to pass to `transformOutput` should have type
 `String => Int`, but the compiler doesn't.
 
 ```scala
-val readsString: In =
+val readsLine: In =
   In.readLine
-val computesInt: In
-  In.changeOutput(str => str.asInstanceOf[String].length)
+val computesLength: In
+  In.transformOutput(str => str.asInstanceOf[String].length)
 ```
 
 
@@ -136,22 +136,121 @@ type information to allow for well typed composition. In other words,
 `In[String]` is not a container that contains a `String`, rather it's
 a command to eventually read one, encoded as a datatype.
 
+`transformOutput` can now have a proper type:
+```scala
+def transformOutput[A, B]: (In[A], A => B) => In[B]
+```
+
+which means `In` becomes:
+
+```scala
+/*
+ * carrier:
+ *   In[A]
+ * introduction forms:
+ *   readLine: In[String]
+ * combinators:
+ *   transformOutput[A, B]: (In[A], A => B) => In[B]
+ */
+sealed trait In[A] {
+  def transformOutput(transform: A => B): In[B]
+  ...
+object In {
+  val readLine: In[String]
+  ...
+```
+
+and we can write our original program:
+
+```scala
+val prog: In[Boolean] =
+  readLine
+    .transformOutput(input => input.length)
+    .transformOutput(length => length > 10)
+```
+
+We can complete our `In` algebra with an elimination form in order to
+embed it into bigger programs, as usual we will translate to `IO`:
+
+```scala
+/*
+ * carrier:
+ *   In[A]
+ * introduction forms:
+ *   readLine: In[String]
+ * combinators:
+ *   transformOutput[A, B]: (In[A], A => B) => In[B]
+ * elimination forms:
+ *   run[A]: In[A] => IO[A]
+ */
+sealed trait In[A] {
+  def transformOutput(transform: A => B): In[B]
+  def run: IO[A]
+  ...
+object In {
+  val readLine: In[String]
+  ...
+```
+
+however, for the next few articles I will omit elimination forms,
+since the focus will be on writing programs _with_ our algebras. We
+will return to the topic of elimination forms once we talk about IO in
+more detail.
 
 
+## Chaining
 
+I'm now going to introduce the algebra that will accompany us for the next few instalments of this series, the `Console` algebra. We will start with an imperfect version, and iterate:
 
+```scala
+/*
+ * carrier:
+ *   Console[A]
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String => Console[Unit]
+ * combinators:
+ *   andThen[A]: (Console[A], Console[A]) => Console[A]
+ *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] => IO[A]
+ *
+ */
+ sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   def transformOutput[B](transform: A => B): Console[B]
+   
+   def run: IO[A]
+   ...
+ }
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+```
 
-We have to be able to distinguish between the `In` program that will eventually output a `String`, and the `In` program that will even
-In particular, `In` carries no type information about its _output_
+as mentioned above, we will ignore the `run` elimination form for the
+remainder of the article , and focus on writing programs with
+`Console`.
 
+You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
 
-Our algebra cannot be used without an elimination form, so as usual we will add one that translates to `IO`, but for the next few articles we won't be thinking about elimination forms at all, since the focus will be on writing programs _in_ the `Console` algebra.
+talk about Console[Unit]
+talk about andThen, just adding the type param
+
+Console algebra, program 0
+read, convert to uppercase
 
 Console algebra, program 1
-You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
 write prompt, then read, convert to upper case
 
-program 2: monads
+program 2: write prompt, then read, convert to upper case, print upper case
+try with andThen, and show compile error
+then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing)
+andThen gives a starting point, recall from part III
+introduce chain
+introduce chainNested
+
+monads
 
 talk about laws a bit:
 
@@ -160,7 +259,7 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 
 <!-- ------- -->
 <!-- possible plan:  -->
-<!-- results, V  -->
+<!-- outputs, V  -->
 <!-- errors, VI -->
 <!-- iteration, VII -->
 <!-- combinator deluge VIII --> <!-- maybe swap iteration with deluge? -->
@@ -200,6 +299,7 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 <!-- -------- -->
 <!-- combinator deluge -->
 <!-- -------- -->
+<!-- better titles: combinators abound, combinators everywhere -->
 <!-- combinator deluge VIII -->
 <!-- slightly different, we'll show vocab of combinators we have gained -->
 <!-- f-a-m, monaderror, use Console version with errors -->
