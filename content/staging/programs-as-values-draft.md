@@ -66,7 +66,8 @@ be really weird if we couldn't encode something as simple as
 
 Instead, we want to have the ability to transform outputs without
 leaving our algebra, and therefore we have to enrich it with a
-_combinator_. Recall that the general shape of a combinator is:
+`transformOutput` _combinator_. Recall that the general shape of a
+combinator is:
 
 ```scala
 transformOutput: (In, ...) => In
@@ -122,7 +123,8 @@ val computesLength: In
 
 
 The key idea out of this problem is that we can add a _type parameter_
-to `In`, which represents the type of its _output_, in order to have:
+to `In` which represents the type of its _output_. The resulting type
+`In[A]` lets us write:
 
 ```scala
 val readsString: In[String]
@@ -141,15 +143,16 @@ a command to eventually read one, encoded as a datatype.
 def transformOutput[A, B]: (In[A], A => B) => In[B]
 ```
 
-This signature has two _type variables_, `A` and `B`. The rule with
-type variables is that whenever the same type variable is mentioned,
-the relative types have to match: in this case, `(In[A], A => ...`
-means that the input of the function needs to match the output of the
-`In` program, and `... => B) => In[B]` means that the output of the
-resulting program will match the output of the function. Therefore
-in the example above the function we need to pass to
-`transformOutput` to connect `readsString: In[String]` with
-`computesInt: In[Int]` has to have type `String => Int`, just like we expect.
+This signature has two _type variables_ (or _type parameters_), `A`
+and `B` . The rule with type variables is that whenever the same type
+variable is mentioned, the relative types have to match: in this case,
+`(In[A], A => ...` means that the input of the function needs to match
+the output of the `In` program, and `... => B) => In[B]` means that
+the output of the resulting `In` program will match the output of the
+function. Therefore in the example above the function we need to pass
+to `transformOutput` to connect `readsString: In[String]` with
+`computesInt: In[Int]` has to have type `String => Int`, just like we
+expect.
 
 Conversely, whenever _different_ type variables appear, the relative
 types _can_ be different, but they don't have to, or in other words
@@ -184,8 +187,8 @@ val prog: In[Boolean] =
     .transformOutput(length => length > 10)
 ```
 
-Finally, we complete `In` with an elimination form so that we can
-embed it into bigger programs, as usual we will translate to `IO`:
+Finally, we need to complete `In` with an elimination form so that we
+can embed it into bigger programs, as usual we will translate to `IO`:
 
 ```scala
 /*
@@ -240,32 +243,45 @@ We can encode this type of assumption as a _law_, something of shape:
 expr1 <-> expr2
 ```
 where `<->` means that `expr1` can be rewritten into `expr2`, and vice versa.
-In other words, laws are equalities that specify which transformations
-on our programs are harmless, which gives us freedom to refactor.
-
 In our case, we will say that:
 
 ```scala
 p.transformOutput(f).transformOutput(g) <-> p.transformOutput(x => g(f(x)))
 
 with
- p: In[A]
- f: A => B
- g: B => C
+  p: In[A]
+  f: A => B
+  g: B => C
 ```
 
 which means that we can switch between `prog1` and `prog2` at will,
 and not just in the case where `p = readLine`, `f = _.length`, and `g
 = _ > 10`, but for _any_ `p`, `f`, and `g`, as long they have the
-correct type.
+correct type. So in this case, we can use laws as a _refactoring
+aid_ : they gave us freedom to refactor by specifying which
+transformations on our programs are harmless.
 
-Since Scala functions already have an `andThen` method to express
-function composition, the law above can be written as:
+By the way, since Scala functions already have an `andThen` method to
+express function composition, the law above can be written as:
 
 ```scala
 p.transformOutput(f).transformOutput(g) <-> p.transformOutput(f.andThen(g))
 ```
 
+And as it turns out, there is another law concerning
+`transformOutput`, the fact that transforming an output with a
+function that doesn't change it is the same as not transforming it at
+all:
+
+```scala
+p.transformOutput(x => x) <-> p
+
+with
+  p: In[A]
+```
+
+If this seems completely obvious, that's because it is! Many laws are
+just stating: my algebra behaves in the way you expect.
 
 ## Conclusion
 
@@ -274,20 +290,6 @@ output of a program by adding a type parameter to the carrier type of
 our algebra. This enabled us to add the `transformOutput` combinator,
 and next time we will use the same insight to model _chaining_, which
 is the essence of sequential control flow.
-
-
-
-talk about laws a bit
-recall the example with `transform output`, functor associativity
-another thing we might say is (identity). Is this seems absolutely obvious, it's because it is. Most laws are just stating: my algebra behaves in the way you expect.
-talk about monad laws, show nested flatMap example
-
-not universal truths about the universe that means every program you write is correct "because maths", which is obviously nonsense. Nor ivory tower nonsense. Laws are simply equalities that encode the type of transformation that is guaranteed to be harmless in a given algebra. Most of them will seem absolutely obvious and unremarkable. Under this lens, most laws are a promise from the implementor of the algebra to the user, saying "I'm not doing anything weird".
-^^ Include the above in the note instead?
-### a note on laws
-Note that (very) rarely, an existing law might conflict with the desired behaviour in some corner cases, resulting in overall behaviour that is harder to reason about. In this case, an implementor might consider breaking the law in that corner case, after very carefully considering it. If the implementor is successful, users won't ever notice the law breakage, and just consider the overall behaviour reasonable. We will _not_ look at any such examples in this series, generally they are so subtle that it would require a separate article. Also note that this should be taken as a justification to break laws willy nilly: in most cases where one is tempted to break a law, one is wrong 
-
-## Conclusion
 
 
 ## Chaining
@@ -326,8 +328,11 @@ remainder of the article , and focus on writing programs with
 
 You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
 
+
 talk about Console[Unit]
 talk about andThen, just adding the type param
+
+show how andthen and map are differnet with print. Make point about laws as _understanding aid_.
 
 Console algebra, program 0
 read, convert to uppercase
@@ -373,6 +378,7 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 <!-- errors -->
 <!-- -------- -->
 <!-- Short Circuit algebra: option -->
+<!-- note on laws as a _specification aid_ -->
 <!-- Errors algebra: Either -->
 <!-- Do I use two type params for Errors? or more simply show <-> Either[Throwable, A]
 <!-- add MonadThrow to Console -->
@@ -414,12 +420,12 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 <!-- -------- -->
 <!-- resource -->
 <!-- -------- -->
-recall interruption from parMapN
-intro form make
-elim form use
-show flatMap
-show lifting with eval (print during resource acquisition)
-add an example restating referential transparency at the end, to introduce effectful constructors
+<!-- recall interruption from parMapN -->
+<!-- intro form make -->
+<!-- elim form use -->
+<!-- show flatMap -->
+<!-- show lifting with eval (print during resource acquisition) -->
+<!-- add an example restating referential transparency at the end, to introduce effectful constructors -->
 <!-- -------- -->
 
 
@@ -528,3 +534,30 @@ add an example restating referential transparency at the end, to introduce effec
 <!--   compile.fold -->
 <!-- } -->
 <!-- ------- -->
+
+<!-- Stick this somewhere, possibly a different article -->
+<!-- ## Appendix: the value of laws -->
+<!-- The focus on algebraic laws can be a bit polarising. -->
+<!-- Some people seem to believe that the existence of laws makes FP -->
+<!-- automatically correct or better than anything else "because Maths", -->
+<!-- which is obviously nonsense. Others think laws are ivory tower -->
+<!-- nonsense that serves no purpose, which is unfair. -->
+<!-- They are useful because: -->
+<!-- - refactoring aids, part V, functor -->
+<!-- - understanding aids, part VI, `F[F[A]]` has no effects -->
+<!-- - specification aids, part VII, short circuiting errors -->
+<!-- - semantics aids, idempotency or monoid associativity -->
+<!-- In addition to that, a lot of them will seem absolutely obvious and -->
+<!-- unremarkable. Under this lens, most laws are a promise from the -->
+<!-- implementor of the algebra to the user, saying "I'm not doing anything -->
+<!-- weird". However, Note that (very) rarely, an existing law might -->
+<!-- conflict with the desired behaviour in some corner cases, resulting in -->
+<!-- overall behaviour that is harder to reason about. In this case, an -->
+<!-- implementor might consider breaking the law in that corner case, after -->
+<!-- very carefully considering it. If the implementor is successful, users -->
+<!-- won't ever notice the law breakage, and just consider the overall -->
+<!-- behaviour reasonable. We will _not_ look at any such examples in this -->
+<!-- series, generally they are so subtle that it would require a separate -->
+<!-- article. Also note that this should be taken as a justification to -->
+<!-- break laws willy nilly: in most cases where one is tempted to break a -->
+<!-- law, one is wrong -->
