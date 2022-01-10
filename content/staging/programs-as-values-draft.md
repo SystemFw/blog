@@ -1,6 +1,6 @@
 ---
 title: "Programs as Values, Part VI: Chaining"
-date: 2022-01-04
+date: 2022-01-10
 ---
 
 I'm now going to introduce the algebra that will accompany us for the next few instalments of this series, the `Console` algebra. We will start with an imperfect version, and iterate:
@@ -34,6 +34,8 @@ I'm now going to introduce the algebra that will accompany us for the next few i
 as mentioned above, we will ignore the `run` elimination form for the
 remainder of the article , and focus on writing programs with
 `Console`.
+
+The first observation
 
 You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
 

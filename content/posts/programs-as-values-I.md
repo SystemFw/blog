@@ -37,7 +37,7 @@ and the __rules of composition__.
 
 The key characteristic of compositional systems is that they can be
 decomposed into parts that still make sense on their own and,
-specularly, they can be built by assembling smaller parts together.  
+conversely, they can be built by assembling smaller parts together.  
 This fits well with the limited capacity of our brains: if I asked you
 to build a model of the Colosseum, would you rather assemble it with
 Lego, or sculpt it with marble?
