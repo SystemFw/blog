@@ -267,6 +267,15 @@ p.transformOutput(f).transformOutput(g) <-> p.transformOutput(f.andThen(g))
 ```
 
 
+## Conclusion
+
+In this article we introduced a really important idea: encoding the
+output of a program by adding a type parameter to the carrier type of
+our algebra. This enabled us to add the `transformOutput` combinator,
+and next time we will use the same insight to model _chaining_, which
+is the essence of sequential control flow.
+
+
 
 talk about laws a bit
 recall the example with `transform output`, functor associativity
