@@ -3,7 +3,9 @@ title: "Programs as Values, Part VI: Chaining"
 date: 2022-01-10
 ---
 
-I'm now going to introduce the algebra that will accompany us for the next few instalments of this series, the `Console` algebra. We will start with an imperfect version, and iterate:
+I'm now going to introduce the algebra that will accompany us for the
+next few instalments of this series, the `Console` algebra. We will
+start with an imperfect version, and iterate:
 
 ```scala
 /*
@@ -31,25 +33,72 @@ I'm now going to introduce the algebra that will accompany us for the next few i
    def print(s: String): Console[Unit]
 ```
 
-as mentioned above, we will ignore the `run` elimination form for the
-remainder of the article , and focus on writing programs with
-`Console`.
+although will ignore the `run` elimination form for the remainder of
+the article, and focus on writing programs with `Console`.
 
-The first observation
+> Note: We're implementing `Console` from scratch even though its
+functionality is a combination of
+[`Out`](https://systemfw.org/posts/programs-as-values-IV.html) and
+[`In`](https://systemfw.org/posts/programs-as-values-V.html). There
+are techniques to compose existing effects, but they are out of scope
+for now.
+
+Note that whilst there are ways to compose existing effects, they are
+out of scope for now, so we're implementing `Console` from scratch even
+though its functionality is a combination of
+[`Out`](https://systemfw.org/posts/programs-as-values-IV.html) and
+[`In`](https://systemfw.org/posts/programs-as-values-V.html).
+
+`readLine` and `transformOutput` should be familiar from `In`, but we
+need to change `print` and `andThen` slightly from `Out`, since
+`Console` has the type parameter `A ` to represent its output.
+Printing has no meaningful output, so we use the `Unit type:
+```scala
+def print(s: String): Console[Unit]
+```
+
+`readLine` and `transformOutput` should be familiar from `In`, but
+unlike `Out`, `Console` has a type parameter that represents its
+output, so we need to change `print` and `andThen` slightly. We use
+the `Unit` type to express that printing has no meaningful output:
+
+```scala
+def print(s: String): Console[Unit]
+```
+
+And for `andThen`, we do the simplest possible thing and just
+parameterise it with `A` everywhere:
+
+```scala
+// andThen[A]: (Console[A], Console[A]) => Console[A]
+
+sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   ...
+```
+
+
 
 You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
-
 
 talk about Console[Unit]
 talk about andThen, just adding the type param
 
-show how andthen and map are different with print. Make point about laws as _understanding aid_.
+program -1
+print and then print
 
 Console algebra, program 0
 read, convert to uppercase
 
-Console algebra, program 1
+Console algebra, program 0.5
+write prompt, then read
+change andThen
+
+Console algebra, program 0.5
 write prompt, then read, convert to upper case
+
+important aside here to show how andthen and map are different with print. Make point about laws as _understanding aid_. Example I can use: two prints or read >> "you started!"
+
 
 program 2: write prompt, then read, convert to upper case, print upper case
 try with andThen, and show compile error
@@ -57,8 +106,7 @@ then with transformOutput, and expand a bit on why nothing happens (annoying det
 andThen gives a starting point, recall from part III
 introduce chain
 introduce chainNested
-
-
+need an example for pure, maybe retry?
 
 
 
@@ -272,3 +320,4 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 <!-- article. Also note that this should be taken as a justification to -->
 <!-- break laws willy nilly: in most cases where one is tempted to break a -->
 <!-- law, one is wrong -->
+
