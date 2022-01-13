@@ -11,6 +11,7 @@ start with an imperfect version, and iterate:
 /*
  * carrier:
  *   Console[A]
+ *     where A represents the output of a Console program
  * introduction forms:
  *   readLine: Console[String]
  *   print: String => Console[Unit]
@@ -33,49 +34,64 @@ start with an imperfect version, and iterate:
    def print(s: String): Console[Unit]
 ```
 
-although will ignore the `run` elimination form for the remainder of
+although we will ignore the `run` elimination form for the remainder of
 the article, and focus on writing programs with `Console`.
 
-> Note: We're implementing `Console` from scratch even though its
-functionality is a combination of
-[`Out`](https://systemfw.org/posts/programs-as-values-IV.html) and
-[`In`](https://systemfw.org/posts/programs-as-values-V.html). There
-are techniques to compose existing effects, but they are out of scope
-for now.
+Techniques to compose existing effects are out of scope for now, so we
+define `Console` from scratch even though its functionality is a
+combination of
+[Out](https://systemfw.org/posts/programs-as-values-IV.html) and
+[In](https://systemfw.org/posts/programs-as-values-V.html).
 
-Note that whilst there are ways to compose existing effects, they are
-out of scope for now, so we're implementing `Console` from scratch even
-though its functionality is a combination of
-[`Out`](https://systemfw.org/posts/programs-as-values-IV.html) and
-[`In`](https://systemfw.org/posts/programs-as-values-V.html).
 
-`readLine` and `transformOutput` should be familiar from `In`, but we
-need to change `print` and `andThen` slightly from `Out`, since
-`Console` has the type parameter `A ` to represent its output.
-Printing has no meaningful output, so we use the `Unit type:
+`readLine` and `transformOutput` should be familiar from `In`, but
+unlike `Out` `Console` has a type parameter that represents its
+output, so we need to change `print` and `andThen` slightly.
+
+We need to change `print` and `andThen` to fit the `Console[A]` shape,
+we use the `Unit` type to express that printing has no meaningful
+output:
+
 ```scala
 def print(s: String): Console[Unit]
 ```
 
-`readLine` and `transformOutput` should be familiar from `In`, but
-unlike `Out`, `Console` has a type parameter that represents its
-output, so we need to change `print` and `andThen` slightly. We use
+and we do the simplest possible thing for `andThen`, and just
+parameterise it with `A` everywhere:
+
+```scala
+// andThen[A]: (Console[A], Console[A]) => Console[A]
+sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   ...
+```
+
+
+although we will ignore the `run` elimination form for the remainder
+of the article, and focus on writing programs with `Console`.
+
+`print` and `andThen` need to fit the `Console[A]` shape, so we use
 the `Unit` type to express that printing has no meaningful output:
 
 ```scala
 def print(s: String): Console[Unit]
 ```
 
-And for `andThen`, we do the simplest possible thing and just
+and we do the simplest possible thing for `andThen`, and just
 parameterise it with `A` everywhere:
 
 ```scala
 // andThen[A]: (Console[A], Console[A]) => Console[A]
-
 sealed trait Console[A] {
    def andThen(next: Console[A]): Console[A]
    ...
 ```
+
+note that techniques to compose existing effects are out of scope for
+now, so we've defined `Console` from scratch even though its
+functionality is a combination of
+[Out](https://systemfw.org/posts/programs-as-values-IV.html) and
+[In](https://systemfw.org/posts/programs-as-values-V.html).
 
 
 
