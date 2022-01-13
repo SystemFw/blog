@@ -20,7 +20,6 @@ start with an imperfect version, and iterate:
  *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
  * elimination forms:
  *   run[A]: Console[A] => IO[A]
- *
  */
  sealed trait Console[A] {
    def andThen(next: Console[A]): Console[A]
@@ -33,52 +32,18 @@ start with an imperfect version, and iterate:
    val readLine: Console[String]
    def print(s: String): Console[Unit]
 ```
-
-although we will ignore the `run` elimination form for the remainder of
-the article, and focus on writing programs with `Console`.
-
-Techniques to compose existing effects are out of scope for now, so we
-define `Console` from scratch even though its functionality is a
-combination of
-[Out](https://systemfw.org/posts/programs-as-values-IV.html) and
-[In](https://systemfw.org/posts/programs-as-values-V.html).
-
-
-`readLine` and `transformOutput` should be familiar from `In`, but
-unlike `Out` `Console` has a type parameter that represents its
-output, so we need to change `print` and `andThen` slightly.
-
-We need to change `print` and `andThen` to fit the `Console[A]` shape,
-we use the `Unit` type to express that printing has no meaningful
-output:
-
-```scala
-def print(s: String): Console[Unit]
-```
-
-and we do the simplest possible thing for `andThen`, and just
-parameterise it with `A` everywhere:
-
-```scala
-// andThen[A]: (Console[A], Console[A]) => Console[A]
-sealed trait Console[A] {
-   def andThen(next: Console[A]): Console[A]
-   ...
-```
-
-
 although we will ignore the `run` elimination form for the remainder
 of the article, and focus on writing programs with `Console`.
 
-`print` and `andThen` need to fit the `Console[A]` shape, so we use
-the `Unit` type to express that printing has no meaningful output:
+`readLine` and `transformOutput` have a familiar shape, but `print`
+and `andThen` need to fit the `Console[A]` shape, so we use the `Unit`
+type to express that printing has no meaningful output:
 
 ```scala
 def print(s: String): Console[Unit]
 ```
 
-and we do the simplest possible thing for `andThen`, and just
-parameterise it with `A` everywhere:
+and parameterise `andThen` with `A` everywhere:
 
 ```scala
 // andThen[A]: (Console[A], Console[A]) => Console[A]
@@ -87,24 +52,29 @@ sealed trait Console[A] {
    ...
 ```
 
-note that techniques to compose existing effects are out of scope for
-now, so we've defined `Console` from scratch even though its
+and we can write `Console` programs!
+
+```scala
+val helloWorld: Console[Unit] =
+  Console.print("Hello ").andThen(Console.print("World!"))
+  
+val upperCaseInput: Console[String] =
+  Console.readLine.transformOutput(line => line.toUpperCase)
+```
+
+> Note that techniques to compose existing effects are out of scope
+for now, so we've defined `Console` from scratch even though its
 functionality is a combination of
 [Out](https://systemfw.org/posts/programs-as-values-IV.html) and
 [In](https://systemfw.org/posts/programs-as-values-V.html).
 
 
+## Chaining
 
-You might have noticed that we wrote console from scratch, rather than attempting to compose Out and In. There are techniques to achieve such a modular composition of effects, but they are out of scope for now.
+We will now explore and evolve our `Console` algebra by writing a few
+interesting programs with it.
 
-talk about Console[Unit]
-talk about andThen, just adding the type param
 
-program -1
-print and then print
-
-Console algebra, program 0
-read, convert to uppercase
 
 Console algebra, program 0.5
 write prompt, then read
@@ -121,8 +91,9 @@ try with andThen, and show compile error
 then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing)
 andThen gives a starting point, recall from part III
 introduce chain
-introduce chainNested
-need an example for pure, maybe retry?
+introduce chainNested (possibly after pure)
+need an example for pure, example: retry, read a line, only return it if less than 10 characters
+
 
 
 
