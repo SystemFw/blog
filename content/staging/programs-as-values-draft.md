@@ -24,13 +24,13 @@ start with an imperfect version, and iterate:
  sealed trait Console[A] {
    def andThen(next: Console[A]): Console[A]
    def transformOutput[B](transform: A => B): Console[B]
-   
+
    def run: IO[A]
    ...
- }
  object Console {
    val readLine: Console[String]
    def print(s: String): Console[Unit]
+   ...
 ```
 although we will ignore the `run` elimination form for the remainder
 of the article, and focus on writing programs with `Console`.
@@ -57,7 +57,7 @@ and we can write `Console` programs!
 ```scala
 val helloWorld: Console[Unit] =
   Console.print("Hello ").andThen(Console.print("World!"))
-  
+
 val upperCaseInput: Console[String] =
   Console.readLine.transformOutput(line => line.toUpperCase)
 ```
@@ -68,22 +68,141 @@ functionality is a combination of
 [Out](https://systemfw.org/posts/programs-as-values-IV.html) and
 [In](https://systemfw.org/posts/programs-as-values-V.html).
 
+We will now explore and evolve our `Console` algebra by writing some
+programs with it.
+
+
+## Generalising andThen
+
+Our first program will ask the user for their name, read it from
+stdin, and convert it to upper case. Let's start with the prompt:
+
+```scala
+val namePrompt: Console[String] =
+  Console
+    .print("What's your name? ")
+    .andThen(Console.readLine)
+
+type mismatch;
+[error]  found   : Console[String]
+[error]  required: Console[Unit]
+[error]       .andThen(Console.readLine)
+[error]                        ^
+```
+
+Uh-oh, it doesn't compile: `andThen` wants both arguments to be
+`Console` programs with the same type of output, but `print(s)` and
+`readLine` have different output types, respectively `Console[Unit]`
+and `Console[String]`.
+
+This limitation doesn't seem reasonable, so let's relax the type of
+`andThen` to allow the second program to have a different output type,
+which will also be the output type of the overall expression:
+
+```scala
+// andThen[A, B]: (Console[A], Console[B]) => Console[B]
+ sealed trait Console[A] {
+   def andThen[B](next: Console[B]): Console[B]
+   ...
+```
+and we can write `namePrompt` unchanged:
+
+```scala
+val namePrompt: Console[String] =
+  Console
+    .print("What's your name? ")
+    .andThen(Console.readLine)
+```
+and complete our program:
+
+```scala
+val uppercaseNamePrompt: Console[String] =
+  Console
+    .print("What's your name? ")
+    .andThen(Console.readLine)
+    .transformOutput(name => name.toUppercase)
+```
 
 ## Chaining
 
-We will now explore and evolve our `Console` algebra by writing a few
-interesting programs with it.
+program 2: write prompt, then read, convert to upper case, print upper case
+try with andThen, and show compile error
+then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing)
+andThen gives a starting point, recall from part III
+introduce chain
+
+
+I should make the point that once you have `A =>` you have a lot more power than just passing the argument,
+the entirety of sequential control flow is available to you
+need an example for pure, example: retry, read a line, only return it if less than 10 characters
+
+
+I might split this article in 2:
+part I - andThen, chain (and definition) & value/pure, laws?, appendix?
+part II - recap, transformOutput and chain, real names. Possibly move laws here.
+
+### andThen or transformOutput?
+
+`uppercaseNamePrompt` uses both `andThen` and `transformOutput`, let's
+go through a further example to drive home the difference between the
+two.
+
+We will write a program that waits for user input, prints a message, then terminates.
+The correct way to write this program is via `andThen`:
+
+```scala
+val waitInput: Console[Unit] =
+  Console
+    .readLine
+    .andThen(Console.print("\n Exiting!"))
+```
+
+but it's interesting to look at this broken version instead:
+
+```scala
+val wrongWaitInput: Console[Console[Unit]] =
+  Console
+    .readLine
+    .transformOutput(_ => Console.print("\n Exiting!"))
+```
+
+To begin with, it might not be obvious why it compiles, let's look at
+it again with explicit type annotations everywhere:
+```scala
+sealed trait Console[A] {
+  def transformOutput[B](transform: A => B): Console[B]
+  ...
+
+
+val wrongWaitInput: Console[Console[Unit]] =
+  (Console.readLine: Console[String])
+    .transformOutput[Console[Unit]] { (_: String) =>
+       Console.print("\n Exiting!"): Console[Unit]
+    }
+```
+
+Just like in `uppercaseNamePrompt` the `[B]` type parameter of
+`transformOutput` assumes the concrete type `String`, in
+`wrongWaitInput` `[B]` assumes the type `Console[Unit]`. The type of
+the result is therefore `Console[Console[Unit]]`, as you can see by
+writing `Console[Unit]` wherever you see `B`in the signature of
+`transformOutput`.
+
+TODO the more I think about this, the more I think it should come after explaining chaining
+call out `console ; console`, and `console.map(a => console)` as errors. I don't want to introduce `chainNested/flatten`, I'll do it in the combinators instead. I'll chain it explicitly to execute it, to highlight the comparison with `console ; console`. you might have notice similarities between chain and transformoutput (show sigs), let's look at an example to drive home the difference, do example, show why it compiles, how do we understand it? It's a program that _outputs_ another program, what's the behaviour: doesn't print, this is surprising if thinking of side effects, but programs are values, for example if I have `print; print` it wont' execute, I have to chain explicitly. Similarly when I have a program that returns another program, I am free to discard it `nested.transformOutput(_ => ())`, and if I want to execute it I have to chain it explicitly `nested.chain(next => next)`. Therefore, `chain` is fundamentally more powerful than `transformOutput`.
+
+On the other hand, we can look at `transformOutput` as a special case of chaining two programs, where the second one does nothing but a simple transformation of the input, all we need to do is transform `A => B` into `A => Console[B]` to make fit blah blah
 
 
 
-Console algebra, program 0.5
-write prompt, then read
-change andThen
+^^ should I write this as the first program, in english, but say "let's start" with the prompt,
+so then after changing `andThen` I can say: and we can now write our full program, and insert the above,
+and then find a sentence for the transformOutput digression, worth analysing another example to fully understand the difference between andThen and trasformOutput, we will use the following program: waits for the user to insert any input, print a message, and terminate, the correct way to write it is with andThen, what happens if I use tranformOutput instead? (example, show why it compiles, explain what it does, it's just an output). Move "we will explore..." at the end of the first section
 
+skip this
 Console algebra, program 0.5
 write prompt, then read, convert to upper case
-
-important aside here to show how andthen and map are different with print. Make point about laws as _understanding aid_. Example I can use: two prints or read >> "you started!"
+important aside here to show how andthen and map are different with print. Make point about laws as _understanding aid_ . Example I can use: two prints or read >> "you started!"
 
 
 program 2: write prompt, then read, convert to upper case, print upper case
@@ -91,10 +210,11 @@ try with andThen, and show compile error
 then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing)
 andThen gives a starting point, recall from part III
 introduce chain
-introduce chainNested (possibly after pure)
+introduce chainNested (possibly after pure) --> nope
+
+I should make the point that once you have `A =>` you have a lot more power than just passing the argument,
+the entirety of sequential control flow is available to you
 need an example for pure, example: retry, read a line, only return it if less than 10 characters
-
-
 
 
 a rose by any other name
@@ -102,7 +222,13 @@ real names, laws
 rewrite examples with flatMap
 
 appendix:
-show the console ADT, but do remark we will mostly ignore the structure. Maaaybe link the fiber talk
+show the console ADT, but do remark we will mostly ignore the
+structure. Maaaybe link the fiber talk. I'm actually not sure I want
+to do this. I could do it in the IO articles instead, as an
+introduction to IO. I could do a small version: translate to IO, and
+then say "how does IO do it: we will talk about inthe appropriate
+article"
+
 
 <!-- ------- -->
 <!-- possible plan:  -->
@@ -307,4 +433,3 @@ show the console ADT, but do remark we will mostly ignore the structure. Maaaybe
 <!-- article. Also note that this should be taken as a justification to -->
 <!-- break laws willy nilly: in most cases where one is tempted to break a -->
 <!-- law, one is wrong -->
-
