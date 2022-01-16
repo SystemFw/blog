@@ -3,6 +3,82 @@ title: "Programs as Values, Part VI: Chaining"
 date: 2022-01-10
 ---
 
+I'm now going to introduce the `Console` algebra, an evolution of
+[Out](https://systemfw.org/posts/programs-as-values-IV.html) and
+[In](https://systemfw.org/posts/programs-as-values-V.html) that will
+accompany us for the next few instalments of this series.
+
+We will start from an imperfect version, here's how it looks like:
+
+```scala
+/*
+ * carrier:
+ *   Console[A]
+ *     where A represents the output of a Console program
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String => Console[Unit]
+ * combinators:
+ *   andThen[A]: (Console[A], Console[A]) => Console[A]
+ *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] => IO[A]
+ */
+ sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   def transformOutput[B](transform: A => B): Console[B]
+
+   def run: IO[A]
+   ...
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+   ...
+```
+`readLine` and `transformOutput` have a familiar shape, but `print`
+and `andThen` need to fit the `Console[A]` shape, so we use the `Unit`
+type to express that printing has no meaningful output:
+
+```scala
+def print(s: String): Console[Unit]
+```
+
+and parameterise `andThen` with `A` everywhere:
+
+```scala
+// andThen[A]: (Console[A], Console[A]) => Console[A]
+sealed trait Console[A] {
+   def andThen(next: Console[A]): Console[A]
+   ...
+```
+
+and we can write `Console` programs!
+
+```scala
+val helloWorld: Console[Unit] =
+  Console.print("Hello ").andThen(Console.print("World!"))
+
+val upperCaseInput: Console[String] =
+  Console.readLine.transformOutput(line => line.toUpperCase)
+```
+
+Obviously to actually execute these programs, they have to be
+converted to `IO` via `run` and then embedded into an `IOApp`, but we
+will ignore the elimination form for the remainder of the article, and
+focus on writing programs with `Console`.
+
+In particular, we will explore and evolve the `Console` algebra whilst
+trying to write the following program:
+
+1. Ask the user to enter their username.
+2. Read it from stdin.
+3. Create a greeting like `"Hello, $username!"`.
+4. Print the greeting to stdout.
+5. Extra: if the username at point 2 is empty, ask again.
+
+
+----
+
 I'm now going to introduce the algebra that will accompany us for the
 next few instalments of this series, the `Console` algebra. We will
 start with an imperfect version, and iterate:
@@ -139,7 +215,13 @@ need an example for pure, example: retry, read a line, only return it if less th
 
 I might split this article in 2:
 part I - andThen, chain (and definition) & value/pure, laws?, appendix?
+can structure the whole article around one program: 
 part II - recap, transformOutput and chain, real names. Possibly move laws here.
+
+ask for name, read it, convert to uppercase, and output. If name is empty, should just retry.
+If I want to use pure, I need to make the point about retryOnEmpty combinator or it won't be needed, just
+have both programs in an if. Also I won't bother with prompts like "empty strings not allowed", just keep it simple
+
 
 ### andThen or transformOutput?
 
