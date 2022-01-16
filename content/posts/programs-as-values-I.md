@@ -26,7 +26,8 @@ typical audience:
   [fs2](https://github.com/functional-streams-for-scala/fs2), for
   example through one of my [talks](https://systemfw.org/talks).
 - You're looking for a deeper, lasting understanding of the core ideas
-  behind programs as values, beyond the specifics of a single library.
+  behind programs as values, in addition to the specifics of a single
+  library.
 
 
 ## Compositionality
