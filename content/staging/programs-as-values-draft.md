@@ -67,14 +67,74 @@ converted to `IO` via `run` and then embedded into an `IOApp`, but we
 will ignore the elimination form for the remainder of the article, and
 focus on writing programs with `Console`.
 
-In particular, we will explore and evolve the `Console` algebra whilst
+## A sample program
+
+We will explore and evolve the `Console` algebra whilst
 trying to write the following program:
 
 1. Ask the user to enter their username.
 2. Read it from stdin.
-3. Create a greeting like `"Hello, $username!"`.
-4. Print the greeting to stdout.
+3. Create a greeting message like `"Hello, $username!"`.
+4. Print the message to stdout.
 5. Extra: if the username at point 2 is empty, ask again.
+
+We will do it in pieces, starting from points 1. and
+2. without handling an empty username:
+
+```scala
+val namePrompt: Console[String] =
+  Console
+    .print("What's your user name? ")
+    .andThen(Console.readLine)
+
+type mismatch;
+[error]  found   : Console[String]
+[error]  required: Console[Unit]
+[error]       .andThen(Console.readLine)
+[error]                        ^
+```
+
+Uh-oh, it doesn't compile: `andThen` wants both arguments to be
+`Console` programs with the same type of output, but `print(s)` and
+`readLine` have different output types, respectively `Console[Unit]`
+and `Console[String]`.
+
+This limitation doesn't seem reasonable, so let's relax the type of
+`andThen` to allow the second program to have a different output type,
+which will also be the output type of the overall expression:
+
+```scala
+// andThen[A, B]: (Console[A], Console[B]) => Console[B]
+ sealed trait Console[A] {
+   def andThen[B](next: Console[B]): Console[B]
+   ...
+```
+and we can write `namePrompt` unchanged:
+
+```scala
+val namePrompt: Console[String] =
+  Console
+    .print("What's your name? ")
+    .andThen(Console.readLine)
+```
+
+Next step is to create the greeting message, which sounds like a job for
+`transformOutput`:
+
+```scala
+val promptWithGreeting: Console[String] =
+  Console
+    .print("What's your name? ")
+    .andThen(Console.readLine)
+    .transformOutput { username => s"Hello, $username!" }
+```
+
+Ok we're getting there, all that's left to do is to now print the
+greeting message to stdout. And here we stumble onto an interesting
+problem.
+
+## Chaining
+
 
 
 ----
