@@ -227,13 +227,13 @@ fa.chain_(fb) <->  fa.chain { _ => fb }
 i.e. a special case of `chain` where the shape of the next program
 doesn't depend on the output of the previous one, and can ignore it.
 
-So, the ability to depend on the output of a previous computation via
-`chain` has clearly gained us some power, but how much exactly? As it
-turns out, a huge amount: `next: A => Console[B]` can use `A` in
-_arbitrary_ ways to decide what the next computation should be. In
-`nameAndGreet` we simply passed it through, but `next` could include
-`if/else` expressions, recursion, pattern matching, and so on. In
-other words: _general control flow_.
+The ability to depend on the output of a previous computation via
+`chain` has clearly gained us some power, but just how much power
+exactly? As it turns out, a huge amount: `next: A => Console[B]` can
+use `A` in _arbitrary_ ways to decide what the next computation should
+be. In `nameAndGreet` we simply passed it through, but `next` could
+include `if/else` expressions, recursion, pattern matching, and so on.
+In other words: _general control flow_.
 
 
 ## Emitting outputs
@@ -266,24 +266,9 @@ programs are our bread and butter:
 def repeatOnEmpty(p: Console[String]): Console[String] = ???
 ```
 
-So how do we implement `repeatOnEmpty`? For a start, we need `p`:
-
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p
-```
-
-we then need to use the string outputted by `p` to make a decision,
-which is to say we need `chain`:
-
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p.chain { str =>
-    ???
-  }
-```
-
-with a simple `if/else` on the string emptiness:
+So how do we implement `repeatOnEmpty`? We need to use the string
+outputted by `p` to make a decision based on whether it's empty or
+not, which is to say we need `chain`:
 
 ```scala
 def repeatOnEmpty(p: Console[String]): Console[String] =
@@ -329,7 +314,7 @@ a `String`: `repeatOnEmpty` needs to return a _program_, i.e. an
 instance of a datatype that represents commands that will eventually
 be executed, and a `String` is not the same thing as a command to emit
 one. This means that our `Console` algebra is missing an introduction
-form:
+form, the ability to emit an output:
 
 ```scala
 // emitOutput[A]: A => Console[A]
@@ -419,7 +404,8 @@ verbose compared to just:
  }
 ```
 but remember that I'm really spelling things out in the examples.
-Here's how it looks like in real code:
+Here's how it looks like in real code, using `cats.effect.IO` and
+combinators defined in the [cats](github.com/typelevel/cats) library:
 ```scala
   val p: IO[Unit] = 
     (IO.println("What's your name?") >> IO.readLine)
@@ -430,7 +416,7 @@ Here's how it looks like in real code:
 ## Conclusion
 
 In this article we saw the essential concept of _chaining_: creating
-computations that can depend on the output of previous computations.
+programs that can depend on the output of a previous program.
 Chaining represents a big leap in the expressiveness of our algebras,
 as we are now able to express _arbitrary sequential control flow_.
 
@@ -442,8 +428,65 @@ towards writing real code in programs as values.
 
 ## Appendix
 
-add // curious about this? We'll talk about it next time!
-on the implementation of `transformOutput` as `chain` + `emitOutput`
+This series puts a big stress on algebraic thinking: reasoning on
+programs as values datatypes using the operations defined on them
+rather than their internal structure. This is a very powerful approach
+because it scales from extremely simple datatypes like `Option`, to
+datatypes like `IO` whose internal structure and implementation is
+extremely advanced.
+
+However, there is a risk that you might think that "command" datatypes
+like `Console` are utterly magical, so I'm going to make an exception
+and show you an implementation for it:
+
+```scala
+sealed trait Console[A] {
+  def chain[B](next: A => Console[B]): Console[B] =
+    Console.Chain(this, next)
+
+  def chain_[B](next: Console[B]): Console[B] =
+    chain(_ => next)
+
+  def transformOutput[B](transform: A => B): Console[B] =
+    // curious about this? We'll talk about it next time!
+    chain { output =>
+      Console.emitOutput(transform(output))
+    }
+
+  def run: IO[A] =
+    Console.translateToIO(this)
+}
+object Console {
+  def translateToIO[A](c: Console[A]): IO[A] = c match {
+    case Console.ReadLine => IO.readLine
+    case Console.Print(s) => IO.println(s)
+    case Console.EmitOutput(a) => a.pure[IO]
+    case Console.Chain(fa, f) =>
+      translateToIO(fa).flatMap(x => translateToIO(f(x)))
+  }
+
+  def readLine: Console[String] =
+    ReadLine
+
+  def print(s: String): Console[Unit] =
+    Print(s)
+
+  def emitOutput[A](a: A): Console[A] =
+    EmitOutput(a)
+
+  case object ReadLine extends Console[String]
+  case class Print(s: String) extends Console[Unit]
+  case class EmitOutput[A](a: A) extends Console[A]
+  case class Chain[AA, A](fa: Console[AA], f: AA => Console[A])
+      extends Console[A]
+}
+```
+
+As you can see, we really do mean programs are _values_: `Console` is
+literally a datatype, which then gets translated to `IO`, which is
+another datatype. All the actual execution happens in the layer that
+interprets `IO` into actual effects, as we will see once our series
+gets to discussing `IO`.
 
 <!-- ---- -->
 
