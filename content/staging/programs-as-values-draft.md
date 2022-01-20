@@ -85,7 +85,7 @@ handle empty usernames:
 ```scala
 val namePrompt: Console[String] =
   Console
-    .print("What's your user name? ")
+    .print("What's your username? ")
     .andThen(Console.readLine)
 
 type mismatch;
@@ -116,7 +116,7 @@ and we can write `namePrompt` unchanged:
 ```scala
 val namePrompt: Console[String] =
   Console
-    .print("What's your name? ")
+    .print("What's your username? ")
     .andThen(Console.readLine)
 ```
 
@@ -126,7 +126,7 @@ Next step is to create the greeting message, which sounds like a job for
 ```scala
 val promptWithGreeting: Console[String] =
   Console
-    .print("What's your name? ")
+    .print("What's your username? ")
     .andThen(Console.readLine)
     .transformOutput { username => s"Hello, $username!" }
 ```
@@ -213,33 +213,226 @@ and indeed express our target program:
 ```scala
 val promptAndGreet: Console[Unit] =
   Console
-    .print("What's your name? ")
-    .chain { _ => Console.readLine }
+    .print("What's your username? ")
+    .chain_(Console.readLine)
     .transformOutput { username => s"Hello, $username!" }
     .chain { greeting => Console.print(greeting) }
 ```
 
 Note that in `promptAndGreet` we've replaced `print.andThen(readLine)`
-with `print.chain { _ => readLine}`, i.e. `andThen` is a special case
-of `chain` where the shape of the next program doesn't depend on the
-output of the previous one, and can ignore it.
+with `print.chain_(readLine)`, where `chain_` is defined as :
+```
+fa.chain_(fb) <->  fa.chain { _ => fb }
+```
+i.e. a special case of `chain` where the shape of the next program
+doesn't depend on the output of the previous one, and can ignore it.
 
-So, we've clearly gained some power with `chain`, but how much exactly?
-After all, `chain` and `andThen` are not that different:
+So, the ability to depend on the output of a previous computation via
+`chain` has clearly gained us some power, but how much exactly? As it
+turns out, a huge amount: `next: A => Console[B]` can use `A` in
+_arbitrary_ ways to decide what the next computation should be. In
+`nameAndGreet` we simply passed it through, but `next` could include
+`if/else` expressions, recursion, pattern matching, and so on. In
+other words: _general control flow_.
+
+
+## Emitting outputs
+
+Here's what our sample program looks like so far, with some
+minimal refactoring:
 
 ```scala
-chain[A, B]  : (Console[A], A => Console[B]) => Console[B]
-andThen[A, B]: (Console[A],      Console[B]) => Console[B]
+val namePrompt: Console[String] =
+  Console
+    .print("What's your username? ")
+    .chain_(Console.readLine)
+
+val promptAndGreet: Console[Unit] =
+  namePrompt
+    .transformOutput { username => s"Hello, $username!" }
+    .chain { greeting => Console.print(greeting) }
 ```
 
-As it turns out though, we've gained a huge amount: `next: A =>
-Console[B]` can use the output of a previous computation in
-_arbitrary ways_ to decide what the next computation should be. In
-`nameAndGreet` we simply passed that output through, but `next` could
-include `if/else` expressions, recursion, pattern matching... or in other
-words, _general control flow_.
+The only piece left is asking for a username again if the user inserts
+an empty one. We could go and modify `namePrompt` accordingly, but
+when you think about it there isn't much about this logic that is
+actually specific to `namePrompt`: we simply want to repeat a `p:
+Console[String]` until its output is non empty.
 
-## pure/value
+We're in programs as values, so programs that manipulate other
+programs are our bread and butter:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] = ???
+```
+
+So how do we implement `repeatOnEmpty`? For a start, we need `p`:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p
+```
+
+we then need to use the string outputted by `p` to make a decision,
+which is to say we need `chain`:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =>
+    ???
+  }
+```
+
+with a simple `if/else` on the string emptiness:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =>
+    if (str.isEmpty) ???
+    else ???
+  }
+```
+
+if the string is indeed empty, we simply repeat the whole process
+using recursion:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =>
+    if (str.isEmpty) repeatOnEmpty(p)
+    else ???
+  }
+```
+
+and if it's non empty, that's the output of our `Console` program:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =>
+    if (str.isEmpty) repeatOnEmpty(p)
+    else str
+  }
+  
+type mismatch;
+[error]  found   : String
+[error]  required: Console[String]
+[error]       else str
+[error]            ^
+```
+
+Oh, another compile error... both branches of an `if/else` need to
+have the same type, whereas in our case the `if` branch has type
+`Console[String]`, and the `else` branch has type `String`.
+
+On second thought, it doesn't make sense for `repeatOnEmpty` to return
+a `String`: `repeatOnEmpty` needs to return a _program_, i.e. an
+instance of a datatype that represents commands that will eventually
+be executed, and a `String` is not the same thing as a command to emit
+one. This means that our `Console` algebra is missing an introduction
+form:
+
+```scala
+// emitOutput[A]: A => Console[A]
+
+object Console {
+  def emitOutput[A](a: A): Console[A]
+  ...
+```
+
+and there we have it:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =>
+    if (str.isEmpty) repeatOnEmpty(p)
+    else Console.emitOutput(str)
+  }
+```
+
+## The final program
+
+Here's what the final version of `Console` looks like:
+
+```scala
+/*
+ * carrier:
+ *   Console[A]
+ *     where A represents the output of a Console program
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String => Console[Unit]
+ *   emitOutput[A]: A => Console[A]
+ * combinators:
+ *   chain[A, B]: (Console[A], A => Console[B]) => Console[B]
+ *   chain_[B]: (Console[A], Console[B]) => Console[B]
+ *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] => IO[A]
+ */
+ sealed trait Console[A] {
+   def chain[B](next: A => Console[B]): Console[B]
+   def chain_[B](next: Console[B]): Console[B] =
+     chain(_ => next)
+   def transformOutput[B](transform: A => B): Console[B]
+
+   def run: IO[A]
+   ...
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+   def emitOutput[A](out: A): Console[A]
+   ...
+```
+
+and here's our final program:
+
+```scala
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.chain { str =>
+    if (str.isEmpty) repeatOnEmpty(p)
+    else Console.emitOutput(str)
+  }
+  
+val namePrompt: Console[String] =
+  Console
+    .print("What's your username? ")
+    .chain_(Console.readLine)
+
+val promptAndGreet: Console[Unit] =
+  repeatOnEmpty(namePrompt)
+    .transformOutput { username => s"Hello, $username!" }
+    .chain { greeting => Console.print(greeting) }
+```
+
+#### Note on conciseness
+You might be thinking that our program above is rather
+verbose compared to just:
+
+```scala
+ def p: Unit = {
+   var user: String = ""
+   while (user.isEmpty) {
+     println("What's your username?")
+     user = scala.io.StdIn.readLine()
+   }
+   println(s"Hello, $user!")
+ }
+```
+but remember that I'm really spelling things out in the examples.
+Here's how it looks like in real code:
+```scala
+  val p: IO[Unit] = 
+    (IO.println("What's your name?") >> IO.readLine)
+      .iterateWhile(_.isEmpty)
+      .flatMap { user => IO.println(s"Hello, $user!") }
+ ```
+
+## Conclusion
+
+## Appendix
+
+add // curious about this? We'll talk about it next time!
+on the implementation of `transformOutput` as `chain` + `emitOutput`
 
 <!-- ---- -->
 
