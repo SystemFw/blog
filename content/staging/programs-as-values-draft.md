@@ -1,6 +1,6 @@
 ---
 title: "Programs as Values, Part VI: Chaining"
-date: 2022-01-10
+date: 2022-01-20
 ---
 
 I'm now going to introduce the `Console` algebra, an evolution of
@@ -426,14 +426,14 @@ Next time we will explore some of properties of `chain` and
 [cats-effect](github.com/typelevel/cats-effect), as we make our way
 towards writing real code in programs as values.
 
-## Appendix
+## Appendix: implementation
 
-This series puts a big stress on algebraic thinking: reasoning on
+This series puts a big stress on _algebraic thinking_: reasoning on
 programs as values datatypes using the operations defined on them
-rather than their internal structure. This is a very powerful approach
-because it scales from extremely simple datatypes like `Option`, to
-datatypes like `IO` whose internal structure and implementation is
-extremely advanced.
+rather than their internal structure. This is a powerful approach
+because it scales from simple datatypes like `Option`, to datatypes
+like `IO` whose internal structure and implementation is extremely
+advanced.
 
 However, there is a risk that you might think that "command" datatypes
 like `Console` are utterly magical, so I'm going to make an exception
@@ -457,14 +457,6 @@ sealed trait Console[A] {
     Console.translateToIO(this)
 }
 object Console {
-  def translateToIO[A](c: Console[A]): IO[A] = c match {
-    case Console.ReadLine => IO.readLine
-    case Console.Print(s) => IO.println(s)
-    case Console.EmitOutput(a) => a.pure[IO]
-    case Console.Chain(fa, f) =>
-      translateToIO(fa).flatMap(x => translateToIO(f(x)))
-  }
-
   def readLine: Console[String] =
     ReadLine
 
@@ -479,14 +471,22 @@ object Console {
   case class EmitOutput[A](a: A) extends Console[A]
   case class Chain[AA, A](fa: Console[AA], f: AA => Console[A])
       extends Console[A]
+
+  def translateToIO[A](c: Console[A]): IO[A] = c match {
+    case Console.ReadLine => IO.readLine
+    case Console.Print(s) => IO.println(s)
+    case Console.EmitOutput(a) => a.pure[IO]
+    case Console.Chain(fa, f) =>
+      translateToIO(fa).flatMap(x => translateToIO(f(x)))
+  }
 }
 ```
 
 As you can see, we really do mean programs are _values_: `Console` is
 literally a datatype, which then gets translated to `IO`, which is
-another datatype. All the actual execution happens in the layer that
-interprets `IO` into actual effects, as we will see once our series
-gets to discussing `IO`.
+another datatype. All the execution happens in the layer that
+interprets `IO` into actual side effects when the JVM calls `main`, as
+we will see once our series gets to discussing `IO`.
 
 <!-- ---- -->
 
