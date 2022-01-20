@@ -238,7 +238,7 @@ other words: _general control flow_.
 
 ## Emitting outputs
 
-Here's what our sample program looks like so far, with some
+Here's how our sample program looks like so far, with some
 minimal refactoring:
 
 ```scala
@@ -428,6 +428,17 @@ Here's how it looks like in real code:
  ```
 
 ## Conclusion
+
+In this article we saw the essential concept of _chaining_: creating
+computations that can depend on the output of previous computations.
+Chaining represents a big leap in the expressiveness of our algebras,
+as we are now able to express _arbitrary sequential control flow_.
+
+Next time we will explore some of properties of `chain` and
+`emitOutput`, as well as introducing the real names used in
+[cats](github.com/typelevel/cats) and
+[cats-effect](github.com/typelevel/cats-effect), as we make our way
+towards writing real code in programs as values.
 
 ## Appendix
 
