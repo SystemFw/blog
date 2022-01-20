@@ -232,8 +232,8 @@ The ability to depend on the output of a previous computation via
 exactly? As it turns out, a huge amount: `next: A => Console[B]` can
 use `A` in _arbitrary_ ways to decide what the next computation should
 be. In `nameAndGreet` we simply passed it through, but `next` could
-include `if/else` expressions, recursion, pattern matching, and so on.
-In other words: _general control flow_.
+include `if/else` expressions, recursion, pattern matching...or in
+other words, _general control flow_.
 
 
 ## Emitting outputs
@@ -475,7 +475,7 @@ object Console {
   def translateToIO[A](c: Console[A]): IO[A] = c match {
     case Console.ReadLine => IO.readLine
     case Console.Print(s) => IO.println(s)
-    case Console.EmitOutput(a) => a.pure[IO]
+    case Console.EmitOutput(a) => IO.pure(a)
     case Console.Chain(fa, f) =>
       translateToIO(fa).flatMap(x => translateToIO(f(x)))
   }
