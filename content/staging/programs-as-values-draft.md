@@ -1,20 +1,17 @@
 ---
 title: "Programs as Values, Part VII: Exploring Chaining"
-date: 2022-01-20
+date: 2022-01-23
 ---
 
+Last time we introduced the key concept of _chaining_: creating
+programs that can depend on the output of other programs, and can
+therefore encode arbitrary sequential control flow. In this short
+followup we will explore some of the properties of chaining that are
+relevant when writing real programs.
 
-Last time we introduced the key concept of chaining: creating programs
-that can depend on the output of a previous program, and can therefore
-encode _arbitrary sequential control flow_. In this short followup we
-will explore some of the properties of chaining that are relevant when
-writing real programs.
 
-
-Before we start, here's a reminder of how the `Console` algebra that
-we have used for our sample programs looks like, excluding the `run`
-elimination form and the `chain_` combinator which aren't important
-for this article:
+Before we start, here's a reminder of how our `Console` algebra looks
+like:
 
 ```scala
 /*
@@ -28,11 +25,14 @@ for this article:
  * combinators:
  *   chain[A, B]: (Console[A], A => Console[B]) => Console[B]
  *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
- * ...
+ * elimination forms:
+ *   run[A]: Console[A] => IO[A]
  */
  sealed trait Console[A] {
    def chain[B](next: A => Console[B]): Console[B]
    def transformOutput[B](transform: A => B): Console[B]
+
+   def run: IO[A]
    ...
  object Console {
    val readLine: Console[String]
@@ -40,7 +40,6 @@ for this article:
    def emitOutput[A](out: A): Console[A]
    ...
 ```
-
 
 ## A rose by any other name
 
@@ -66,16 +65,32 @@ flatMap[A, B]: (Console[A], A => Console[B]) => Console[B]
 
 The rationale behind these names is not that important, what matters
 is their type and the intent of the programs they return: emitting an
-output (`pure`), transforming the output of another program (`map`)
+output (`pure`), transforming the output of another program (`map`),
 and using the output of a program to determine what the next
 program should be (`flatMap`).
 
 Here's `Console` with the standard names in place:
 
 ```scala
+/*
+ * carrier:
+ *   Console[A]
+ *     where A represents the output of a Console program
+ * introduction forms:
+ *   readLine: Console[String]
+ *   print: String => Console[Unit]
+ *   emitOutput[A]: A => Console[A]
+ * combinators:
+ *   flatMap[A, B]: (Console[A], A => Console[B]) => Console[B]
+ *   map[A, B]: (Console[A], A => B) => Console[B]
+ * elimination forms:
+ *   run[A]: Console[A] => IO[A]
+ */
  sealed trait Console[A] {
    def flatMap[B](next: A => Console[B]): Console[B]
    def map[B](transform: A => B): Console[B]
+
+   def run: IO[A]
    ...
  object Console {
    val readLine: Console[String]
@@ -83,6 +98,7 @@ Here's `Console` with the standard names in place:
    def pure[A](out: A): Console[A]
    ...
 ```
+
 
 and here's our sample program that greets any user with a non-empty
 username:
@@ -104,131 +120,66 @@ val promptAndGreet: Console[Unit] =
     .map { username => s"Hello, $username!" }
     .flatMap { greeting => Console.print(greeting) }
 ```
-transformOutput does this
 
-chain does this
+For the rest of the series we will use the same names `cats` uses, so
+that knowledge can be transferred immediately.
 
-emitOutput does this
+## map vs flatMap
 
-although these names are, in my opinion, rather nice, they aren't the ones used in cats and cats-effect
-In this article we will briefly explore some of the properties of chaining, with a 
+Let's now explore the relationship between `map` and `flatMap`.
+Although there is a rich theoretical background behind it, the reason
+for our interest is very practical: confusion between `map` and
+`flatMap` is one of the most common beginner mistakes when writing
+code in programs as values.
 
+We can start by looking at their types:
 
-
-This is going to be a short article exploring some of the properties
-of chaining. Although the idea behind chaining has a rich theory
-behind it, all the concepts in this article have been selected because
-they have a practical implication.
-
-Remember that we're working with the Console algebra:
-
-(TODO possibly delete chain_ if not used in this article)
 ```scala
-/*
- * carrier:
- *   Console[A]
- *     where A represents the output of a Console program
- * introduction forms:
- *   readLine: Console[String]
- *   print: String => Console[Unit]
- *   emitOutput[A]: A => Console[A]
- * combinators:
- *   chain[A, B]: (Console[A], A => Console[B]) => Console[B]
- *   chain_[B]: (Console[A], Console[B]) => Console[B]
- *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
- * elimination forms:
- *   run[A]: Console[A] => IO[A]
- */
- sealed trait Console[A] {
-   def chain[B](next: A => Console[B]): Console[B]
-   def chain_[B](next: Console[B]): Console[B] =
-     chain(_ => next)
-   def transformOutput[B](transform: A => B): Console[B]
+// map[A, B]:     (Console[A], A =>         B ) => Console[B]
+// flatMap[A, B]: (Console[A], A => Console[B]) => Console[B]
 
-   def run: IO[A]
-   ...
- object Console {
-   val readLine: Console[String]
-   def print(s: String): Console[Unit]
-   def emitOutput[A](out: A): Console[A]
-   ...
+trait Console[A] {
+  def map[B](transform: A => B): Console[B]
+  def flatMap[B](next: A => Console[B]): Console[B]
 ```
 
-I'm omitting `run` and `chain_` here cause we won't use them
+Note that `[B]` is a type _parameter_, and therefore not necessarily
+the same type in both functions. We can make this clearer by renaming
+it:
 
-and we wrote the following program with it:
-
-(TODO possibly delete this, only keep it if used )
 ```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p.chain { str =>
-    if (str.isEmpty) repeatOnEmpty(p)
-    else Console.emitOutput(str)
-  }
-
-val namePrompt: Console[String] =
-  Console
-    .print("What's your username? ")
-    .chain_(Console.readLine)
-
-val promptAndGreet: Console[Unit] =
-  repeatOnEmpty(namePrompt)
-    .transformOutput { username => s"Hello, $username!" }
-    .chain { greeting => Console.print(greeting) }
+trait Console[A] {
+  def map[O](transform: A => O): Console[O]
+  def flatMap[T](next: A => Console[T]): Console[T]
 ```
-(TODO delete this)
-```scala
-  val p: IO[Unit] =
-    (IO.println("What's your name?") >> IO.readLine)
-      .iterateWhile(_.isEmpty)
-      .flatMap { user => IO.println(s"Hello, $user!") }
- ```
 
+Both `map` and `flatMap` take functions that process the output of a
+previous computation, but `flatMap` uses it to determine the next
+computation as per the shape `A => Console[T]`, whereas `map` just
+transforms into another value as per the shape `A => O`.
 
-## transformOutput and chain
-
-The first thing that's worth looking at is the relationship between `transformOutput` and `chain`. Although there is a rich theoretical background behind it, the reason we're looking at it is very practical: confusion between `chain` and `transformOutput` is one of the most common beginner mistakes when writing code in programs as values.
-
-We will be looking at a very simple `echo` program that reads a line and prints it back, then terminates
+Well, but we said that programs are values, so can we not pass a
+function that returns a program to `map`? Let's see what happens by
+experimenting with a very simple `echo` program that reads a line and
+prints it back, then terminates:
 
 ```scala
 val echo: Console[Unit] =
   Console
     .readLine
-    .chain(line => Console.print(line))
+    .flatMap(line => Console.print(line))
 ```
 
-For a start, note how the types are quite similar, but not indentical:
+and let's replace `flatMap` with `map`:
 
-```scala
-// chain[A, B]:           (Console[A], A => Console[B]) => Console[B]
-// transformOutput[A, B]: (Console[A], A =>         B ) => Console[B]
-
-trait Console[A] {
-  def chain[B](next: A => Console[B]): Console[B]
-  def transformOutput[B](transform: A => B): Console[B]
 ```
-
-Note that `[B]` is a type _parameter_, and therefore not necessarily the same type in both functions. We can make this clearer by renaming it:
-
-```scala
-trait Console[A] {
-  def chain[X](next: A => Console[X]): Console[X]
-  def transformOutput[Y](transform: A => Y): Console[Y]
-
+val echo =
+  Console
+    .readLine
+    .map(line => Console.print(line))
 ```
 
 
-
-
-The `next` function
-
-
-
-
-def chain[B](next: A => Console[B]): Console[B]
-def transformOutput[B](transform: A => B): Console[B]
-```
 
 recap console
 transformOutput vs chain
