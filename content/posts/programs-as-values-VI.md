@@ -146,7 +146,7 @@ In execution as evaluation, this idea is expressed by actually running
 an action and naming its result:
 
 ```scala
-val input: String = readLine()
+val input: String = scala.io.StdIn.readLine()
 println(input)
 ```
 
@@ -214,26 +214,23 @@ and indeed express our target program:
 val promptAndGreet: Console[Unit] =
   Console
     .print("What's your username? ")
-    .chain_(Console.readLine)
+    .chain(_ => Console.readLine)
     .transformOutput { username => s"Hello, $username!" }
     .chain { greeting => Console.print(greeting) }
 ```
 
 Note that in `promptAndGreet` we've replaced `print.andThen(readLine)`
-with `print.chain_(readLine)`, where `chain_` is defined as :
-```
-fa.chain_(fb) <->  fa.chain { _ => fb }
-```
-i.e. a special case of `chain` where the shape of the next program
-doesn't depend on the output of the previous one, and can ignore it.
+with `print.chain(_ => readLine)`, i.e. a special case of `chain`
+where the shape of the next program doesn't depend on the output of
+the previous one, and can ignore it.
 
-The ability to depend on the output of a previous computation via
-`chain` has clearly gained us some power, but just how much power
-exactly? As it turns out, a huge amount: `next: A => Console[B]` can
-use `A` in _arbitrary_ ways to decide what the next computation should
-be. In `nameAndGreet` we simply passed it through, but `next` could
-include `if/else` expressions, recursion, pattern matching...or in
-other words, _general control flow_.
+The ability to depend on the output of another computation has clearly
+gained us some power, but just how much power exactly? As it turns
+out, a huge amount: `next: A => Console[B]` can use `A` in _arbitrary_
+ways to decide what the next computation should be. In `nameAndGreet`
+we simply passed it through, but `next` could include `if/else`
+expressions, recursion, pattern matching, and so on. In other words,
+`chain` allows _general control flow_.
 
 
 ## Emitting outputs
@@ -245,7 +242,7 @@ minimal refactoring:
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
-    .chain_(Console.readLine)
+    .chain(_ => Console.readLine)
 
 val promptAndGreet: Console[Unit] =
   namePrompt
@@ -349,15 +346,12 @@ Here's what the final version of `Console` looks like:
  *   emitOutput[A]: A => Console[A]
  * combinators:
  *   chain[A, B]: (Console[A], A => Console[B]) => Console[B]
- *   chain_[B]: (Console[A], Console[B]) => Console[B]
  *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
  * elimination forms:
  *   run[A]: Console[A] => IO[A]
  */
  sealed trait Console[A] {
    def chain[B](next: A => Console[B]): Console[B]
-   def chain_[B](next: Console[B]): Console[B] =
-     chain(_ => next)
    def transformOutput[B](transform: A => B): Console[B]
 
    def run: IO[A]
@@ -381,7 +375,7 @@ def repeatOnEmpty(p: Console[String]): Console[String] =
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
-    .chain_(Console.readLine)
+    .chain(_ => Console.readLine)
 
 val promptAndGreet: Console[Unit] =
   repeatOnEmpty(namePrompt)
@@ -443,9 +437,6 @@ and show you an implementation for it:
 sealed trait Console[A] {
   def chain[B](next: A => Console[B]): Console[B] =
     Console.Chain(this, next)
-
-  def chain_[B](next: Console[B]): Console[B] =
-    chain(_ => next)
 
   def transformOutput[B](transform: A => B): Console[B] =
     // curious about this? We'll talk about it next time!
