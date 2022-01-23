@@ -1,14 +1,20 @@
 ---
-title: "Programs as Values, Part VI: Chaining"
+title: "Programs as Values, Part VII: Exploring Chaining"
 date: 2022-01-20
 ---
 
-I'm now going to introduce the `Console` algebra, an evolution of
-[Out](https://systemfw.org/posts/programs-as-values-IV.html) and
-[In](https://systemfw.org/posts/programs-as-values-V.html) that will
-accompany us for the next few instalments of this series.
 
-We will start from an imperfect version, here's how it looks like:
+Last time we introduced the key concept of chaining: creating programs
+that can depend on the output of a previous program, and can therefore
+encode _arbitrary sequential control flow_. In this short followup we
+will explore some of the properties of chaining that are relevant when
+writing real programs.
+
+
+Before we start, here's a reminder of how the `Console` algebra that
+we have used for our sample programs looks like, excluding the `run`
+elimination form and the `chain_` combinator which aren't important
+for this article:
 
 ```scala
 /*
@@ -18,326 +24,105 @@ We will start from an imperfect version, here's how it looks like:
  * introduction forms:
  *   readLine: Console[String]
  *   print: String => Console[Unit]
+ *   emitOutput[A]: A => Console[A]
  * combinators:
- *   andThen[A]: (Console[A], Console[A]) => Console[A]
+ *   chain[A, B]: (Console[A], A => Console[B]) => Console[B]
  *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
- * elimination forms:
- *   run[A]: Console[A] => IO[A]
+ * ...
  */
  sealed trait Console[A] {
-   def andThen(next: Console[A]): Console[A]
+   def chain[B](next: A => Console[B]): Console[B]
    def transformOutput[B](transform: A => B): Console[B]
-
-   def run: IO[A]
    ...
  object Console {
    val readLine: Console[String]
    def print(s: String): Console[Unit]
-   ...
-```
-`readLine` and `transformOutput` have a familiar shape, but `print`
-and `andThen` need to fit the `Console[A]` shape, so we use the `Unit`
-type to express that printing has no meaningful output:
-
-```scala
-def print(s: String): Console[Unit]
-```
-
-and parameterise `andThen` with `A` everywhere:
-
-```scala
-// andThen[A]: (Console[A], Console[A]) => Console[A]
-
-sealed trait Console[A] {
-   def andThen(next: Console[A]): Console[A]
+   def emitOutput[A](out: A): Console[A]
    ...
 ```
 
-and we can write `Console` programs!
+
+## A rose by any other name
+
+Our main focus has been on three functions: `emitOutput`,
+`transformOutput`, and `chain`. Perhaps unsurprisingly given some of
+the `IO` snippets I've shown during these series, we can now reveal
+those aren't the real names used in [cats](github.com/typelevel/cats)
+and [cats-effect](github.com/typelevel/cats-effect). Enter `pure`,
+`map`, and `flatMap`:
 
 ```scala
-val helloWorld: Console[Unit] =
-  Console.print("Hello ").andThen(Console.print("World!"))
-
-val inputLength: Console[Int] =
-  Console.readLine.transformOutput(line => line.length)
+emitOutput[A]: A => Console[A]
+      pure[A]: A => Console[A]
+```
+```scala
+transformOutput[A, B]: (Console[A], A => B) => Console[B]
+            map[A, B]: (Console[A], A => B) => Console[B]
+```
+```scala
+  chain[A, B]: (Console[A], A => Console[B]) => Console[B]
+flatMap[A, B]: (Console[A], A => Console[B]) => Console[B]
 ```
 
-Obviously to actually execute these programs, they have to be
-converted to `IO` via `run` and then embedded into an `IOApp`, but we
-will ignore the elimination form for the remainder of the article, and
-focus on writing programs with `Console`.
+The rationale behind these names is not that important, what matters
+is their type and the intent of the programs they return: emitting an
+output (`pure`), transforming the output of another program (`map`)
+and using the output of a program to determine what the next
+program should be (`flatMap`).
 
-## A sample program
-
-We will explore and evolve the `Console` algebra whilst
-trying to write the following program:
-
-- Ask the user to enter their username.
-- Read it from stdin.
-- Create a greeting message like `"Hello, $username!"`.
-- Print the message to stdout.
-- Extra: if the username at point 2 is empty, ask again.
-
-We will do it in pieces, starting from a simple prompt that doesn't
-handle empty usernames:
+Here's `Console` with the standard names in place:
 
 ```scala
-val namePrompt: Console[String] =
-  Console
-    .print("What's your username? ")
-    .andThen(Console.readLine)
-
-type mismatch;
-[error]  found   : Console[String]
-[error]  required: Console[Unit]
-[error]       .andThen(Console.readLine)
-[error]                        ^
+ sealed trait Console[A] {
+   def flatMap[B](next: A => Console[B]): Console[B]
+   def map[B](transform: A => B): Console[B]
+   ...
+ object Console {
+   val readLine: Console[String]
+   def print(s: String): Console[Unit]
+   def pure[A](out: A): Console[A]
+   ...
 ```
 
-Uh-oh, it doesn't compile: `andThen` wants both arguments to be
-`Console` programs with the same type of output, but `print(s)` and
-`readLine` have different output types, respectively `Console[Unit]`
-and `Console[String]`.
-
-This limitation doesn't seem reasonable, so let's relax the type of
-`andThen` to allow the second program to have a different output type,
-which will also be the output type of the overall expression:
+and here's our sample program that greets any user with a non-empty
+username:
 
 ```scala
-// andThen[A, B]: (Console[A], Console[B]) => Console[B]
-
-sealed trait Console[A] {
-  def andThen[B](next: Console[B]): Console[B]
-  ...
-```
-and we can write `namePrompt` unchanged:
-
-```scala
-val namePrompt: Console[String] =
-  Console
-    .print("What's your username? ")
-    .andThen(Console.readLine)
-```
-
-Next step is to create the greeting message, which sounds like a job for
-`transformOutput`:
-
-```scala
-val promptWithGreeting: Console[String] =
-  Console
-    .print("What's your username? ")
-    .andThen(Console.readLine)
-    .transformOutput { username => s"Hello, $username!" }
-```
-
-Ok we're getting there, all that's left to do now is to print the
-greeting message to stdout. And here we stumble onto an interesting
-problem.
-
-## Chaining
-
-The program we need to write has to print something we've previously
-read (and transformed). In slightly more general terms, it needs to
-use the _output_ of our `promptWithGreeting` program to build another
-program, the program that prints that output.
-
-In execution as evaluation, this idea is expressed by actually running
-an action and naming its result:
-
-```scala
-val input: String = readLine()
-println(input)
-```
-
-but as usual, we want to compose programs instead.
-
-What we need is a change in perspective: whenever we need the output
-of a program `p1: Console[A]` to build another program `p2:
-Console[B]`, that means that `p2` _depends_ on the output of `p1`.
-
-We've seen that the output of a `Console[A]` program is represented by
-its output type parameter `A`, and the idea that `Y` depends on `X` is
-expressed by a function `X => Y`, so the concept that `p2: Console[B]`
-depends on the output of `p1: Console[A]` can be written as `A =>
-Console[B]`.
-
-And therein lies our problem, the only combinator that can connect two
-`Console` programs is `andThen`, and we can see from its type that
-there is no dependency between the two programs it takes as input:
-
-```scala
-// andThen[A, B]: (Console[A], Console[B]) => Console[B]
-
-sealed trait Console[A] {
-  def andThen[B](next: Console[B]): Console[B]
-  ...
-```
-
-Let's instead introduce a new `chain` combinator which takes
-dependency into account. It will take a `Console[A]` program, and a
-function that uses the output of that program to decide what the next
-program should be:
-
-
-```scala
-// chain[A, B]: (Console[A], A => Console[B]) => Console[B]
-
-sealed trait Console[A] {
-  def chain[B](next: A => Console[B]): Console[B]
-  ...
-```
-
-Equipped with `chain`, we can now easily print something we've read:
-
-```scala
-val echo: Console[Unit] =
-  Console.readLine.chain { input =>
-    Console.print(input)
+def repeatOnEmpty(p: Console[String]): Console[String] =
+  p.flatMap { str =>
+    if (str.isEmpty) repeatOnEmpty(p)
+    else Console.pure(str)
   }
 
-// Same, but with explicit annotations for every type:
-val echo: Console[Unit] = 
-  // chain: (Console[String], String => Console[Unit]) => Console[Unit] 
-  (Console.readLine: Console[String]).chain { 
-     (
-       (input: String) => 
-          Console.print(input): Console[Unit]
-     ): String => Console[Unit]
-  }: Console[Unit]
-
-```
-
-and indeed express our target program:
-
-```scala
-val promptAndGreet: Console[Unit] =
-  Console
-    .print("What's your username? ")
-    .chain_(Console.readLine)
-    .transformOutput { username => s"Hello, $username!" }
-    .chain { greeting => Console.print(greeting) }
-```
-
-Note that in `promptAndGreet` we've replaced `print.andThen(readLine)`
-with `print.chain_(readLine)`, where `chain_` is defined as :
-```
-fa.chain_(fb) <->  fa.chain { _ => fb }
-```
-i.e. a special case of `chain` where the shape of the next program
-doesn't depend on the output of the previous one, and can ignore it.
-
-The ability to depend on the output of a previous computation via
-`chain` has clearly gained us some power, but just how much power
-exactly? As it turns out, a huge amount: `next: A => Console[B]` can
-use `A` in _arbitrary_ ways to decide what the next computation should
-be. In `nameAndGreet` we simply passed it through, but `next` could
-include `if/else` expressions, recursion, pattern matching, and so on.
-In other words: _general control flow_.
-
-
-## Emitting outputs
-
-Here's how our sample program looks like so far, with some
-minimal refactoring:
-
-```scala
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
-    .chain_(Console.readLine)
+    .flatMap(_ => Console.readLine)
 
 val promptAndGreet: Console[Unit] =
-  namePrompt
-    .transformOutput { username => s"Hello, $username!" }
-    .chain { greeting => Console.print(greeting) }
+  repeatOnEmpty(namePrompt)
+    .map { username => s"Hello, $username!" }
+    .flatMap { greeting => Console.print(greeting) }
 ```
+transformOutput does this
 
-The only piece left is asking for a username again if the user inserts
-an empty one. We could go and modify `namePrompt` accordingly, but
-when you think about it there isn't much about this logic that is
-actually specific to `namePrompt`: we simply want to repeat a `p:
-Console[String]` until its output is non empty.
+chain does this
 
-We're in programs as values, so programs that manipulate other
-programs are our bread and butter:
+emitOutput does this
 
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] = ???
-```
+although these names are, in my opinion, rather nice, they aren't the ones used in cats and cats-effect
+In this article we will briefly explore some of the properties of chaining, with a 
 
-So how do we implement `repeatOnEmpty`? We need to use the string
-outputted by `p` to make a decision based on whether it's empty or
-not, which is to say we need `chain`:
 
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p.chain { str =>
-    if (str.isEmpty) ???
-    else ???
-  }
-```
 
-if the string is indeed empty, we simply repeat the whole process
-using recursion:
+This is going to be a short article exploring some of the properties
+of chaining. Although the idea behind chaining has a rich theory
+behind it, all the concepts in this article have been selected because
+they have a practical implication.
 
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p.chain { str =>
-    if (str.isEmpty) repeatOnEmpty(p)
-    else ???
-  }
-```
+Remember that we're working with the Console algebra:
 
-and if it's non empty, that's the output of our `Console` program:
-
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p.chain { str =>
-    if (str.isEmpty) repeatOnEmpty(p)
-    else str
-  }
-  
-type mismatch;
-[error]  found   : String
-[error]  required: Console[String]
-[error]       else str
-[error]            ^
-```
-
-Oh, another compile error... both branches of an `if/else` need to
-have the same type, whereas in our case the `if` branch has type
-`Console[String]`, and the `else` branch has type `String`.
-
-On second thought, it doesn't make sense for `repeatOnEmpty` to return
-a `String`: `repeatOnEmpty` needs to return a _program_, i.e. an
-instance of a datatype that represents commands that will eventually
-be executed, and a `String` is not the same thing as a command to emit
-one. This means that our `Console` algebra is missing an introduction
-form, the ability to emit an output:
-
-```scala
-// emitOutput[A]: A => Console[A]
-
-object Console {
-  def emitOutput[A](a: A): Console[A]
-  ...
-```
-
-and there we have it:
-
-```scala
-def repeatOnEmpty(p: Console[String]): Console[String] =
-  p.chain { str =>
-    if (str.isEmpty) repeatOnEmpty(p)
-    else Console.emitOutput(str)
-  }
-```
-
-## The final program
-
-Here's what the final version of `Console` looks like:
-
+(TODO possibly delete chain_ if not used in this article)
 ```scala
 /*
  * carrier:
@@ -369,15 +154,18 @@ Here's what the final version of `Console` looks like:
    ...
 ```
 
-and here's our final program:
+I'm omitting `run` and `chain_` here cause we won't use them
 
+and we wrote the following program with it:
+
+(TODO possibly delete this, only keep it if used )
 ```scala
 def repeatOnEmpty(p: Console[String]): Console[String] =
   p.chain { str =>
     if (str.isEmpty) repeatOnEmpty(p)
     else Console.emitOutput(str)
   }
-  
+
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
@@ -388,251 +176,100 @@ val promptAndGreet: Console[Unit] =
     .transformOutput { username => s"Hello, $username!" }
     .chain { greeting => Console.print(greeting) }
 ```
-
-#### Note on conciseness
-You might be thinking that our program above is rather
-verbose compared to just:
-
+(TODO delete this)
 ```scala
- def p: Unit = {
-   var user: String = ""
-   while (user.isEmpty) {
-     println("What's your username?")
-     user = scala.io.StdIn.readLine()
-   }
-   println(s"Hello, $user!")
- }
-```
-but remember that I'm really spelling things out in the examples.
-Here's how it looks like in real code, using `cats.effect.IO` and
-combinators defined in the [cats](github.com/typelevel/cats) library:
-```scala
-  val p: IO[Unit] = 
+  val p: IO[Unit] =
     (IO.println("What's your name?") >> IO.readLine)
       .iterateWhile(_.isEmpty)
       .flatMap { user => IO.println(s"Hello, $user!") }
  ```
 
-## Conclusion
 
-In this article we saw the essential concept of _chaining_: creating
-programs that can depend on the output of a previous program.
-Chaining represents a big leap in the expressiveness of our algebras,
-as we are now able to express _arbitrary sequential control flow_.
+## transformOutput and chain
 
-Next time we will explore some of properties of `chain` and
-`emitOutput`, as well as introducing the real names used in
-[cats](github.com/typelevel/cats) and
-[cats-effect](github.com/typelevel/cats-effect), as we make our way
-towards writing real code in programs as values.
+The first thing that's worth looking at is the relationship between `transformOutput` and `chain`. Although there is a rich theoretical background behind it, the reason we're looking at it is very practical: confusion between `chain` and `transformOutput` is one of the most common beginner mistakes when writing code in programs as values.
 
-## Appendix: implementation
-
-This series puts a big stress on _algebraic thinking_: reasoning on
-programs as values datatypes using the operations defined on them
-rather than their internal structure. This is a powerful approach
-because it scales from simple datatypes like `Option`, to datatypes
-like `IO` whose internal structure and implementation is extremely
-advanced.
-
-However, there is a risk that you might think that "command" datatypes
-like `Console` are utterly magical, so I'm going to make an exception
-and show you an implementation for it:
+We will be looking at a very simple `echo` program that reads a line and prints it back, then terminates
 
 ```scala
-sealed trait Console[A] {
-  def chain[B](next: A => Console[B]): Console[B] =
-    Console.Chain(this, next)
-
-  def chain_[B](next: Console[B]): Console[B] =
-    chain(_ => next)
-
-  def transformOutput[B](transform: A => B): Console[B] =
-    // curious about this? We'll talk about it next time!
-    chain { output =>
-      Console.emitOutput(transform(output))
-    }
-
-  def run: IO[A] =
-    Console.translateToIO(this)
-}
-object Console {
-  def readLine: Console[String] =
-    ReadLine
-
-  def print(s: String): Console[Unit] =
-    Print(s)
-
-  def emitOutput[A](a: A): Console[A] =
-    EmitOutput(a)
-
-  case object ReadLine extends Console[String]
-  case class Print(s: String) extends Console[Unit]
-  case class EmitOutput[A](a: A) extends Console[A]
-  case class Chain[AA, A](fa: Console[AA], f: AA => Console[A])
-      extends Console[A]
-
-  def translateToIO[A](c: Console[A]): IO[A] = c match {
-    case Console.ReadLine => IO.readLine
-    case Console.Print(s) => IO.println(s)
-    case Console.EmitOutput(a) => a.pure[IO]
-    case Console.Chain(fa, f) =>
-      translateToIO(fa).flatMap(x => translateToIO(f(x)))
-  }
-}
+val echo: Console[Unit] =
+  Console
+    .readLine
+    .chain(line => Console.print(line))
 ```
 
-As you can see, we really do mean programs are _values_: `Console` is
-literally a datatype, which then gets translated to `IO`, which is
-another datatype. All the execution happens in the layer that
-interprets `IO` into actual side effects when the JVM calls `main`, as
-we will see once our series gets to discussing `IO`.
+For a start, note how the types are quite similar, but not indentical:
 
-<!-- ---- -->
+```scala
+// chain[A, B]:           (Console[A], A => Console[B]) => Console[B]
+// transformOutput[A, B]: (Console[A], A =>         B ) => Console[B]
 
-<!-- I'm now going to introduce the algebra that will accompany us for the -->
-<!-- next few instalments of this series, the `Console` algebra. We will -->
-<!-- start with an imperfect version, and iterate: -->
+trait Console[A] {
+  def chain[B](next: A => Console[B]): Console[B]
+  def transformOutput[B](transform: A => B): Console[B]
+```
 
-<!-- ```scala -->
-<!-- /* -->
-<!--  * carrier: -->
-<!--  *   Console[A] -->
-<!--  *     where A represents the output of a Console program -->
-<!--  * introduction forms: -->
-<!--  *   readLine: Console[String] -->
-<!--  *   print: String => Console[Unit] -->
-<!--  * combinators: -->
-<!--  *   andThen[A]: (Console[A], Console[A]) => Console[A] -->
-<!--  *   transformOutput[A, B]: (Console[A], A => B) => Console[B] -->
-<!--  * elimination forms: -->
-<!--  *   run[A]: Console[A] => IO[A] -->
-<!--  */ -->
-<!--  sealed trait Console[A] { -->
-<!--    def andThen(next: Console[A]): Console[A] -->
-<!--    def transformOutput[B](transform: A => B): Console[B] -->
+Note that `[B]` is a type _parameter_, and therefore not necessarily the same type in both functions. We can make this clearer by renaming it:
 
-<!--    def run: IO[A] -->
-<!--    ... -->
-<!--  object Console { -->
-<!--    val readLine: Console[String] -->
-<!--    def print(s: String): Console[Unit] -->
-<!--    ... -->
-<!-- ``` -->
-<!-- although we will ignore the `run` elimination form for the remainder -->
-<!-- of the article, and focus on writing programs with `Console`. -->
+```scala
+trait Console[A] {
+  def chain[X](next: A => Console[X]): Console[X]
+  def transformOutput[Y](transform: A => Y): Console[Y]
 
-<!-- `readLine` and `transformOutput` have a familiar shape, but `print` -->
-<!-- and `andThen` need to fit the `Console[A]` shape, so we use the `Unit` -->
-<!-- type to express that printing has no meaningful output: -->
-
-<!-- ```scala -->
-<!-- def print(s: String): Console[Unit] -->
-<!-- ``` -->
-
-<!-- and parameterise `andThen` with `A` everywhere: -->
-
-<!-- ```scala -->
-<!-- // andThen[A]: (Console[A], Console[A]) => Console[A] -->
-<!-- sealed trait Console[A] { -->
-<!--    def andThen(next: Console[A]): Console[A] -->
-<!--    ... -->
-<!-- ``` -->
-
-<!-- and we can write `Console` programs! -->
-
-<!-- ```scala -->
-<!-- val helloWorld: Console[Unit] = -->
-<!--   Console.print("Hello ").andThen(Console.print("World!")) -->
-
-<!-- val upperCaseInput: Console[String] = -->
-<!--   Console.readLine.transformOutput(line => line.toUpperCase) -->
-<!-- ``` -->
-
-<!-- > Note that techniques to compose existing effects are out of scope -->
-<!-- for now, so we've defined `Console` from scratch even though its -->
-<!-- functionality is a combination of -->
-<!-- [Out](https://systemfw.org/posts/programs-as-values-IV.html) and -->
-<!-- [In](https://systemfw.org/posts/programs-as-values-V.html). -->
-
-<!-- We will now explore and evolve our `Console` algebra by writing some -->
-<!-- programs with it. -->
+```
 
 
-<!-- ## Generalising andThen -->
 
-<!-- Our first program will ask the user for their name, read it from -->
-<!-- stdin, and convert it to upper case. Let's start with the prompt: -->
 
-<!-- ```scala -->
-<!-- val namePrompt: Console[String] = -->
-<!--   Console -->
-<!--     .print("What's your name? ") -->
-<!--     .andThen(Console.readLine) -->
+The `next` function
 
-<!-- type mismatch; -->
-<!-- [error]  found   : Console[String] -->
-<!-- [error]  required: Console[Unit] -->
-<!-- [error]       .andThen(Console.readLine) -->
-<!-- [error]                        ^ -->
-<!-- ``` -->
 
-<!-- Uh-oh, it doesn't compile: `andThen` wants both arguments to be -->
-<!-- `Console` programs with the same type of output, but `print(s)` and -->
-<!-- `readLine` have different output types, respectively `Console[Unit]` -->
-<!-- and `Console[String]`. -->
 
-<!-- This limitation doesn't seem reasonable, so let's relax the type of -->
-<!-- `andThen` to allow the second program to have a different output type, -->
-<!-- which will also be the output type of the overall expression: -->
 
-<!-- ```scala -->
-<!-- // andThen[A, B]: (Console[A], Console[B]) => Console[B] -->
-<!--  sealed trait Console[A] { -->
-<!--    def andThen[B](next: Console[B]): Console[B] -->
-<!--    ... -->
-<!-- ``` -->
-<!-- and we can write `namePrompt` unchanged: -->
+def chain[B](next: A => Console[B]): Console[B]
+def transformOutput[B](transform: A => B): Console[B]
+```
 
-<!-- ```scala -->
-<!-- val namePrompt: Console[String] = -->
-<!--   Console -->
-<!--     .print("What's your name? ") -->
-<!--     .andThen(Console.readLine) -->
-<!-- ``` -->
-<!-- and complete our program: -->
+recap console
+transformOutput vs chain
+laws?
 
-<!-- ```scala -->
-<!-- val uppercaseNamePrompt: Console[String] = -->
-<!--   Console -->
-<!--     .print("What's your name? ") -->
-<!--     .andThen(Console.readLine) -->
-<!--     .transformOutput(name => name.toUppercase) -->
-<!-- ``` -->
+one example for laws:
+
+readLine.transform(a => s"$a").flatMap(Console.println)
+
+IO.readLine.map(a => s"")
+
+Console.readLine
+  .transformOutput { username => s"Hello, $username!" }
+  .chain { greeting => Console.print(greeting) }
+  
+
+Console.readLine
+  .chain { username => Console.emitOutput(s"Hello, $username!" )}
+  .chain { greeting => Console.print(greeting) }
+
+Console.readLine
+  .chain { username => 
+     Console.emitOutput(s"Hello, $username!" )
+        .chain { greeting => Console.print(greeting) }
+  }
+
+Console.readLine
+  .chain { username => Console.print(s"Hello, $username!") }
+
+
+
+names
 
 <!-- ## Chaining -->
 
-<!-- program 2: write prompt, then read, convert to upper case, print upper case -->
-<!-- try with andThen, and show compile error -->
 <!-- then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing) -->
-<!-- andThen gives a starting point, recall from part III -->
-<!-- introduce chain -->
-
-
-<!-- I should make the point that once you have `A =>` you have a lot more power than just passing the argument, -->
-<!-- the entirety of sequential control flow is available to you -->
-<!-- need an example for pure, example: retry, read a line, only return it if less than 10 characters -->
-
 
 <!-- I might split this article in 2: -->
 <!-- part I - andThen, chain (and definition) & value/pure, laws?, appendix? -->
 <!-- can structure the whole article around one program:  -->
 <!-- part II - recap, transformOutput and chain, real names. Possibly move laws here. -->
-
-<!-- ask for name, read it, convert to uppercase, and output. If name is empty, should just retry. -->
-<!-- If I want to use pure, I need to make the point about retryOnEmpty combinator or it won't be needed, just -->
-<!-- have both programs in an if. Also I won't bother with prompts like "empty strings not allowed", just keep it simple -->
-
 
 <!-- ### andThen or transformOutput? -->
 
@@ -686,41 +323,14 @@ we will see once our series gets to discussing `IO`.
 
 <!-- On the other hand, we can look at `transformOutput` as a special case of chaining two programs, where the second one does nothing but a simple transformation of the input, all we need to do is transform `A => B` into `A => Console[B]` to make fit blah blah -->
 
-
-
-<!-- ^^ should I write this as the first program, in english, but say "let's start" with the prompt, -->
-<!-- so then after changing `andThen` I can say: and we can now write our full program, and insert the above, -->
 <!-- and then find a sentence for the transformOutput digression, worth analysing another example to fully understand the difference between andThen and trasformOutput, we will use the following program: waits for the user to insert any input, print a message, and terminate, the correct way to write it is with andThen, what happens if I use tranformOutput instead? (example, show why it compiles, explain what it does, it's just an output). Move "we will explore..." at the end of the first section -->
 
-<!-- skip this -->
-<!-- Console algebra, program 0.5 -->
-<!-- write prompt, then read, convert to upper case -->
-<!-- important aside here to show how andthen and map are different with print. Make point about laws as _understanding aid_ . Example I can use: two prints or read >> "you started!" -->
-
-
-<!-- program 2: write prompt, then read, convert to upper case, print upper case -->
-<!-- try with andThen, and show compile error -->
-<!-- then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing) -->
-<!-- andThen gives a starting point, recall from part III -->
-<!-- introduce chain -->
 <!-- introduce chainNested (possibly after pure) -\-> nope -->
-
-<!-- I should make the point that once you have `A =>` you have a lot more power than just passing the argument, -->
-<!-- the entirety of sequential control flow is available to you -->
-<!-- need an example for pure, example: retry, read a line, only return it if less than 10 characters -->
-
 
 <!-- a rose by any other name -->
 <!-- real names, laws -->
 <!-- rewrite examples with flatMap -->
 
-<!-- appendix: -->
-<!-- show the console ADT, but do remark we will mostly ignore the -->
-<!-- structure. Maaaybe link the fiber talk. I'm actually not sure I want -->
-<!-- to do this. I could do it in the IO articles instead, as an -->
-<!-- introduction to IO. I could do a small version: translate to IO, and -->
-<!-- then say "how does IO do it: we will talk about inthe appropriate -->
-<!-- article" -->
 
 
 <!-- ------- -->
@@ -926,3 +536,5 @@ we will see once our series gets to discussing `IO`.
 <!-- article. Also note that this should be taken as a justification to -->
 <!-- break laws willy nilly: in most cases where one is tempted to break a -->
 <!-- law, one is wrong -->
+
+
