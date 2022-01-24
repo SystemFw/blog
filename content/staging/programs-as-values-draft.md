@@ -228,16 +228,20 @@ Console.readLine.map(input => input.toUppercase.length)
 and vice versa.
 
 We will introduce the additional laws you get with chaining in a
-similar way, by looking at refactoring programs. Let's start from this one:
+similar way, by looking at refactoring programs. Let's start with this one:
 
 ```scala
 Console
   .readLine
   .flatMap { line =>
-     val lineLenght = line.length
+     val lineLength = line.length
      Console.pure(lineLength)
   } 
 ```
+
+The output of `Console.readLine` is a `String`, so we chain it with
+another program that transforms it into an `Int`, and then emits it as
+the new output via `pure`.
 
 
 from a _practical_
@@ -548,7 +552,39 @@ names
 <!-- combinator deluge VIII -->
 <!-- slightly different, we'll show vocab of combinators we have gained -->
 <!-- f-a-m, monaderror, use Console version with errors -->
-<!-- example, combinator, raw form -->
+<!-- example, combinator, raw form 
+
+One of the principles behind programs as values is that you can
+represent complex logic easily by building programs that manipulate
+other programs in the form of combinators. Today we will substantiate
+this claim by showing that the building blocks we've seen so far, i.e.
+`map`, `flatMap`, `pure`, `raiseError` and `handleErrorWith` can be
+used to derive a _large_ variety of combinators that abstract a wealth
+of common control flow patterns.
+
+Even better, those combinators have already been written for you by
+the [cats](https://github.com/typelevel/cats) library: you tell `cats`
+that your algebra includes the required functions, and you get all the
+derived combinators for free. The mechanism used to achieve this -
+*typeclasses* - is interesting but out of scope for now, so we will
+ignore its details. The one important takeway when using datatypes in
+the cats ecosystem like `cats.effect.IO`, `cats.effect.Resource`,
+`fs2.Stream` or `cats.parse.Parser` is the following:
+
+> Always remember to add
+> ```
+> import cats.syntax.all._
+> ```
+> to your toplevel import list.
+
+
+This article is different from the others in the series in that you're
+not required to read it top to bottom, you can keep it as a reference
+and come back to it whenever you want. We will present several
+combinators, and for each of them give a translation into our basic
+operation, and an example. I've tried to put the most common
+combinators towards the top.
+-->
 
 
 <!-- -------- -->
