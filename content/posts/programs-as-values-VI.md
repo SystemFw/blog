@@ -59,7 +59,7 @@ and we can write `Console` programs!
 val helloWorld: Console[Unit] =
   Console.print("Hello ").andThen(Console.print("World!"))
 
-val inputLength: Console[Int] =
+val lineLength: Console[Int] =
   Console.readLine.transformOutput(line => line.length)
 ```
 
@@ -146,8 +146,8 @@ In execution as evaluation, this idea is expressed by actually running
 an action and naming its result:
 
 ```scala
-val input: String = scala.io.StdIn.readLine()
-println(input)
+val line: String = scala.io.StdIn.readLine()
+println(line)
 ```
 
 but as usual, we want to compose programs instead.
@@ -192,8 +192,8 @@ Equipped with `chain`, we can now easily print something we've read:
 
 ```scala
 val echo: Console[Unit] =
-  Console.readLine.chain { input =>
-    Console.print(input)
+  Console.readLine.chain { line =>
+    Console.print(line)
   }
 
 // Same, but with explicit annotations for every type:
@@ -201,8 +201,8 @@ val echo: Console[Unit] =
   // chain: (Console[String], String => Console[Unit]) => Console[Unit]
   (Console.readLine: Console[String]).chain {
      (
-       (input: String) =>
-          Console.print(input): Console[Unit]
+       (line: String) =>
+          Console.print(line): Console[Unit]
      ): String => Console[Unit]
   }: Console[Unit]
 

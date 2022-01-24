@@ -183,7 +183,7 @@ and use it to express our original program:
 ```scala
 val prog: In[Boolean] =
   readLine
-    .transformOutput(input => input.length)
+    .transformOutput(line => line.length)
     .transformOutput(length => length > 10)
 ```
 
@@ -222,7 +222,7 @@ You might be wondering why I have written the final program as:
 ```scala
 val prog1: In[Boolean] =
   readLine
-    .transformOutput(input => input.length)
+    .transformOutput(line => line.length)
     .transformOutput(length => length > 10)
 ```
 
@@ -230,7 +230,7 @@ as opposed to:
 
 ```scala
 val prog2: In[Boolean] =
-  readLine.transformOutput(input => input.length > 10)
+  readLine.transformOutput(line => line.length > 10)
 ```
 
 `prog2` seems less verbose, so should we refactor `prog1` into
