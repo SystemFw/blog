@@ -406,12 +406,12 @@ listA.traverse(i => myIO(i))
 and the same approach scales all the way to very rich, compositional apis:
 
 ```scala
-def randomWait =
+val randomWait =
   Stream
     .random[IO]
     .evalMap(n => IO.sleep(n.nanos))
 
-def hello = IO.println("hello")
+val hello = IO.println("hello")
 
 Stream
   .repeatEval(hello)

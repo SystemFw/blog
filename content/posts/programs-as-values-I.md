@@ -112,12 +112,12 @@ Even without understanding all the details, it should be clear that it
 maintains this compositional quality in the more complex example too:
 
 ```scala
-def randomWait =
+val randomWait =
   Stream
     .random[IO]
     .evalMap(n => IO.sleep(n.nanos))
 
-def hello = IO.println("hello")
+val hello = IO.println("hello")
 
 Stream
   .repeatEval(hello)
