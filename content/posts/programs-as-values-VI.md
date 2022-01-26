@@ -60,7 +60,9 @@ val helloWorld: Console[Unit] =
   Console.print("Hello ").andThen(Console.print("World!"))
 
 val lineLength: Console[Int] =
-  Console.readLine.transformOutput(line => line.length)
+  Console
+    .readLine
+    .transformOutput { line => line.length }
 ```
 
 Obviously to actually execute these programs, they have to be
@@ -214,7 +216,7 @@ and indeed express our target program:
 val promptAndGreet: Console[Unit] =
   Console
     .print("What's your username? ")
-    .chain(_ => Console.readLine)
+    .chain { _ => Console.readLine }
     .transformOutput { username => s"Hello, $username!" }
     .chain { greeting => Console.print(greeting) }
 ```
@@ -242,7 +244,7 @@ minimal refactoring:
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
-    .chain(_ => Console.readLine)
+    .chain { _ => Console.readLine }
 
 val promptAndGreet: Console[Unit] =
   namePrompt
@@ -375,7 +377,7 @@ def repeatOnEmpty(p: Console[String]): Console[String] =
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
-    .chain(_ => Console.readLine)
+    .chain { _ => Console.readLine }
 
 val promptAndGreet: Console[Unit] =
   repeatOnEmpty(namePrompt)
@@ -470,7 +472,7 @@ object Console {
     case Console.Print(s) => IO.println(s)
     case Console.EmitOutput(a) => IO.pure(a)
     case Console.Chain(fa, f) =>
-      translateToIO(fa).flatMap(x => translateToIO(f(x)))
+      translateToIO(fa).flatMap { x => translateToIO(f(x)) }
   }
 }
 ```
