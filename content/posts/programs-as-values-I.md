@@ -114,8 +114,9 @@ maintains this compositional quality in the more complex example too:
 ```scala
 val randomWait =
   Stream
-    .random[IO]
-    .evalMap(n => IO.sleep(n.nanos))
+    .eval(Random.scalaUtilRandom[IO])
+    .flatMap { random => Stream.repeatEval(random.nextInt) }
+    .evalMap { n => IO.sleep(n.nanos) }
 
 val hello = IO.println("hello")
 

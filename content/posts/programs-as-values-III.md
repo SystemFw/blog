@@ -408,8 +408,9 @@ and the same approach scales all the way to very rich, compositional apis:
 ```scala
 val randomWait =
   Stream
-    .random[IO]
-    .evalMap(n => IO.sleep(n.nanos))
+    .eval(Random.scalaUtilRandom[IO])
+    .flatMap { random => Stream.repeatEval(random.nextInt) }
+    .evalMap { n => IO.sleep(n.nanos) }
 
 val hello = IO.println("hello")
 
