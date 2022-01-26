@@ -420,6 +420,8 @@ Next time we will explore some of properties of `chain` and
 [cats-effect](github.com/typelevel/cats-effect), as we make our way
 towards writing real code in programs as values.
 
+---
+
 ## Appendix: implementation
 
 This series puts a big stress on _algebraic thinking_: reasoning on
