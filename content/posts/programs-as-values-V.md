@@ -49,7 +49,7 @@ object In {
 ```
 in order to write:
 ```scala
-val out: Boolean = readLine.run.length > 10
+val out: Boolean = readLine.nope.length > 10
 ```
 
 but this is not a fruitful direction: we are basically saying that the
