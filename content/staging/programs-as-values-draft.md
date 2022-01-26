@@ -47,10 +47,10 @@ Here's `Console` with the standard names in place:
  * introduction forms:
  *   readLine: Console[String]
  *   print: String => Console[Unit]
- *   emitOutput[A]: A => Console[A]
+ *   pure[A]: A => Console[A]
  * combinators:
- *   chain[A, B]: (Console[A], A => Console[B]) => Console[B]
- *   transformOutput[A, B]: (Console[A], A => B) => Console[B]
+ *   flatMap[A, B]: (Console[A], A => Console[B]) => Console[B]
+ *   map[A, B]: (Console[A], A => B) => Console[B]
  * elimination forms:
  *   run[A]: Console[A] => IO[A]
  */
@@ -94,14 +94,6 @@ that knowledge can be transferred immediately.
 
 You might have noticed that there is some similarity between the types of `map` and `flatMap`:
 
-<!-- Let's now explore the relationship between `map` and `flatMap`. -->
-<!-- Although there is a rich theoretical background behind it, the reason -->
-<!-- for our interest is very practical: confusion between `map` and -->
-<!-- `flatMap` is one of the most common beginner mistakes when writing -->
-<!-- code in programs as values. -->
-
-<!-- We can start by looking at their types: -->
-
 ```scala
 // map[A, B]:     (Console[A], A =>         B ) => Console[B]
 // flatMap[A, B]: (Console[A], A => Console[B]) => Console[B]
@@ -111,16 +103,6 @@ trait Console[A] {
   def flatMap[B](next: A => Console[B]): Console[B]
   ...
 ```
-
-<!-- Note that `[B]` is a type _parameter_, and therefore not necessarily -->
-<!-- the same type in both functions. We can make this clearer by renaming -->
-<!-- it: -->
-
-<!-- ```scala -->
-<!-- trait Console[A] { -->
-<!--   def map[O](transform: A => O): Console[O] -->
-<!--   def flatMap[T](next: A => Console[T]): Console[T] -->
-<!-- ``` -->
 
 They both take functions that process the output of a
 previous computation, but `flatMap` uses it to determine the next
@@ -213,66 +195,40 @@ Console
 Console.readLine.map(input => input.toUppercase.length)
 // ... and vice versa
 ```
-which let us refactor this program:
-```scala
-Console
-  .readLine
-  .map(input => input.toUppercase)
-  .map(str => str.length)
-  .map(result => result)
-```
-into this one:
-```scala
-Console.readLine.map(input => input.toUppercase.length)
-```
-and vice versa.
-
 We will introduce the additional laws you get with chaining in a
 similar way, by looking at refactoring programs. Let's start with this one:
 
 ```scala
-Console
-  .readLine
-  .flatMap { line =>
-     val lineLength = line.length
-     Console.pure(lineLength)
-  } 
+val prog =
+  Console
+    .readLine
+    .flatMap { line =>
+      val lineLength = line.length
+      Console.pure(lineLength)
+    } 
 ```
 
 The output of `Console.readLine` is a `String`, so we chain it with
 another program that transforms it into an `Int`, and then emits it as
-the new output via `pure`.
+the new output via `pure`. A more concise description would be that
+`prog` transforms the output of `readLine`...hey, that's `map`!
 
+```scala
+val prog =
+  Console
+    .readLine
+    .map { line => line.length }
+```
 
-from a _practical_
-perspective: we will ignore the theoretical justification for them,
-but rather see how they can be used when transforming and refactoring
-code.
+And they are in fact equivalent by law:
 
+```scala
+p.flatMap { out => pure(f(out)) } <-> p.map { out => f(out) }
+```
 
-We've often said 
-I've often stressed algebraic thinking in this series: thinking about
-the operations on a datatype rather than its internal structure. In
-other words, adopting a _user_ point of view rather than an
-implementor one, and I want to keep the same perspective with laws: we won't talk about 
+A special case of the above is when a program is chained and its
+output immediately emitted
 
-
-I want to talk briefly about the laws of chaining from a _practical_
-perspective, i.e. we won't be offering a theoretical justification for
-them, but rather see how they can be used when transforming and
-refactoring code.
-
-
-
-. The overall theme of these series is algebraic thinking, 
-
-We've seen that `map` does not subsume `flatMap`, but 
-
-state map <-> flatMap(pure), and suggest simplification
-`flatMap` is strictly more powerful than `map`, does it subsueme it?
-explain `pure`
-
-## laws
 
 <!-- never print anything, because again programs are values: -->
 
