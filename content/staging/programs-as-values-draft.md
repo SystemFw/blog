@@ -223,11 +223,83 @@ val prog =
 And they are in fact equivalent by law:
 
 ```scala
-p.flatMap { out => pure(f(out)) } <-> p.map { out => f(out) }
+// Chaining with a transform and then emitting is the same as transforming
+p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
 ```
 
-A special case of the above is when a program is chained and its
-output immediately emitted
+In general, if our chaining _only_ consists of emitting
+outputs, we don't need to chain in the first place.
+
+Specifically, chaining and then emitting is a no-op, which corresponds
+to `map(x => x)`:
+
+```scala
+// Example:
+Console.readLine.flatMap(line => Console.pure(line)) <-> Console.readLine
+// Law:
+p.flatMap { x => pure(x) } <-> p
+```
+And emitting an output `A` to chain it immediately afterwards with a
+function `A => Console[B]` is equivalent to just calling the function
+directly:
+
+```scala
+// Example:
+Console
+  .pure("hello")
+  .flatMap { word => Console.print(word) } <-> Console.print("hello")
+// Law:
+pure(a).flatMap(x => f(x)) <-> f(a)
+```
+
+The final law has to do with nesting
+...
+
+Resulting in this overall set of laws:
+
+```scala
+// Transforming with a no-op is the same as not transforming
+p.map(x => x) <-> p
+// We can fuse two transformations into one
+p.map(f).map(g) <-> p.map(f.andThen(g))
+// Chaining only to emit is a no op
+p.flatMap(x => pure(x)) <-> p
+// Emitting before chaining with a function is just a call to the function
+pure(a).flatMap(x => f(x)) <-> f(a)
+// We can nest and unnest
+p.flatMap { x =>
+  f(x).flatMap { y =>
+    g(y)
+  }
+}
+ <->
+p
+ .flatMap(x => f(x))
+ .flatMap(y => g(y))
+```
+
+all we're doing when chaining is emitting an
+output, we don't need to chain.
+A special case of the above is when the transform is a no-op, in which
+case chaining and then emitting is also a no-op, which corresponds to
+`map(x => x)`
+
+```scala
+p.flatMap { x => pure(x) } <-> p
+```
+
+The opposite is also true: if we emit an output `A` and chain it
+immediately afterwards with a function `A => Console[B]`, we could
+just pass it directly to the function:
+
+```scala
+Console
+  .pure("hello")
+  .flatMap { word => Console.print(word) } <-> Console.print("hello")
+  
+  
+pure(a).flatMap(x => f(x)) <-> f(a)
+```
 
 
 <!-- never print anything, because again programs are values: -->
