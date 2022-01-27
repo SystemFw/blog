@@ -187,6 +187,7 @@ p.map { x => x } <-> p
 // 2. We can fuse two transformations into one
 p.map(f).map(g) <-> p.map(f.andThen(g))
 
+// Refactoring example for 1. and 2.
 Console
   .readLine
   .map { input => input.toUppercase }
@@ -201,10 +202,14 @@ providing a description in English, an equivalence with `<->`, and an
 example of refactoring:
 
 ```scala
-/*****************************************************************************
-3. Chaining to emit a transformed result is the same as transforming
-     p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
-******************************************************************************/
+// 3. Chaining to emit a transformed result is the same as transforming
+p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
+// 4. Chaining only to emit is a no-op. Follows from 3. and 1.
+p.flatMap { x => pure(x) } <-> p
+// 5. Emitting before chaining with a function is just a call to the function
+pure(a).flatMap { x => f(x) } <-> f(a)
+
+// Refactoring example for 3.
 Console
   .readLine
   .flatMap { line =>
@@ -216,18 +221,12 @@ Console
   .readLine
   .map { line => line.length }
 
-/*****************************************************************************
-4. Chaining only to emit is a no-op. Follows from 3. and 1.
-     p.flatMap { x => pure(x) } <-> p
-******************************************************************************/
+// Refactoring example for 4.
 Console.readLine.flatMap { line => Console.pure(line) }
         <->
 Console.readLine
 
-/*****************************************************************************
-5. Emitting before chaining with a function is just a call to the function
-     pure(a).flatMap { x => f(x) } <-> f(a)
-******************************************************************************/
+// Refactoring example for 5.
 Console
   .pure("hello")
   .flatMap { word => Console.print(word) }
