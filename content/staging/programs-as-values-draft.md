@@ -5,9 +5,9 @@ date: 2022-01-23
 
 Last time we introduced the key concept of _chaining_: creating
 programs that can depend on the output of other programs, and can
-therefore encode arbitrary sequential control flow. In this followup
-we will explore some of the properties of chaining that are relevant
-when writing real code.
+therefore encode arbitrary sequential control flow. In this short
+follow-up we will explore some of the properties of chaining that are
+relevant when writing real code.
 
 ## A rose by any other name
 
@@ -79,7 +79,7 @@ def repeatOnEmpty(p: Console[String]): Console[String] =
 val namePrompt: Console[String] =
   Console
     .print("What's your username? ")
-    .flatMap(_ => Console.readLine)
+    .flatMap { _ => Console.readLine }
 
 val promptAndGreet: Console[Unit] =
   repeatOnEmpty(namePrompt)
@@ -90,7 +90,7 @@ val promptAndGreet: Console[Unit] =
 For the rest of the series we will use the same names `cats` uses, so
 that knowledge can be transferred immediately.
 
-## To map or to flatMap
+## map vs flatMap
 
 You might have noticed that there is some similarity between the types of `map` and `flatMap`:
 
@@ -118,7 +118,7 @@ prints it back, then terminates:
 val echo: Console[Unit] =
   Console
     .readLine
-    .flatMap(line => Console.print(line))
+    .flatMap { line => Console.print(line) }
 ```
 
 
@@ -128,7 +128,7 @@ and let's replace `flatMap` with `map`:
 val echo2: Console[Console[Unit]] =
   Console
     .readLine
-    .map(line => Console.print(line))
+    .map { line => Console.print(line) }
 ```
 
 `Console.readLine.map[B]` expects a `String => B` and returns a
@@ -150,7 +150,7 @@ Therefore we need to chain explicitly via `flatMap` for it to run:
 val echo2: Console[Console[Unit]] =
   Console
     .readLine
-    .map(line => Console.print(line))
+    .map { line => Console.print(line) }
 
 val echo: Console[Unit] =
   echo2.flatMap { nextProgram => nextProgram }
@@ -171,30 +171,61 @@ altogether are common sources of errors, look out for them whenever
 your programs aren't executing something you think they should
 execute.
 
-## Let it be lawful
+## Conclusion
 
-Let's talk briefly about the laws of chaining.
-We will ignore the theoretical justification for them, and instead
-keep a _practical_ perspective by seeing how to use them to transform
-and refactor code.
+In this post we covered two small but important points: we introduced
+the real names of `pure`, `map` and `flatMap`, and we addressed the
+common mistake of not using `flatMap` properly, which results in code
+not executing. Next time we'll be looking at making our algebra even
+more powerful, by equipping it with _error handling_.
 
-Remember that we've already seen some when talking about transforming outputs:
+---
+
+## Appendix: laws
+
+Most material about laws is either of theoretical nature, or it talks
+about laws as contracts to respect when implementing algebras, but
+there's very little talk about how to take advantage of laws as a
+_user_. I want to share a practical view of them as _refactoring
+rules_ , where the equivalence symbol `p1 <-> p2` can be read as `p1
+can be refactored into p2 and vice versa`.
+
+We've already seen a couple when discussing transforming outputs:
 ```scala
-// Transforming with a no-op is the same as not transforming
-p.map(x => x) <-> p
-// We can fuse two transformations into one
+// 1. Transforming with a no-op is the same as not transforming
+p.map { x => x } <-> p
+// 2. We can fuse two transformations into one
 p.map(f).map(g) <-> p.map(f.andThen(g))
 
-// So we can refactor this program
+// Example for 1. & 2.
 Console
   .readLine
-  .map(input => input.toUppercase)
-  .map(str => str.length)
-  .map(result => result)
-// into this one
-Console.readLine.map(input => input.toUppercase.length)
-// ... and vice versa
+  .map { input => input.toUppercase }
+  .map { str => str.length }
+  .map { result => result }
+ <->
+Console.readLine.map { input => input.toUppercase.length }
+
 ```
+
+We've already seen a couple when discussing transforming outputs:
+```scala
+// 1. Transforming with a no-op is the same as not transforming
+p.map { x => x } <-> p
+// 2. We can fuse two transformations into one
+p.map(f).map(g) <-> p.map(f.andThen(g))
+
+// Example for 1. & 2.
+Console
+  .readLine
+  .map { input => input.toUppercase }
+  .map { str => str.length }
+  .map { result => result }
+ <->
+Console.readLine.map { input => input.toUppercase.length }
+
+```
+
 We will introduce the additional laws you get with chaining in a
 similar way, by looking at refactoring programs. Let's start with this one:
 
@@ -229,13 +260,12 @@ p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
 
 In general, if our chaining _only_ consists of emitting
 outputs, we don't need to chain in the first place.
-
-Specifically, chaining and then emitting is a no-op, which corresponds
+Therefore, chaining and then emitting is a no-op, which corresponds
 to `map(x => x)`:
 
 ```scala
 // Example:
-Console.readLine.flatMap(line => Console.pure(line)) <-> Console.readLine
+Console.readLine.flatMap { line => Console.pure(line) } <-> Console.readLine
 // Law:
 p.flatMap { x => pure(x) } <-> p
 ```
@@ -249,7 +279,7 @@ Console
   .pure("hello")
   .flatMap { word => Console.print(word) } <-> Console.print("hello")
 // Law:
-pure(a).flatMap(x => f(x)) <-> f(a)
+pure(a).flatMap { x => f(x) } <-> f(a)
 ```
 
 The final law has to do with nesting
@@ -258,15 +288,17 @@ The final law has to do with nesting
 Resulting in this overall set of laws:
 
 ```scala
-// Transforming with a no-op is the same as not transforming
-p.map(x => x) <-> p
-// We can fuse two transformations into one
+// 1.Transforming with a no-op is the same as not transforming
+p.map { x => x } <-> p
+// 2.We can fuse two transformations into one
 p.map(f).map(g) <-> p.map(f.andThen(g))
-// Chaining only to emit is a no op
-p.flatMap(x => pure(x)) <-> p
-// Emitting before chaining with a function is just a call to the function
-pure(a).flatMap(x => f(x)) <-> f(a)
-// We can nest and unnest
+// 3.Chaining, applying a function and emitting is the same as transforming
+p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
+// 4.Chaining only to emit is a no op
+p.flatMap { x => pure(x) } <-> p
+// 5.Emitting before chaining with a function is just a call to the function
+pure(a).flatMap { x => f(x) } <-> f(a)
+// 6.We can nest and unnest
 p.flatMap { x =>
   f(x).flatMap { y =>
     g(y)
@@ -274,263 +306,54 @@ p.flatMap { x =>
 }
  <->
 p
- .flatMap(x => f(x))
- .flatMap(y => g(y))
+ .flatMap { x => f(x) }
+ .flatMap { y => g(y) }
 ```
 
-all we're doing when chaining is emitting an
-output, we don't need to chain.
-A special case of the above is when the transform is a no-op, in which
-case chaining and then emitting is also a no-op, which corresponds to
-`map(x => x)`
-
-```scala
-p.flatMap { x => pure(x) } <-> p
-```
-
-The opposite is also true: if we emit an output `A` and chain it
-immediately afterwards with a function `A => Console[B]`, we could
-just pass it directly to the function:
+If you don't think you can remember them, don't worry! They will
+appear naturally when writing code, and most of the time you will
+apply them without even noticing. Let's conclude with an example of using laws to refactor, specifically transforming one of our greeting programs:
 
 ```scala
 Console
-  .pure("hello")
-  .flatMap { word => Console.print(word) } <-> Console.print("hello")
-  
-  
-pure(a).flatMap(x => f(x)) <-> f(a)
+  .readLine
+  .map { username => s"Hello, $username!" }
+  .flatMap { greeting => Console.print(greeting) }
 ```
 
+Into a shorter version that fuses the transformation of the output
+with the chaining:
 
-<!-- never print anything, because again programs are values: -->
+```scala
+Console
+  .readLine
+  .flatMap { username => Console.print(s"Hello, $username!") }
+```
 
-<!-- ```scala -->
-<!-- val justAnInt: Int = { -->
-<!--   Console.print("hello") -->
-<!--   "I'm another discarded value just like the above" -->
-<!--   42 -->
-<!-- } -->
-<!-- ``` -->
-
------------
-
-laws are obvious, show the nesting and pure, give one example of
-usefulness with that substitution
-
-
-<!-- The reason it compiles is that we took: -->
-<!-- ```scala -->
-<!-- sealed trait  -->
-<!-- ``` -->
-
-
-<!-- The first noteworthy point is that it does compile (TODO explain how?): -->
-<!-- ```scala -->
-<!-- val echo2: Console[Console[Unit]] = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .map(line => Console.print(line)) -->
-<!-- ``` -->
-<!-- can you guess its behaviour? -->
-
-<!-- When translated to `IO` and run via an `IOApp`, `echo` will indeed -->
-<!-- read a line from stdin, print it back to stdout, and terminate. -->
-<!-- `echo2` on the other hand will read a line to stdin, and then -->
-<!-- terminate _without_ printing anything to stdout. -->
-<!-- This may appear surprising if you're still used to execution as -->
-<!-- evaluation, but remember that programs are values: -->
-
-<!-- ```scala -->
-<!-- val a: Int = { -->
-<!--   Console.print("hello") -->
-<!--   1 -->
-<!-- } -->
-
-<!-- val b: Console[Unit] = { -->
-<!--   Console.print("hello ") -->
-<!--   Console.print("world") -->
-<!-- } -->
-<!-- ``` -->
-
-<!-- so `a` will never print anything, and `b` will _only_ print "world" -->
-<!-- (and only when run via `IOApp`), since `Console.print("hello ")` is -->
-<!-- not connected to `Console.print("world")` by any combinator and just -->
-<!-- gets discarded. -->
-
-<!-- Similarly, `echo2: Console[Console[Unit]]` is not equivalent to `echo: -->
-<!-- Console[Unit]`: `Console[Console[Unit]]` is the type of a program that -->
-<!-- _returns another program as an output_, rather than a program chained -->
-<!-- with another, we will need to chain explicitly to have it run: -->
-<!-- ```scala -->
-<!-- val echoOutput: Console[Console[Unit]] = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .map(line => Console.print(line)) -->
-
-<!-- val echo: Console[Unit] = -->
-<!--   echoOutput.flatMap(nextProgram => nextProgram) -->
-<!-- ``` -->
-
-
-
-recap console
-transformOutput vs chain
-laws?
-
-one example for laws:
-
-readLine.transform(a => s"$a").flatMap(Console.println)
-
-IO.readLine.map(a => s"")
-
-Console.readLine
-  .transformOutput { username => s"Hello, $username!" }
-  .chain { greeting => Console.print(greeting) }
-  
-
-Console.readLine
-  .chain { username => Console.emitOutput(s"Hello, $username!" )}
-  .chain { greeting => Console.print(greeting) }
-
-Console.readLine
-  .chain { username => 
-     Console.emitOutput(s"Hello, $username!" )
-        .chain { greeting => Console.print(greeting) }
-  }
-
-Console.readLine
-  .chain { username => Console.print(s"Hello, $username!") }
-
-
-
-names
-<!-- and let's replace `flatMap` with `map`: -->
-
-<!-- ```scala -->
-<!-- val echo2 = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .map(line => Console.print(line)) -->
-<!-- ``` -->
-
-<!-- The first noteworthy point is that it does compile (TODO explain how?): -->
-<!-- ```scala -->
-<!-- val echo2: Console[Console[Unit]] = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .map(line => Console.print(line)) -->
-<!-- ``` -->
-<!-- can you guess its behaviour? -->
-
-<!-- When translated to `IO` and run via an `IOApp`, `echo` will indeed -->
-<!-- read a line from stdin, print it back to stdout, and terminate. -->
-<!-- `echo2` on the other hand will read a line to stdin, and then -->
-<!-- terminate _without_ printing anything to stdout. -->
-<!-- This may appear surprising if you're still used to execution as -->
-<!-- evaluation, but remember that programs are values: -->
-
-<!-- ```scala -->
-<!-- val a: Int = { -->
-<!--   Console.print("hello") -->
-<!--   1 -->
-<!-- } -->
-
-<!-- val b: Console[Unit] = { -->
-<!--   Console.print("hello ") -->
-<!--   Console.print("world") -->
-<!-- } -->
-<!-- ``` -->
-
-<!-- so `a` will never print anything, and `b` will _only_ print "world" -->
-<!-- (and only when run via `IOApp`), since `Console.print("hello ")` is -->
-<!-- not connected to `Console.print("world")` by any combinator and just -->
-<!-- gets discarded. -->
-
-<!-- Similarly, `echo2: Console[Console[Unit]]` is not equivalent to `echo: -->
-<!-- Console[Unit]`: `Console[Console[Unit]]` is the type of a program that -->
-<!-- _returns another program as an output_, rather than a program chained -->
-<!-- with another, we will need to chain explicitly to have it run: -->
-<!-- ```scala -->
-<!-- val echoOutput: Console[Console[Unit]] = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .map(line => Console.print(line)) -->
-
-<!-- val echo: Console[Unit] = -->
-<!--   echoOutput.flatMap(nextProgram => nextProgram) -->
-<!-- ``` -->
-<!-- --- -->
-
-<!-- ## Chaining -->
-
-<!-- then with transformOutput, and expand a bit on why nothing happens (annoying detour to show the printing) -->
-
-<!-- I might split this article in 2: -->
-<!-- part I - andThen, chain (and definition) & value/pure, laws?, appendix? -->
-<!-- can structure the whole article around one program:  -->
-<!-- part II - recap, transformOutput and chain, real names. Possibly move laws here. -->
-
-<!-- ### andThen or transformOutput? -->
-
-<!-- `uppercaseNamePrompt` uses both `andThen` and `transformOutput`, let's -->
-<!-- go through a further example to drive home the difference between the -->
-<!-- two. -->
-
-<!-- We will write a program that waits for user input, prints a message, then terminates. -->
-<!-- The correct way to write this program is via `andThen`: -->
-
-<!-- ```scala -->
-<!-- val waitInput: Console[Unit] = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .andThen(Console.print("\n Exiting!")) -->
-<!-- ``` -->
-
-<!-- but it's interesting to look at this broken version instead: -->
-
-<!-- ```scala -->
-<!-- val wrongWaitInput: Console[Console[Unit]] = -->
-<!--   Console -->
-<!--     .readLine -->
-<!--     .transformOutput(_ => Console.print("\n Exiting!")) -->
-<!-- ``` -->
-
-<!-- To begin with, it might not be obvious why it compiles, let's look at -->
-<!-- it again with explicit type annotations everywhere: -->
-<!-- ```scala -->
-<!-- sealed trait Console[A] { -->
-<!--   def transformOutput[B](transform: A => B): Console[B] -->
-<!--   ... -->
-
-
-<!-- val wrongWaitInput: Console[Console[Unit]] = -->
-<!--   (Console.readLine: Console[String]) -->
-<!--     .transformOutput[Console[Unit]] { (_: String) => -->
-<!--        Console.print("\n Exiting!"): Console[Unit] -->
-<!--     } -->
-<!-- ``` -->
-
-<!-- Just like in `uppercaseNamePrompt` the `[B]` type parameter of -->
-<!-- `transformOutput` assumes the concrete type `String`, in -->
-<!-- `wrongWaitInput` `[B]` assumes the type `Console[Unit]`. The type of -->
-<!-- the result is therefore `Console[Console[Unit]]`, as you can see by -->
-<!-- writing `Console[Unit]` wherever you see `B`in the signature of -->
-<!-- `transformOutput`. -->
-
-<!-- TODO the more I think about this, the more I think it should come after explaining chaining -->
-<!-- call out `console ; console`, and `console.map(a => console)` as errors. I don't want to introduce `chainNested/flatten`, I'll do it in the combinators instead. I'll chain it explicitly to execute it, to highlight the comparison with `console ; console`. you might have notice similarities between chain and transformoutput (show sigs), let's look at an example to drive home the difference, do example, show why it compiles, how do we understand it? It's a program that _outputs_ another program, what's the behaviour: doesn't print, this is surprising if thinking of side effects, but programs are values, for example if I have `print; print` it wont' execute, I have to chain explicitly. Similarly when I have a program that returns another program, I am free to discard it `nested.transformOutput(_ => ())`, and if I want to execute it I have to chain it explicitly `nested.chain(next => next)`. Therefore, `chain` is fundamentally more powerful than `transformOutput`. -->
-
-<!-- On the other hand, we can look at `transformOutput` as a special case of chaining two programs, where the second one does nothing but a simple transformation of the input, all we need to do is transform `A => B` into `A => Console[B]` to make fit blah blah -->
-
-<!-- and then find a sentence for the transformOutput digression, worth analysing another example to fully understand the difference between andThen and trasformOutput, we will use the following program: waits for the user to insert any input, print a message, and terminate, the correct way to write it is with andThen, what happens if I use tranformOutput instead? (example, show why it compiles, explain what it does, it's just an output). Move "we will explore..." at the end of the first section -->
-
-<!-- introduce chainNested (possibly after pure) -\-> nope -->
-
-<!-- a rose by any other name -->
-<!-- real names, laws -->
-<!-- rewrite examples with flatMap -->
-
-
+It should make intuitive sense that we can do this, but we can be sure
+it's a valid transformation by applying laws:
+```scala
+Console
+  .readLine
+  .map { username => s"Hello, $username!" }
+  .flatMap { greeting => Console.print(greeting) }
+// law 3: transform `map` into `flatMap`
+Console
+  .readLine
+  .flatMap { username => Console.pure(s"Hello, $username!") }
+  .flatMap { greeting => Console.print(greeting) }
+// law 6: nest
+Console
+  .readLine
+  .flatMap { username => 
+     Console.pure(s"Hello, $username!")
+       .flatMap { greeting => Console.print(greeting) }
+   }
+// law 5: eliminate `pure` by applying function directly 
+Console
+  .readLine
+  .flatMap { username => Console.print(s"Hello, $username!") }
+```
 
 <!-- ------- -->
 <!-- possible plan:  -->
