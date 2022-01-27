@@ -193,14 +193,17 @@ Console
   .map { input => input.toUppercase }
   .map { str => str.length }
   .map { result => result }
-        <->
+         <->
 Console.readLine.map { input => input.toUppercase.length }
 ```
 
-And we'll follow a similar format for the additional laws of chaining,
+And we'll follow a similar format for the additional laws of chaining:
 providing a description in English, an equivalence with `<->`, and an
-example of refactoring:
+example of refactoring.
 
+The first set of laws are variations of the same idea: if your
+chaining revolves exclusively around emitting an output, you don't
+actually need to chain.
 ```scala
 // 3. Chaining to emit a transformed result is the same as transforming
 p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
@@ -216,113 +219,74 @@ Console
     val lineLength = line.length
     Console.pure(lineLength)
   }
-        <->
+         <->
 Console
   .readLine
   .map { line => line.length }
 
 // Refactoring example for 4.
 Console.readLine.flatMap { line => Console.pure(line) }
-        <->
+         <->
 Console.readLine
 
 // Refactoring example for 5.
 Console
   .pure("hello")
   .flatMap { word => Console.print(word) }
-        <->
+         <->
 Console.print("hello")
+```
+The final law deals with nesting:
+```scala
+// 6. Sequences of dependencies can be nested or unnested
+p.flatMap { x =>
+  f(x).flatMap { y =>
+    g(y)
+  }
+}
+         <->
+p
+ .flatMap { x => f(x) }
+ .flatMap { y => g(y) }
 
-/*****************************************************************************
-6. Sequences of dependencies can be nested or unnested
-     p.flatMap { x =>
-       f(x).flatMap { y =>
-         g(y)
-       }
-     }
-             <->
-     p
-      .flatMap { x => f(x) }
-      .flatMap { y => g(y) }
-******************************************************************************/
+// Refactoring example for 6.
 def prompt(s: String): Console[String] =
   Console.print(s).flatMap { _ => Console.readLine }
 
 prompt("What's your name?").flatMap { name =>
   prompt(s"Hello $name, what's your favourite food?").flatMap { food =>
-    Console.print(s"I like $food too!")
+    prompt(s"I like $food too! And where are you from?")
   }
 }
-        <->
+         <->
 prompt("What's your name?")
   .flatMap { name => prompt(s"Hello $name, what's your favourite food?") }
-  .flatMap { food => Console.print(s"I like $food too!") }
+  .flatMap { food => prompt(s"I like $food too! And where are you from?") }
 ```
-
-If you don't think you can remember them, don't worry! They will
-appear naturally when writing code, and most of the time you will
-apply them without even noticing.
-
-In terms of intuition, laws 3, 4, 5 are variations of the same idea:
-if your chaining revolves exclusively around emitting an output, you
-don't actually need to chain.
-
-Law 6 can appear a bit more puzzling, but let's look at this slightly
-simpler example of it:
-
+It can appear a bit puzzling, but it's just stating "nothing weird
+happens when you nest programs", since it's the exact equivalent of
+the following behaviour that we take for granted in execution as
+evaluation:
 ```scala
-Console.print("Hello").flatMap { _ =>
-  Console.print("World!").flatMap { _ =>
-    Console.print("I'm a program!")
-  }
+def prompt(s: String): String = {
+  println(s)
+  scala.io.StdIn.readLine()
 }
-  <->
-Console
-  .println("Hello")
-  .flatMap { _ => Console.print("World!") }
-  .flatMap { _ => Console.print("I'm a program!") }
-```
 
-If we write the same example in execution as evaluation, we get:
-```scala
-print("Hello")
-{
-  println("World!")
-  println("I'm a program!")
+val name: String = prompt("What's your name")
+val location: String = {
+  val food: String = prompt(s"Hello $name, what's your favourite food?")
+  prompt(s"I like $food too! And where are you from?")
 }
-  <->
-{
-  println("Hello")
-  println("World!")
-}
-println("I'm a program!")
+         <->
+val name: String = prompt("What's your name?")
+val food: String = prompt(s"Hello $name, what's your favourite food?")
+val location: String = prompt(s"I like $food too! And where are you from?")
 ```
 
-which is such an obvious property you probably never even thought
-about it in those terms. So law 6 is merely stating "nothing weird
-happens when you nest programs".
+Let's conclude with an example of using laws to refactor one of our
+greeting programs:
 
-Let's conclude with an example of using laws to refactor,
-specifically transforming one of our greeting programs:
-
-```scala
-Console
-  .readLine
-  .map { username => s"Hello, $username!" }
-  .flatMap { greeting => Console.print(greeting) }
-```
-
-Into a shorter version that fuses the transformation of the output
-with the chaining:
-
-```scala
-Console
-  .readLine
-  .flatMap { username => Console.print(s"Hello, $username!") }
-```
-
-It should make intuitive sense that we can do this, but we can be sure
-it's a valid transformation by applying laws:
 ```scala
 Console
   .readLine
@@ -348,12 +312,11 @@ Console
 
 ## Conclusion
 
-In this post we covered two small but important points: we introduced
-the real names of `pure`, `map` and `flatMap`, and we addressed the
-common mistake of not using `flatMap` properly, which results in code
-not executing. Next time we'll be looking at making our algebra even
-more powerful, by equipping it with _error handling_.
-
+In this post we introduced the real names of `pure`, `map` and
+`flatMap` and shown how programs don't execute without `flatMap`,
+before exploring the refactoring rules of chaining. Next time we'll be
+looking at enriching our algebras by equipping them with _error
+handling_.
 
 
 <!-- ------- -->
