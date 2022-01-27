@@ -187,13 +187,12 @@ p.map { x => x } <-> p
 // 2. We can fuse two transformations into one
 p.map(f).map(g) <-> p.map(f.andThen(g))
 
-// Example of refactoring with 1. & 2.
 Console
   .readLine
   .map { input => input.toUppercase }
   .map { str => str.length }
   .map { result => result }
-  <->
+        <->
 Console.readLine.map { input => input.toUppercase.length }
 ```
 
@@ -204,47 +203,46 @@ example of refactoring:
 ```scala
 // 3. Chaining to emit a transformed result is the same as transforming
 p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
-// 4. Chaining only to emit is a no-op. Follows from 3. and 1.
-p.flatMap { x => pure(x) } <-> p
-// 5. Emitting before chaining with a function is just a call to the function
-pure(a).flatMap { x => f(x) } <-> f(a)
-// 6. Sequences of dependencies can be nested or unnested
-p.flatMap { x =>
-  f(x).flatMap { y =>
-    g(y)
-  }
-}
-  <->
-p
- .flatMap { x => f(x) }
- .flatMap { y => g(y) }
- 
- 
-// Example of refactoring with 3.
+
 Console
   .readLine
   .flatMap { line =>
     val lineLength = line.length
     Console.pure(lineLength)
   } 
-  <->
+        <->
 Console
   .readLine
   .map { line => line.length }
-  
-// Example of refactoring with 4.
-Console.readLine.flatMap { line => Console.pure(line) } 
-  <->
-Console.readLine
+```
+```scala
+// 4. Chaining only to emit is a no-op. Follows from 3. and 1.
+p.flatMap { x => pure(x) } <-> p
 
-// Example of refactoring with 5.
+Console.readLine.flatMap { line => Console.pure(line) } 
+        <->
+Console.readLine
+```
+```scala
+//////////////////////////////////////////////////////////////////////////////
+// 5. Emitting before chaining with a function is just a call to the function
+pure(a).flatMap { x => f(x) } <-> f(a)
+
 Console
   .pure("hello")
   .flatMap { word => Console.print(word) }
-  <-> 
+        <-> 
 Console.print("hello")
+//////////////////////////////////////////////////////////////////////////////
+// 6. Sequences of dependencies can be nested or unnested
+p.flatMap { x =>
+  f(x).flatMap { y =>
+    g(y)
+  }
+}
+        <->
+p.flatMap { x => f(x) }.flatMap { y => g(y) }
 
-// Example of refactoring with 6. Notice the different nesting.
 def prompt(s: String): Console[String] =
   Console.print(s).flatMap { _ => Console.readLine }
 
@@ -253,7 +251,7 @@ prompt("What's your name?").flatMap { name =>
     Console.print(s"I like $food too!")
   }
 }
-  <->
+        <->
 prompt("What's your name?")
   .flatMap { name => prompt(s"Hello $name, what's your favourite food?") }
   .flatMap { food => Console.print(s"I like $food too!") }
