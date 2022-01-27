@@ -201,48 +201,51 @@ providing a description in English, an equivalence with `<->`, and an
 example of refactoring:
 
 ```scala
-// 3. Chaining to emit a transformed result is the same as transforming
-p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
-
+/*****************************************************************************
+3. Chaining to emit a transformed result is the same as transforming
+     p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
+******************************************************************************/
 Console
   .readLine
   .flatMap { line =>
     val lineLength = line.length
     Console.pure(lineLength)
-  } 
+  }
         <->
 Console
   .readLine
   .map { line => line.length }
-```
-```scala
-// 4. Chaining only to emit is a no-op. Follows from 3. and 1.
-p.flatMap { x => pure(x) } <-> p
 
-Console.readLine.flatMap { line => Console.pure(line) } 
+/*****************************************************************************
+4. Chaining only to emit is a no-op. Follows from 3. and 1.
+     p.flatMap { x => pure(x) } <-> p
+******************************************************************************/
+Console.readLine.flatMap { line => Console.pure(line) }
         <->
 Console.readLine
-```
-```scala
-//////////////////////////////////////////////////////////////////////////////
-// 5. Emitting before chaining with a function is just a call to the function
-pure(a).flatMap { x => f(x) } <-> f(a)
 
+/*****************************************************************************
+5. Emitting before chaining with a function is just a call to the function
+     pure(a).flatMap { x => f(x) } <-> f(a)
+******************************************************************************/
 Console
   .pure("hello")
   .flatMap { word => Console.print(word) }
-        <-> 
-Console.print("hello")
-//////////////////////////////////////////////////////////////////////////////
-// 6. Sequences of dependencies can be nested or unnested
-p.flatMap { x =>
-  f(x).flatMap { y =>
-    g(y)
-  }
-}
         <->
-p.flatMap { x => f(x) }.flatMap { y => g(y) }
+Console.print("hello")
 
+/*****************************************************************************
+6. Sequences of dependencies can be nested or unnested
+     p.flatMap { x =>
+       f(x).flatMap { y =>
+         g(y)
+       }
+     }
+             <->
+     p
+      .flatMap { x => f(x) }
+      .flatMap { y => g(y) }
+******************************************************************************/
 def prompt(s: String): Console[String] =
   Console.print(s).flatMap { _ => Console.readLine }
 
@@ -270,7 +273,7 @@ simpler example of it:
 
 ```scala
 Console.print("Hello").flatMap { _ =>
-  Console.print("World!").flatMap { _ => 
+  Console.print("World!").flatMap { _ =>
     Console.print("I'm a program!")
   }
 }
@@ -284,12 +287,12 @@ Console
 If we write the same example in execution as evaluation, we get:
 ```scala
 print("Hello")
-{ 
+{
   println("World!")
   println("I'm a program!")
 }
   <->
-{ 
+{
   println("Hello")
   println("World!")
 }
@@ -334,11 +337,11 @@ Console
 // law 6: nest
 Console
   .readLine
-  .flatMap { username => 
+  .flatMap { username =>
      Console.pure(s"Hello, $username!")
        .flatMap { greeting => Console.print(greeting) }
    }
-// law 5: eliminate `pure` by applying function directly 
+// law 5: eliminate `pure` by applying function directly
 Console
   .readLine
   .flatMap { username => Console.print(s"Hello, $username!") }
@@ -402,7 +405,7 @@ more powerful, by equipping it with _error handling_.
 <!-- combinator deluge VIII -->
 <!-- slightly different, we'll show vocab of combinators we have gained -->
 <!-- f-a-m, monaderror, use Console version with errors -->
-<!-- example, combinator, raw form 
+<!-- example, combinator, raw form
 
 One of the principles behind programs as values is that you can
 represent complex logic easily by building programs that manipulate
@@ -589,5 +592,3 @@ combinators towards the top.
 <!-- article. Also note that this should be taken as a justification to -->
 <!-- break laws willy nilly: in most cases where one is tempted to break a -->
 <!-- law, one is wrong -->
-
-
