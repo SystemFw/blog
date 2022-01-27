@@ -5,7 +5,7 @@ date: 2022-01-23
 
 Last time we introduced the key concept of _chaining_: creating
 programs that can depend on the output of other programs, and can
-therefore encode arbitrary sequential control flow. In this short
+therefore encode arbitrary sequential control flow. In this shorter
 follow-up we will explore some of the properties of chaining that are
 relevant when writing real code.
 
@@ -171,17 +171,7 @@ altogether are common sources of errors, look out for them whenever
 your programs aren't executing something you think they should
 execute.
 
-## Conclusion
-
-In this post we covered two small but important points: we introduced
-the real names of `pure`, `map` and `flatMap`, and we addressed the
-common mistake of not using `flatMap` properly, which results in code
-not executing. Next time we'll be looking at making our algebra even
-more powerful, by equipping it with _error handling_.
-
----
-
-## Appendix: laws
+## Laws
 
 Most material about laws is either of theoretical nature, or it talks
 about laws as contracts to respect when implementing algebras, but
@@ -197,122 +187,123 @@ p.map { x => x } <-> p
 // 2. We can fuse two transformations into one
 p.map(f).map(g) <-> p.map(f.andThen(g))
 
-// Example for 1. & 2.
+// Example of refactoring with 1. & 2.
 Console
   .readLine
   .map { input => input.toUppercase }
   .map { str => str.length }
   .map { result => result }
- <->
+  <->
 Console.readLine.map { input => input.toUppercase.length }
-
 ```
 
-We've already seen a couple when discussing transforming outputs:
-```scala
-// 1. Transforming with a no-op is the same as not transforming
-p.map { x => x } <-> p
-// 2. We can fuse two transformations into one
-p.map(f).map(g) <-> p.map(f.andThen(g))
-
-// Example for 1. & 2.
-Console
-  .readLine
-  .map { input => input.toUppercase }
-  .map { str => str.length }
-  .map { result => result }
- <->
-Console.readLine.map { input => input.toUppercase.length }
-
-```
-
-We will introduce the additional laws you get with chaining in a
-similar way, by looking at refactoring programs. Let's start with this one:
+And we'll follow a similar format for the additional laws of chaining,
+providing a description in English, an equivalence with `<->`, and an
+example of refactoring:
 
 ```scala
-val prog =
-  Console
-    .readLine
-    .flatMap { line =>
-      val lineLength = line.length
-      Console.pure(lineLength)
-    } 
-```
-
-The output of `Console.readLine` is a `String`, so we chain it with
-another program that transforms it into an `Int`, and then emits it as
-the new output via `pure`. A more concise description would be that
-`prog` transforms the output of `readLine`...hey, that's `map`!
-
-```scala
-val prog =
-  Console
-    .readLine
-    .map { line => line.length }
-```
-
-And they are in fact equivalent by law:
-
-```scala
-// Chaining with a transform and then emitting is the same as transforming
+// 3. Chaining to emit a transformed result is the same as transforming
 p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
-```
-
-In general, if our chaining _only_ consists of emitting
-outputs, we don't need to chain in the first place.
-Therefore, chaining and then emitting is a no-op, which corresponds
-to `map(x => x)`:
-
-```scala
-// Example:
-Console.readLine.flatMap { line => Console.pure(line) } <-> Console.readLine
-// Law:
+// 4. Chaining only to emit is a no-op. Follows from 3. and 1.
 p.flatMap { x => pure(x) } <-> p
-```
-And emitting an output `A` to chain it immediately afterwards with a
-function `A => Console[B]` is equivalent to just calling the function
-directly:
-
-```scala
-// Example:
-Console
-  .pure("hello")
-  .flatMap { word => Console.print(word) } <-> Console.print("hello")
-// Law:
+// 5. Emitting before chaining with a function is just a call to the function
 pure(a).flatMap { x => f(x) } <-> f(a)
-```
-
-The final law has to do with nesting
-...
-
-Resulting in this overall set of laws:
-
-```scala
-// 1.Transforming with a no-op is the same as not transforming
-p.map { x => x } <-> p
-// 2.We can fuse two transformations into one
-p.map(f).map(g) <-> p.map(f.andThen(g))
-// 3.Chaining, applying a function and emitting is the same as transforming
-p.flatMap { x => pure(f(x)) } <-> p.map { x => f(x) }
-// 4.Chaining only to emit is a no op
-p.flatMap { x => pure(x) } <-> p
-// 5.Emitting before chaining with a function is just a call to the function
-pure(a).flatMap { x => f(x) } <-> f(a)
-// 6.We can nest and unnest
+// 6. Sequences of dependencies can be nested or unnested
 p.flatMap { x =>
   f(x).flatMap { y =>
     g(y)
   }
 }
- <->
+  <->
 p
  .flatMap { x => f(x) }
  .flatMap { y => g(y) }
+ 
+ 
+// Example of refactoring with 3.
+Console
+  .readLine
+  .flatMap { line =>
+    val lineLength = line.length
+    Console.pure(lineLength)
+  } 
+  <->
+Console
+  .readLine
+  .map { line => line.length }
+  
+// Example of refactoring with 4.
+Console.readLine.flatMap { line => Console.pure(line) } 
+  <->
+Console.readLine
+
+// Example of refactoring with 5.
+Console
+  .pure("hello")
+  .flatMap { word => Console.print(word) }
+  <-> 
+Console.print("hello")
+
+// Example of refactoring with 6. Notice the different nesting.
+def prompt(s: String): Console[String] =
+  Console.print(s).flatMap { _ => Console.readLine }
+
+prompt("What's your name?").flatMap { name =>
+  prompt(s"Hello $name, what's your favourite food?").flatMap { food =>
+    Console.print(s"I like $food too!")
+  }
+}
+  <->
+prompt("What's your name?")
+  .flatMap { name => prompt(s"Hello $name, what's your favourite food?") }
+  .flatMap { food => Console.print(s"I like $food too!") }
 ```
 
 If you don't think you can remember them, don't worry! They will
 appear naturally when writing code, and most of the time you will
-apply them without even noticing. Let's conclude with an example of using laws to refactor, specifically transforming one of our greeting programs:
+apply them without even noticing.
+
+In terms of intuition, laws 3, 4, 5 are variations of the same idea:
+if your chaining revolves exclusively around emitting an output, you
+don't actually need to chain.
+
+Law 6 can appear a bit more puzzling, but let's look at this slightly
+simpler example of it:
+
+```scala
+Console.print("Hello").flatMap { _ =>
+  Console.print("World!").flatMap { _ => 
+    Console.print("I'm a program!")
+  }
+}
+  <->
+Console
+  .println("Hello")
+  .flatMap { _ => Console.print("World!") }
+  .flatMap { _ => Console.print("I'm a program!") }
+```
+
+If we write the same example in execution as evaluation, we get:
+```scala
+print("Hello")
+{ 
+  println("World!")
+  println("I'm a program!")
+}
+  <->
+{ 
+  println("Hello")
+  println("World!")
+}
+println("I'm a program!")
+```
+
+which is such an obvious property you probably never even thought
+about it in those terms. So law 6 is merely stating "nothing weird
+happens when you nest programs".
+
+Let's conclude with an example of using laws to refactor,
+specifically transforming one of our greeting programs:
 
 ```scala
 Console
@@ -354,6 +345,16 @@ Console
   .readLine
   .flatMap { username => Console.print(s"Hello, $username!") }
 ```
+
+## Conclusion
+
+In this post we covered two small but important points: we introduced
+the real names of `pure`, `map` and `flatMap`, and we addressed the
+common mistake of not using `flatMap` properly, which results in code
+not executing. Next time we'll be looking at making our algebra even
+more powerful, by equipping it with _error handling_.
+
+
 
 <!-- ------- -->
 <!-- possible plan:  -->
