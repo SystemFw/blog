@@ -1,6 +1,6 @@
 ---
 title: "Programs as Values, Part VII: Exploring Chaining"
-date: 2022-01-23
+date: 2022-01-27
 ---
 
 Last time we introduced the key concept of _chaining_: creating
@@ -175,10 +175,10 @@ execute.
 
 Most material about laws is either of theoretical nature, or it talks
 about laws as contracts to respect when implementing algebras, but
-there's very little talk about how to take advantage of laws as a
-_user_. I want to share a practical view of them as _refactoring
-rules_ , where the equivalence symbol `p1 <-> p2` can be read as `p1
-can be refactored into p2 and vice versa`.
+there's very little talk about them from the _user_'s perspective.
+I want to share a practical view of laws as _refactoring rules_ ,
+where the equivalence symbol `p1 <-> p2` can be read as `p1 can be
+refactored into p2 and vice versa`.
 
 We've already seen a couple when discussing transforming outputs:
 ```scala
