@@ -10,6 +10,11 @@ Hakyll source code for my blog.
 | `stack exec site build`   | Changes to `talks.md` and `writings.md` |
 | `stack exec site rebuild` | build and clean cache                   |
 | `stack build`             | Changes to `site.hs`                    |
+|---------------------------|-----------------------------------------|
+| `cabal run site watch`    | Changes to content                      |
+| `cabal run site build`    | Changes to `talks.md` and `writings.md` |
+| `cabal run site rebuild`  | build and clean cache                   |
+| `cabal build`             | Changes to `site.hs`                    |
 
 
 Make sure you are in the root directory of the blog when running these
