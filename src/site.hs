@@ -9,13 +9,14 @@ import           Control.Monad.Except (liftEither)
 
 import           Hakyll
 import           Text.Pandoc
-import qualified Data.Text as Text
 import           Data.String
 
 import qualified Data.Aeson as Yaml
 import qualified Data.Aeson.Types as Yaml
 import           Data.Aeson ((.:), (.:?), (.!=))
 
+
+import Data.Text(Text)
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -132,19 +133,24 @@ writings = listField "writings" writing writingMetadata <> site
 writing :: Context Yaml.Object
 writing = foldMap  mandatoryField ["title", "link"]
 
-yamlField name runParse parser =
-  field name $ \item -> runParse parser $ itemBody item
-
+mandatoryField :: String -> Context Yaml.Object
 mandatoryField name =
-  yamlField name yamlParser $ \o -> o .: Text.pack name
+  yamlField name yamlParser $ \o -> o .: fromString name
 
+numberField :: String -> Context Yaml.Object
 numberField name = yamlField name yamlParser $ \o -> do
-  n :: Integer <- o .: Text.pack name
+  n :: Integer <- o .: fromString name
   pure $ show n
 
+optionalField :: String -> Context Yaml.Object
 optionalField name = yamlField name
    (\parser o -> maybe empty pure =<< yamlParser parser o)
-   (\o -> o .:? Text.pack name)
+   (\o -> o .:? fromString name)
+
+
+yamlField :: String -> (a -> b -> Compiler String) -> a -> Context b
+yamlField name runParse parser =
+  field name $ \item -> runParse parser $ itemBody item
 
 yamlParser :: (Yaml.Object -> Yaml.Parser a) -> Yaml.Object -> Compiler a
 yamlParser p = \o -> liftEither . first pure $ Yaml.parseEither p o
