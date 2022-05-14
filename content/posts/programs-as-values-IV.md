@@ -346,14 +346,14 @@ which we called "carrier" and "combinators" respectively. The terms
 "introduction forms" and "elimination forms" come from logic via type
 theory instead.
 
-Universal Algebra also introduces the concept of a signature algebra,
-or _sigma algebra_, which defines the set of typed operation symbols
-without specifying the functions that would be the actual operations.
-Sigma algebras correspond roughly to the notion of "interface" in
-programming, and are often encoded in Scala via typeclasses.
+Universal Algebra also introduces the concept of a _signature_, which
+defines the set of typed operation symbols without specifying the
+functions that would be the actual operations. Signatures correspond
+roughly to the notion of "interface" in programming, and are often
+encoded in Scala via typeclasses.
 
 The issue is that FP terminology uses the word "algebra" to also mean
-"sigma algebra", for example in the phrase "algebras and
+"signature", for example in the phrase "algebras and
 interpreters" which roughly corresponds to "abstractions and
 implementations" (the usage of the word "interpreter" comes from the
 theory of embedded domain specific languages, or eDSLs).
