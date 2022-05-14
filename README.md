@@ -34,3 +34,12 @@ Use the `content/staging` folder for drafts.
 `deploy.sh` will deploy using git submodules and github pages.
 You will have to git push after deploy, to make sure the submodule
 state is correctly sync'd.
+
+Note: when cloning the repo on a new laptop for the first time, you
+have to pass the `--recurse-submodules` option to `clone` to
+initialise the `deploy` submodule properly, or it won't be sync'd and
+deploying won't work. If you forgot to do this, call:
+```
+git submodule update --init --recursive
+```
+More info [here](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
