@@ -1,6 +1,6 @@
-stack build
-stack exec site clean
-stack exec site build
+cabal build
+cabal run site clean
+cabal run site build
 
 cd deploy
 git checkout master
