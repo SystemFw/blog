@@ -210,13 +210,13 @@ writings:
 -
  title: Final tagless again
  link: https://discord.com/channels/632277896739946517/839263668478672937/847438971969077248
-- 
+-
  title: Currying, function syntax, eta expansion
  link: https://discordapp.com/channels/632277896739946517/839899003306901545/883825592619900991
 -
  title: Why I don't use `for comprehensions` anymore
  link: https://discord.com/channels/632277896739946517/632727524434247691/890684551918133248
-- 
+-
  title: Unification
  link: https://discord.com/channels/632277896739946517/632278570512678923/914537715201093652
 -
@@ -225,4 +225,31 @@ writings:
 -
  title: Elimination forms
  link: https://discord.com/channels/632277896739946517/839899003306901545/923559484712960051
+-
+ title: Syntax sugar for a functional language
+ link: https://discord.com/channels/632277896739946517/632278570512678923/929432056516186173
+-
+ title: Long convo teaching polymorphic recursion and unification
+ link: https://discord.com/channels/632150470000902164/632150470000902166/929847549685293096
+-
+ title: The Unit type
+ link: https://discord.com/channels/632150470000902164/632150470000902166/930828171065057290
+-
+ title: Applicatives
+ link: https://discord.com/channels/632277896739946517/632277897448652844/932271382937628774
+-
+ title: fs2's `covary`
+ link: https://discord.com/channels/632277896739946517/632310980449402880/933553137401352212
+-
+ title: Show fs2's power by writing parMeet in a handful of lines
+ link: https://discord.com/channels/632277896739946517/843528196876009512/934292179877240842
+-
+ title: How to use TestControl
+ link: https://discord.com/channels/632277896739946517/632310980449402880/947531958999728250
+-
+ title: fs2-kafka producer patterns
+ link: https://discord.com/channels/632277896739946517/632310980449402880/957082598562234368
+-
+ title: Stack safety in monadic recursion
+ link: https://discord.com/channels/632277896739946517/632278570512678923/979506544527962162
 ---
