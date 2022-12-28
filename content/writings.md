@@ -252,4 +252,13 @@ writings:
 -
  title: Stack safety in monadic recursion
  link: https://discord.com/channels/632277896739946517/632278570512678923/979506544527962162
+-
+ title: Philosophical discussion on thread-per-core, data-driven programming
+ link: https://discord.com/channels/632277896739946517/1000499416072982528/1023638876193030164
+-
+ title: More discussion on thread-per-core
+ link: https://discord.com/channels/632277896739946517/839263556754472990/1021388251988234332
+-
+ title: Philosophical musings on data driven designs in distributed systems
+ link: https://discord.com/channels/632277896739946517/845095298879062036/1023996556711575593
 ---
