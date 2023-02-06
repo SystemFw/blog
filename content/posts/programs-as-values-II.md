@@ -305,13 +305,12 @@ val p: Console = hey.andThenDo(hey).andThenDo(print("you"))
 
 // Everything is RT, so p is equivalent to
 val p: Console = 
-  hey
-   .andThenDo(print("hey "))
+  print("hey "
    .andThenDo(print("hey "))
    .andThenDo(print("you"))
 
-object Main extends App {
-  def main(args: List[String]): Unit =
+object Main {
+  def main(args: Array[String]): Unit =
     p.translateToActualEffects
 }
 ```
