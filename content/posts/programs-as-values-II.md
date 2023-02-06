@@ -307,7 +307,6 @@ val p: Console = hey.andThenDo(hey).andThenDo(print("you"))
 val p: Console = 
   hey
    .andThenDo(print("hey "))
-   .andThenDo(print("hey "))
    .andThenDo(print("you"))
 
 object Main extends App {
