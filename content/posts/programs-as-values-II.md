@@ -305,7 +305,7 @@ val p: Console = hey.andThenDo(hey).andThenDo(print("you"))
 
 // Everything is RT, so p is equivalent to
 val p: Console = 
-  print("hey "
+  print("hey ")
    .andThenDo(print("hey "))
    .andThenDo(print("you"))
 
