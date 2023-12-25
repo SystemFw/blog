@@ -261,4 +261,26 @@ writings:
 -
  title: Philosophical musings on data driven designs in distributed systems
  link: https://discord.com/channels/632277896739946517/845095298879062036/1023996556711575593
+-
+  title: Interruption, composing computation vs composing handles
+  link: https://discord.com/channels/632150470000902164/632150470000902166/1165000668558405762
+-
+  title: Some details on interruption protocols
+  link: https://discord.com/channels/632150470000902164/632150470000902166/1164972563944968293
+-
+  title: Gardener syndrome
+  link: https://discord.com/channels/632277896739946517/920140670394589224/1159440568733159485
+-
+  title: Why not typed errors
+  link: https://discord.com/channels/632277896739946517/839899003306901545/1068081618088112129
+-
+  title: Explaining algebraic effects
+  link: https://discord.com/channels/632277896739946517/632277897448652844/1097963142748831915
+-
+  title: Explaining Ref.access
+  link: https://discord.com/channels/632277896739946517/632278570512678923/1153557041013604372
+-
+  title: Very long convo on non-blocking IO & async
+  link: https://discord.com/channels/632277896739946517/839899003306901545/1159827917916880967
 ---
+
