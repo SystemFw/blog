@@ -3,35 +3,140 @@ title: "Deriving Tail Recursive Fibonacci"
 date: 2024-01-04
 ---
 
-Here's a derivation for a tail recursive fibonacci function.
+## Introduction
 
-So, which mindset should you use?
-The truth is that both are useful for this task, and both are also
-useful in general:
-equational reasoning comes up when refactoring FP code a lot, whereas
-being able to systematically identify essential state is useful when
-developing concurrent and distributed algorithms.
+One of the cornerstones of Functional Programming is the use of
+_structural recursion_: writing functions that are _recursive_ (they
+call themselves) and that model the recursion after the structure of
+the data they are operating on.
 
-## derivation
-
-let's start from the Maths definition:
-```
-fib(0) = 0
-fib(1) = 1
-fib(n) = fib(n - 1)  + fib(n - 2)
+For example, given the standard `Cons` list:
+```scala
+sealed trait List[+A]
+case class Cons[+A](head: A, tail: List[A]) extends List[A]
+case object Nil extends List[Nothing]
 ```
 
-Let's translate the structure, leaving the recursive case unspecified:
+we can write a `length` function using structural recursion:
+
+```scala
+def length[A](list: List[A]): Int =
+  list match {
+    case Nil => 0
+    case Cons(_, tail) => 1 + length(tail)
+  }
+```
+
+Most introductory material will then explain how certain functions are
+_tail-recursive_ if and only if the recursive call is in _tail
+position_ , or in other words if and only of they call themselves
+recursively as their final action.
+
+Note that looks can be deceiving: although _visually_ it looks like
+the recursive call in our `length` function above is in tail position,
+it is not, as we can see when we expand the execution trace of its
+recursive case:
+
+```scala
+case Cons(_, tail) => 1 + length(tail)
+// is evaluated like:
+val a = 1
+val b = length(tail) // not in tail position!
+a + b
+```
+
+Instead, a tail-recursive `length` looks like this:
+```scala
+def length[A](list: List[A], acc: Int = 0): Int =
+  list match {
+    case Nil => acc
+    case Cons(_, tail) => length(tail, acc + 1)
+  }
+```
+
+Tail-recursive functions tend to be less obvious for most people than
+their structural counterpart, so you might be wondering whether
+learning how to write them is worth the effort.
+
+Well, there are at least of couple of good, practical reasons:
+
+1. The Scala compiler can run tail recursive functions in constant
+   stack space, without incurring a `StackOverflowException` if the
+   recursion is too deep.
+2. Some functions, when written with structural recursion, exhibit
+   exponential complexity and are therefore prohibitely slow, and they
+   can be made to run in linear time written with tail-recursion.
+   
+...but I have to be honest, if those were the only reasons, I probably
+wouldn't bother writing a post about it.
+
+Instead, I believe the main reason tail-recursion is worth learning is
+because the shape of tail-recursive functions forces us to focus on
+the _essential state_ needed to perform a certain computation, and
+the usefulness of identitying essential state extends far beyond just
+Functional Programming. For example, it is crucial in my day job when
+dealing with concurrent and distributed algorithms.
+
+This post is divided into two parts: Part I will show a recipe to
+derive tail-recursive functions via _algebraic manipulation_, which is
+very useful if you know the recursive structure of your computation,
+but struggle to express it in tail-recursive terms. Part II will
+instead show an alternative method which focuses on _state_, and gets
+us closer to the skillset needed to model imperative, and ultimately
+concurrent and distributed computations.
+
+## Naive Fibonacci
+
+The running example for this post will be a function to compute the
+`N-th` number of the Fibonacci sequence:
+
+> 0, 1, 1, 2, 3, 5, 8, 13, 21, ...
+
+which is described by the following _recurrence relation_:
+
+
+> F(0) = 0  
+> F(1) = 1  
+> F(n) = F(n - 1) + F(n - 2)
+
+We can easily translate that into Scala via structural recursion,
+noting that it has two base cases, and that we will pretend that
+Scala's `Int` cannot be negative:
+
+```scala
+def fib(n: Int): Int = 
+ n match {
+   case 0 => 0
+   case 1 => 1
+   case n => fib(n - 1) + fib(n - 2)
+ }
+```
+
+Fibonacci is often used as a motivating example to learn
+tail-recursion because the version we've just written is exponential,
+and starts getting pretty slow as we increase `n`.
+
+So, tail recursion to the rescue!
+
+## Algebraic derivation
+
+Let's start from the naive fibonacci:
 
 ```scala
 def fib0(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
-   // fib(n) = fib(n - 1) + fib(n - 2)
+   def go(): Int = ???
    ???
 }
 ```
+
+As you can see, we have left the recursive case unspecified, and
+instead introduced a helper function called `go`, which is where all
+the actual recursion is going to happen.
+This is a very common style since tail-recursive functions tend to
+need additional parameters, which are hidden by the helper function.
 
 
 the recursive definition is made of 4 components: 
