@@ -1,6 +1,6 @@
 ---
 title: "Deriving Tail Recursive Fibonacci"
-date: 2024-01-04
+date: 2024-01-11
 ---
 
 ## Introduction
@@ -29,7 +29,7 @@ def length[A](list: List[A]): Int =
 
 Most introductory material will then explain how certain functions are
 _tail-recursive_ if and only if the recursive call is in _tail
-position_ , or in other words if and only of they call themselves
+position_ , or in other words if and only if they call themselves
 recursively as their final action.
 
 Note that looks can be deceiving: although _visually_ it looks like
@@ -64,7 +64,7 @@ Well, there are at least of couple of good, practical reasons:
    stack space, without incurring a `StackOverflowException` if the
    recursion is too deep.
 2. Some functions, when written with structural recursion, exhibit
-   exponential complexity and are therefore prohibitely slow, and they
+   exponential complexity and are therefore prohibitively slow, and they
    can be made to run in linear time written with tail-recursion.
    
 ...but I have to be honest, if those were the only reasons, I probably
@@ -73,7 +73,7 @@ wouldn't bother writing a post about it.
 Instead, I believe the main reason tail-recursion is worth learning is
 because the shape of tail-recursive functions forces us to focus on
 the _essential state_ needed to perform a certain computation, and
-the usefulness of identitying essential state extends far beyond just
+the usefulness of identifying essential state extends far beyond just
 Functional Programming. For example, it is crucial in my day job when
 dealing with concurrent and distributed algorithms.
 
@@ -104,7 +104,7 @@ noting that it has two base cases, and that we will pretend that
 Scala's `Int` cannot be negative:
 
 ```scala
-def fib(n: Int): Int = 
+def fib(n: Int): Int =
  n match {
    case 0 => 0
    case 1 => 1
@@ -113,7 +113,7 @@ def fib(n: Int): Int =
 ```
 
 Fibonacci is often used as a motivating example to learn
-tail-recursion because the version we've just written is exponential,
+tail recursion because the version we've just written is exponential,
 and starts getting pretty slow as we increase `n`.
 
 So, tail recursion to the rescue!
@@ -123,7 +123,7 @@ So, tail recursion to the rescue!
 Let's start from the naive fibonacci:
 
 ```scala
-def fib0(n: Int) = n match {
+def fib(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
@@ -138,55 +138,77 @@ the actual recursion is going to happen.
 This is a very common style since tail-recursive functions tend to
 need additional parameters, which are hidden by the helper function.
 
+In particular, each component of the recursive definition becomes a
+parameter, so with the recurrence relation:
 
-the recursive definition is made of 4 components: 
-  > n, fib(n), fib(n - 1), fib(n - 2)
-let's call them:
-  > counter, current, last, secondLast
-and order them according to how they are ordered visually:
-  > counter, secondLast, last, current
+> F(n) = F(n - 1) + F(n - 2)
 
+we will have parameters for `n`, `F(n)`, `F(n - 1)`, and `F(n - 2)`.
 
-Each component becomes an argument to our tailrec helper:
+We can find appropriate names for these parameters by putting them on
+a number line in order:
+
+```shell
+         F(n - 2)        F(n - 1)          F(n)            n
+-------------|---------------|---------------|-------------> 
+        secondLast         last          current        counter
+```
+
+which means our function becomes:
+
 
 ```scala
-def fib1(n: Int) = n match {
+def fib(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
-   def go(counter: Int, secondLast: Int, last: Int, current: Int): Int = ???
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int = ???
    ???
 }
 ```
 
+In order to call `go`, we need to find appropriate initial values for
+its arguments: the initial value for `counter` is 2, because
+iterations 0 and 1 are already covered by the base cases.
+Then, the other params are given by the Fibonacci series up to iteration 2:
 
-Now let's think about the starting state, we know that counter
-needs to start at 2 because 0 and 1 are already covered by the
-previous cases.
-The rest follows by how Fibonacci looks.
-The starting state is what we call `go` with.
+> 0, 1, 1, ...
+
+so:
 
 ```scala
-def fib2(n: Int) = n match {
+def fib(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
-   def go(counter: Int, secondLast: Int, last: Int, current: Int): Int = ???
-   go(counter = 2, secondLast = 0, last = 1, current = 1)
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int = ???
+   go(secondLast = 0, last = 1, current = 1, counter = 2)
 }
 ```
 
-Now let's write `go`:
-If counter is at `n`, we are in the right spot, so we can return `current`.
-If not, we update all variables according to the definition of
-Fibonacci, and recur.
+
+Now let's write `go`. Our `fib` function has to return the value of
+the Fibonacci sequence at iteration `n`, or in other words, the
+`current` value if `counter` is equal to `n`.
+
+If `counter` is not at `n`, then we advance, so `last` becomes
+`secondLast`, `current` becomes `last`, and we compute the next value
+of `current` with the definition of Fibonacci, which says the
+`current` Fibonacci number is equal to the sum of the `last` and
+`secondLast` Fibonacci numbers.
+
+Note that because we have replaced recursive components with arguments
+to `go`, we can compute the next value of `current` without any
+recursion, we only need to recur in tail position with the updated
+values of the arguments to `go`:
+
 
 ```scala
-def fib3(n: Int) = n match {
+def fib(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
-   def go(counter: Int, secondLast: Int, last: Int, current: Int): Int = {
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int =
      if (counter == n) current
      else 
        val counterNext = counter + 1
@@ -199,47 +221,58 @@ def fib3(n: Int) = n match {
         last = lastNext,
         current = currentNext
        )
-   }
-   go(counter = 2, secondLast = 0, last = 1, current = 1)
+
+   go(secondLast = 0, last = 1, current = 1, counter = 2)
 }
 ```
 
+and we're done! We can apply several transformations to considerably
+simplify this function, but before we do that, let's recap the two
+ideas we've used to write tail-recursive functions:
 
-Now we are done, but we can simplify by applying inlining,
-i.e. we replace each name with its definition in `go`.
+- Every component of the recursive definition becomes an argument to a
+  recursive helper.
+- At the end of the recursion, one of the arguments will hold the
+  final result.
+  
+One final observation is that the recursion is no longer _structural_,
+i.e. the fact that the `current` Fibonacci number is defined
+recursively no longer corresponds to recursion in code. Instead, the
+logical recursion corresponds to state updates, and the recursion in
+code is only used to iterate our state transformations until we reach
+the desired results. This is the reason why the recursive call can be
+in tail position, but I dare say the link between recursive
+definitions and state is a far more interesting aspect of this type of
+function than the use of tail-recursion in itself.
+
+### Simplification
+
+The first transformation we can apply is _inlining_, i.e. replacing
+each name with its definition.
 This is safe to do because even though the algorithm is conceptually
 evolving variables, it's expressed as immutable transformations for which
 inlining can always be done without changing behaviour.
 As an example:
 ```scala
 go(..., currentNext, ...)
-```
-but:
-```scala
+// but:
 currentNext = lastNext + secondLastNext
-```
-so:
-```scala
+// so:
 go(..., lastNext + secondLastNext, ...)
-```
-but:
-```scala
+// but:
 lastNext = current
 secondLastNext = last
-```
-so:
-```scala
+// so:
 go(..., current + last, ...)
 ```
-  
-we do the same across the board:
+Let's inline all the definitions in `go`:
 
 ```scala
-def fib4(n: Int) = n match {
+def fib(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
-   def go(counter: Int, secondLast: Int, last: Int, current: Int): Int = {
+   def go(secondLast: Int, last: Int, current: Int, counter: Int): Int =
      if (counter == n) current
      else 
        go(
@@ -248,27 +281,22 @@ def fib4(n: Int) = n match {
         last = current,
         current = current + last
        )
-   }
-   go(counter = 2, secondLast = 0, last = 1, current = 1)
+   
+   go(secondLast = 0, last = 1, current = 1, counter = 2)
 }
 ```
 
+but now we notice that `secondLast` is redundant, because it's updated
+but never actually used to compute `current`: `current` is updated via
+`current + last`, and `last` doesn't depend on `secondLast`.
 
-but now we notice that `secondLast` is updated but never actually
-used it so we can eliminate it.
-To see that, start from the expression that returns the result, which
-is `current`.
-Then see how `current` is computed, which is with `current + last`,
-then see how `last` doesn't depend on `secondLast`, i.e `secondLast`
-is never used.
-
-
+So we can eiminate it to get to:
 ```scala
-def fib5(n: Int) = n match {
+def fib(n: Int) = n match {
   case 0 => 0
   case 1 => 1
   case n =>
-   def go(counter: Int, last: Int, current: Int): Int = {
+   def go(last: Int, current: Int, counter: Int): Int =
      if (counter == n) current
      else 
        go(
@@ -276,8 +304,8 @@ def fib5(n: Int) = n match {
         last = current,
         current = current + last
        )
-   }
-   go(counter = 2, last = 1, current = 1)
+
+   go(last = 1, current = 1, counter = 2)
 }
 ```
 
