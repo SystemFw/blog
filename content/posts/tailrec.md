@@ -118,7 +118,7 @@ and starts getting pretty slow as we increase `n`.
 
 So, tail recursion to the rescue!
 
-## Part I: Algebraic derivation
+## Part I: Algebraic Derivation
 
 Let's start from the naive fibonacci:
 
@@ -244,7 +244,7 @@ code is only used to iterate our state transformations until we reach
 the desired results. This is the reason why the recursive call can be
 in tail position, but I dare say the link between recursive
 definitions and state is a far more interesting aspect of this type of
-function than the use of tail-recursion in itself.
+function than the use of tail recursion in itself.
 
 ### Simplification
 
@@ -312,7 +312,7 @@ def fib(n: Int) = n match {
 
 Now let's eliminate the named arguments, and hoist `go` at the top.
 It's tail recursive, and we can make sure by adding the `tailrec`
-annotation.
+annotation:
 
 ```scala
 import annotation.tailrec
@@ -321,18 +321,20 @@ def fib(n: Int) = {
   @tailrec
   def go(last: Int, current: Int, counter: Int): Int =
     if (counter == n) current 
-    else go(counter + 1, current, current + last)
+    else go(current, current + last, counter + 1)
 
   n match {
     case 0 => 0
     case 1 => 1
-    case n => go(2, 1, 1)
+    case n => go(1, 1, 2)
   }
 }
 ```
 
 
-Finally, we can see that the pattern matching has redundant logic in the first two cases, and doesn't use the pattern in the third, so we can replace it with an `if`. This is our final version:
+Finally, we can see that the pattern matching has redundant logic in
+the first two cases, and doesn't use the pattern in the third, so we
+can replace it with an `if`. This is our final version:
 
 ```scala
 import annotation.tailrec
@@ -341,19 +343,13 @@ def fib(n: Int) = {
   @tailrec
   def go(last: Int, current: Int, counter: Int): Int =
     if (counter == n) current 
-    else go(counter + 1, current, current + last)
+    else go(current, current + last, counter + 1)
 
-  if (n <= 1) n else go(2, 1, 1)
+  if (n <= 1) n else go(1, 1, 2)
 }
 ```
 
-```scala
-val a = (0 to 8).map(fib)
-
-// res0: Vector[Int]  = Vector(0, 1, 1, 2, 3, 5, 8, 13, 21)
-```
-
-## Part II: operational derivation 
+## Part II: Operational Derivation 
 
 The derivation above used a lot of equational thinking, but often with
 tail recursion we can adopt a more operational mindset.
@@ -392,7 +388,7 @@ Tail recursive helpers have to return a result which is updated
 during the iteration, so we can start by keeping track of that.
 
 ```scala
-def fib1(n: Int) = {
+def fib(n: Int) = {
   def go(result: Int): Int = go(result)
   if (n <= 1) n else go(???)
 }
@@ -416,99 +412,116 @@ Next, we have to figure out when it is possible to return `result`,
 i.e. a _termination condition_. Sometimes this can be done as a
 predicate on `result` without any additional state, but in this case
 the result has to be returned once we reach the `n-th` iteration,
-which means we have to add some state to keep track of that:
+which means we have to add a `counter: Int` parameter to keep track of
+which iteration we're in.
+
+Because the `if` covers iterations 0 and 1, so the initial value of
+`counter` will be 2:
 
 ```scala
 def fib(n: Int) = {
-  def go(counter: Int, result: Int): Int =
+  def go(result: Int, counter: Int): Int =
     if (counter == n) result
-    else go(counter, result)
-  if (n <= 1) n else go(counter = ???, result = 1)
-}
-```
-
-Again, the `if` covers iterations 0 and 1, so the initial value of
-`counter` is 2:
-
-```scala
-def fib(n: Int) = {
-  def go(counter: Int, result: Int): Int =
-    if (counter == n) result
-    else go(counter, result)
-  if (n <= 1) n else go(counter = 2, result = 1)
+    else go(result, counter)
+  if (n <= 1) n else go(result = 1, counter = 2)
 }
 ```
 
 
-Now we have some state with initial values, and we have to figure out
-how to update it before recurring.
+Now that we have some state with initial values, we have to figure out
+how to update it before recurring:
 
 ```scala
-def fib3(n: Int) = {
-  def go(counter: Int, result: Int): Int =
+def fib(n: Int) = {
+  def go(result: Int, counter: Int): Int =
     if (counter == n) result
     else {
       val counterNext = counter + 1
       val resultNext = ???
-      go(counterNext, resultNext)
+      go(resultNext, counterNext)
     }
-  if (n <= 1) n else go(counter = 2, result = 1)
+  if (n <= 1) n else go(result = 1, counter = 2)
 }
 ```
 
-Updating counter is easy, but we don't know what `resultNext` should
-be. According to the definition of fibonacci, it's the sum of `fib(n -
-1)` and `fib(n - 2)`. We already have the result of `fib(n - 1)`, it's
-`result`!
+Updating `counter` is trivial, but we don't know what `resultNext`
+should be. Well, according to the definition of Fibonacci, it's the
+sum of `fib(n - 1)` and `fib(n - 2)`, and we already have `fib(n -
+1)`, it's `result`!
+
+To see why, consider that `resultNext` is the `result`, i.e. the
+`fib(n)`, of the _next_ iteration, which means that `fib(n - 1)` is
+the previous value from the point of view of the next iteration, i.e
+the `result` of the current iteration. Let's update the code:
 
 ```scala
-def fib4(n: Int) = {
-  def go(counter: Int, result: Int): Int =
+def fib(n: Int) = {
+  def go(result: Int, counter: Int): Int =
     if (counter == n) result
     else {
       val counterNext = counter + 1
-      val resultNext = result // + something
-      go(counterNext, resultNext)
+      val resultNext = result + ???
+      go(resultNext, counterNext)
     }
-  if (n <= 1) n else go(counter = 2, result = 1)
+  if (n <= 1) n else go(result = 1, counter = 2)
 }
 ```
 
-However, we don't have info about `fib(n - 2)`, which means we are
-missing some state to track it, let's call it `last`.
-Understanding why this is the `last` value can be a bit tricky:
-remember that we need `fib(n - 2)` in the _next_ iteration, which
-means we need `fib(n - 1)` in this iteration, i.e. the last value.
+However, we simply cannot compute `fib(n - 2)`, which means we are
+missing a parameter to track it, let's call it `last: Int`.
+Understanding why this is the `last` value can be a bit tricky, but
+it's the same idea as before: we need `fib(n - 2)` in the _next_
+iteration, which means we need `fib(n - 1)` in this iteration, i.e.
+the last value.
 
-Once you understand that, the rest is easy: `lastNext` is the same as
-`result` now, and the initial value of `last` is `fib(n - 1)` when `n
-== 2`, i.e. `1
+Now, `last` is going to need an initial value, and it's also going to
+need to be updated on each iteration before the recursive call.
+Let's start with the initial value, which is straightforward: we need
+`fib(n - 1)` when `counter == 2`, which is 1.
+The updated `lastNext` value represents, once again, the previous
+result from the point of view of the _next_ iteration, i.e. the
+`result` of the current iteration.
 
+So we have:
 
 ```scala
-def fib5(n: Int) = {
-  def go(counter: Int, last: Int,  result: Int): Int =
+def fib(n: Int) = {
+  def go(result: Int, counter: Int, last: Int): Int =
     if (counter == n) result
     else {
       val counterNext = counter + 1
       val resultNext = result + last
       val lastNext = result
-      go(counterNext, lastNext, resultNext)
+      go(resultNext, counterNext, lastNext)
     }
-  if (n <= 1) n else go(counter = 2, last = 1, result = 1)
+  if (n <= 1) n else go(result = 1, counter = 2, last = 1)
 }
 ```
 
-
-Again, we can apply some inlining and remove name params, and we're
-done:
+And let's apply the same refactoring as in Part I:
 
 ```scala
-def fib(n: Int) = {
-  def go(counter: Int, last: Int, result: Int): Int = 
-    if (counter == n) result
-    else go(counter + 1, result, result + last)
+import annotation.tailrec
 
-  if (n <= 1) n else go(2, 1, 1)
+def fib(n: Int) = {
+  @tailrec
+  def go(result: Int, counter: Int, last: Int): Int =
+    if (counter == n) result
+    else go(result + last, counter + 1, result)
+
+  if (n <= 1) n else go(1, 2, 1)
 }
 ```
+
+## Conclusion
+
+Although most didactic material covers the idea of tail recursion,
+actually _writing_ tail-recursive functions is often left as an
+exercise to the reader.
+
+This is a shame because, far from just being an optimisation, tail
+recursion is actually great at expressing tricky stateful logic, and
+really teaches us to think about state methodically.
+
+So, tail recurse more, and see you next time!
+
