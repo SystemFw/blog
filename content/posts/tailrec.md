@@ -65,7 +65,7 @@ Well, there are at least of couple of good, practical reasons:
    recursion is too deep.
 2. Some functions, when written with structural recursion, exhibit
    exponential complexity and are therefore prohibitively slow, and they
-   can be made to run in linear time written with tail-recursion.
+   can be made to run in linear time when written with tail-recursion.
    
 ...but I have to be honest, if those were the only reasons, I probably
 wouldn't bother writing a post about it.
