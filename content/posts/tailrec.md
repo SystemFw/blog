@@ -118,7 +118,7 @@ and starts getting pretty slow as we increase `n`.
 
 So, tail recursion to the rescue!
 
-## Algebraic derivation
+## Part I: Algebraic derivation
 
 Let's start from the naive fibonacci:
 
@@ -199,8 +199,8 @@ of `current` with the definition of Fibonacci, which says the
 
 Note that because we have replaced recursive components with arguments
 to `go`, we can compute the next value of `current` without any
-recursion, we only need to recur in tail position with the updated
-values of the arguments to `go`:
+recursion, we only need to recur in tail position by passing the
+updated arguments to `go`:
 
 
 ```scala
@@ -210,17 +210,18 @@ def fib(n: Int) = n match {
   case n =>
    def go(secondLast: Int, last: Int, current: Int, counter: Int): Int =
      if (counter == n) current
-     else 
+     else {
        val counterNext = counter + 1
        val secondLastNext = last // we move to the right
        val lastNext = current // we move to the right
        val currentNext = lastNext + secondLastNext // definition of Fibonacci
        go(
-        counter = counterNext,
         secondLast = secondLastNext,
         last = lastNext,
-        current = currentNext
+        current = currentNext,
+        counter = counterNext
        )
+     }
 
    go(secondLast = 0, last = 1, current = 1, counter = 2)
 }
@@ -247,12 +248,12 @@ function than the use of tail-recursion in itself.
 
 ### Simplification
 
-The first transformation we can apply is _inlining_, i.e. replacing
-each name with its definition.
-This is safe to do because even though the algorithm is conceptually
-evolving variables, it's expressed as immutable transformations for which
-inlining can always be done without changing behaviour.
-As an example:
+Ok, now onto simplifying our implementation: the first transformation
+we can apply is _inlining_, i.e. replacing each name with its
+definition.This is safe to do because even though the algorithm is
+conceptually evolving variables, it's expressed as immutable
+transformations for which inlining can always be done without changing
+behaviour. As an example:
 ```scala
 go(..., currentNext, ...)
 // but:
@@ -276,10 +277,10 @@ def fib(n: Int) = n match {
      if (counter == n) current
      else 
        go(
-        counter = counter + 1,
         secondLast = last,
         last = current,
-        current = current + last
+        current = current + last,
+        counter = counter + 1,
        )
    
    go(secondLast = 0, last = 1, current = 1, counter = 2)
@@ -290,7 +291,7 @@ but now we notice that `secondLast` is redundant, because it's updated
 but never actually used to compute `current`: `current` is updated via
 `current + last`, and `last` doesn't depend on `secondLast`.
 
-So we can eiminate it to get to:
+So we can eliminate it to get to:
 ```scala
 def fib(n: Int) = n match {
   case 0 => 0
@@ -300,20 +301,25 @@ def fib(n: Int) = n match {
      if (counter == n) current
      else 
        go(
-        counter = counter + 1,
         last = current,
         current = current + last
+        counter = counter + 1
        )
 
    go(last = 1, current = 1, counter = 2)
 }
 ```
 
-Now let's eliminate the named arguments, and hoist the helper at the top:
+Now let's eliminate the named arguments, and hoist `go` at the top.
+It's tail recursive, and we can make sure by adding the `tailrec`
+annotation.
 
 ```scala
-def fib6(n: Int) = {
-  def go(counter: Int, last: Int, current: Int): Int =
+import annotation.tailrec
+
+def fib(n: Int) = {
+  @tailrec
+  def go(last: Int, current: Int, counter: Int): Int =
     if (counter == n) current 
     else go(counter + 1, current, current + last)
 
@@ -326,15 +332,14 @@ def fib6(n: Int) = {
 ```
 
 
-The pattern matching has redundant logic in the first two cases, and
-doesn't use the pattern in the third, we can replace it with an `if`.
-`go` is tail recursive, we can make sure by adding an annotation.
-This is our final version:
+Finally, we can see that the pattern matching has redundant logic in the first two cases, and doesn't use the pattern in the third, so we can replace it with an `if`. This is our final version:
 
 ```scala
+import annotation.tailrec
+
 def fib(n: Int) = {
-  @annotation.tailrec
-  def go(counter: Int, last: Int, current: Int): Int =
+  @tailrec
+  def go(last: Int, current: Int, counter: Int): Int =
     if (counter == n) current 
     else go(counter + 1, current, current + last)
 
@@ -342,71 +347,91 @@ def fib(n: Int) = {
 }
 ```
 
-val a = (0 to 8).map(fib)
-// res0: Vector[Int]  = Vector(0, 1, 1, 2, 3, 5, 8, 13, 21)
-
-
-## Alternative derivation 
-
-
-The derivation above uses equational thinking a lot, but often with
-tail recursion we can apply more operational thinking.
-
-Tail recursion can be understood as a translation from mutable state
-algorithms, except with a more explicit explicit representation of
-imperative thinking, where for each variable `x` you distinguish the
-updated version x' from x (due to immutability), and you loop via a
-restricted GOTO (the recursive call) instead of using `while`.
-
-To derive tail recursive functions with this type of thinking, the
-guiding principle is generally trying to figure out which state you
-need to keep track of.
- 
-Let's start from the Maths definition again:
 ```scala
-fib(0) = 0
-fib(1) = 1
-fib(n) = fib(n - 1)  + fib(n - 2)
+val a = (0 to 8).map(fib)
+
+// res0: Vector[Int]  = Vector(0, 1, 1, 2, 3, 5, 8, 13, 21)
 ```
 
-This time, we start by recognising the first two cases can be done
-with an `if`, and then we know there is going to be some iteration
-after, which we can represent with a helper. At this point, the only
-information we have about the helper is its return type:
+## Part II: operational derivation 
+
+The derivation above used a lot of equational thinking, but often with
+tail recursion we can adopt a more operational mindset.
+
+In fact, tail recursion can be understood as a translation from
+mutable state algorithms, one where imperative thinking is more
+explicit than in most imperative languages, in that for each variable
+`x` you distinguish `x` from its updated version `x'` (due to
+immutability), and you loop via a restricted `GOTO` (the recursive
+call) instead of using `while`.
+
+So, let's look at the recurrence relation again:
+
+> F(0) = 0  
+> F(1) = 1  
+> F(n) = F(n - 1) + F(n - 2)
+
+
+This time, we start by recognising that the first two cases can be
+done with an `if`, and then we know there is going to be some
+iteration in the recursive case, which we can represent with a helper.
+At this point, the only information we have about the helper is its
+return type:
 
 ```scala
-def fib0(n: Int) = {
+def fib(n: Int) = {
   def go(): Int = go()
   if (n <= 1) n else go()
 }
 ```
 
-
-tail recursive helpers have to return a result which is updated
-during the iteration, so we can start by keeping track of that. Note
-that to do that, we have to figure out what its initial value should
-be. In this case, because the `if` arleady covers 0 and 1, the value
-is 1.
+The guiding principle when deriving tail-recursive functions via
+operational thinking is figuring out which state you need to keep
+track of, and add each piece of state as a parameter.
+Tail recursive helpers have to return a result which is updated
+during the iteration, so we can start by keeping track of that.
 
 ```scala
 def fib1(n: Int) = {
+  def go(result: Int): Int = go(result)
+  if (n <= 1) n else go(???)
+}
+```
+
+To call `go`, we need to figure out the initial value of `result`. We
+know that the `if` returns the result of `fib(n)` when `n == 0` and `n
+== 1`, so the initial value of `result` is `fib(n)` when `n == 2`,
+which is 1, as per:
+
+> 0, 1, 1, ...
+
+```scala
+def fib(n: Int) = {
    def go(result: Int): Int = go(result)
    if (n <= 1) n else go(1)
 }
 ```
 
-
-Now we have to figure out when it's possible to return `result`,
-i.e. we have to to figure out a termination condition.
-Sometimes this can be done as a predicate on `result`, requiring no
-additional state, but in this case the result has to be returned once
-we reach the nTh iteration, which means we have to add some state to
-keep track of that with a `counter: Int`.
-Similarly, we have to figure out the initial value of `counter`,
-because the `if` in `fib2` covers iterations 0 and 1, the value is 2.
+Next, we have to figure out when it is possible to return `result`,
+i.e. a _termination condition_. Sometimes this can be done as a
+predicate on `result` without any additional state, but in this case
+the result has to be returned once we reach the `n-th` iteration,
+which means we have to add some state to keep track of that:
 
 ```scala
-def fib2(n: Int) = {
+def fib(n: Int) = {
+  def go(counter: Int, result: Int): Int =
+    if (counter == n) result
+    else go(counter, result)
+  if (n <= 1) n else go(counter = ???, result = 1)
+}
+```
+
+Again, the `if` covers iterations 0 and 1, so the initial value of
+`counter` is 2:
+
+```scala
+def fib(n: Int) = {
   def go(counter: Int, result: Int): Int =
     if (counter == n) result
     else go(counter, result)
@@ -459,8 +484,6 @@ Once you understand that, the rest is easy: `lastNext` is the same as
 `result` now, and the initial value of `last` is `fib(n - 1)` when `n
 == 2`, i.e. `1
 
-At any let's call it `last`.
-The initial value of `old` is `fib(n - 2)` when `n = 2`, i.e. 0
 
 ```scala
 def fib5(n: Int) = {
