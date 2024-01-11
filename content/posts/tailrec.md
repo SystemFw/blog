@@ -88,7 +88,7 @@ concurrent and distributed computations.
 ## Naive Fibonacci
 
 The running example for this post will be a function to compute the
-`N-th` number of the Fibonacci sequence:
+`n-th` number of the Fibonacci sequence:
 
 > 0, 1, 1, 2, 3, 5, 8, 13, 21, ...
 
