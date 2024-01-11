@@ -65,12 +65,12 @@ Well, there are at least of couple of good, practical reasons:
    recursion is too deep.
 2. Some functions, when written with structural recursion, exhibit
    exponential complexity and are therefore prohibitively slow, and they
-   can be made to run in linear time when written with tail-recursion.
+   can be made to run in linear time when written with tail recursion.
    
 ...but I have to be honest, if those were the only reasons, I probably
 wouldn't bother writing a post about it.
 
-Instead, I believe the main reason tail-recursion is worth learning is
+Instead, I believe the main reason tail recursion is worth learning is
 because the shape of tail-recursive functions forces us to focus on
 the _essential state_ needed to perform a certain computation, and
 the usefulness of identifying essential state extends far beyond just
