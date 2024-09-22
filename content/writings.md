@@ -284,6 +284,12 @@ writings:
   link: https://discord.com/channels/632277896739946517/839899003306901545/1159827917916880967
 -
   title: Technical vs business errors is a false dichotomy
-  link: https://discord.com/channels/632150470000902164/632150470000902166/1163847764766113912  
+  link: https://discord.com/channels/632150470000902164/632150470000902166/1163847764766113912
+-
+  title: Kleisli
+  link: https://discord.com/channels/632277896739946517/839899003306901545/1093121485977170001
+-
+  title: Generics and type erasure
+  link: https://discord.com/channels/632150470000902164/632150470000902166/1255070988660379770
 ---
 
