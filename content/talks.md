@@ -1,6 +1,13 @@
 ---
 talks: # Displayed in the order they are written
 -
+   title: KLogs - Distributed Streaming on Unison Cloud
+   video: https://www.youtube.com/embed/cdn5CQQXfJc
+   slides: https://systemfw.org/Unison-Forall-2024/#
+   year: 2024
+   conf: Unison Forall
+   id: unison-forall-2024
+-
    title: Composable concurrency with Ref and Deferred
    video: https://player.vimeo.com/video/366191463
    slides: https://systemfw.org/scala-italy-2019/#/
