@@ -9,7 +9,7 @@ talks: # Displayed in the order they are written
    id: unison-forall-2024
 -
    title: Composable concurrency with Ref and Deferred
-   video: https://player.vimeo.com/video/366191463
+   video: https://www.youtube.com/embed/kRnLcsXyIvk
    slides: https://systemfw.org/scala-italy-2019/#/
    year: 2019
    conf: Scala Italy
@@ -30,7 +30,7 @@ talks: # Displayed in the order they are written
    id: tl-summit-ne-2019
 -
    title: "Shared State in Pure FP: when a State Monad won't do"
-   video: https://player.vimeo.com/video/294736344
+   video: https://www.youtube.com/embed/0nnH0ELjs5g
    slides: https://systemfw.github.io/scala-italy-2018/#/
    year: 2018
    conf: Scala Italy
