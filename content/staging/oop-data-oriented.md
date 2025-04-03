@@ -45,14 +45,17 @@ transact : Database -> '{Transaction, Exception, Random, Batch} a ->{Exception, 
 
 As a quick syntax primer, `a ->{g} b` is a function from `a` to `b`
 that performs effects defined by the `g` ability, `'{g} a` is
-syntactic sugar for the thunk `() ->{g} a`, and lower case letters in
+syntactic sugar for the type of the thunk `() ->{g} a`, and lower case letters in
 type signatures indicate generic type parameters.
+Function calls are just whitespace (`f a b`), and `do ...` is
+syntactic sugar for thunks `_ -> ...`.
 
 Here's an example showing a bank transfer of 10 "pounds" (here
 represented horribly as just a non-negative integer) between Alice and
-Bob:
+Bob.
 
 ```haskell
+-- populated with data elsewhere
 accounts: Table UserId Nat
 accounts = Table.Table "accounts"
 
@@ -68,7 +71,18 @@ transfer database =
       write.tx accounts alice (to + 10)
     else 
       Exception.raiseGeneric "insufficient balance" bob
+
+-- no infra needed to run code on cloud
+Cloud.run do
+  db = Database.default()
+  Cloud.submit Environment.default() do transfer db
 ```
+
+The code snippet above runs `transfer` on Unison Cloud, where the data
+is persisted on our distributed storage, and the implementation of
+`transact` guarantees that the funds are transferred atomically.
+
+
 
 
 
