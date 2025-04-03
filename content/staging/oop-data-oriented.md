@@ -110,7 +110,12 @@ Counter.getAndIncrement counter =
   n
 ```
 
-
+Equipped with our counter, add Log
+then move to the real example with publish 
+  Table Key (Log Event)
+  [(Key, Event)]
+remark that the final version of the code is already ugly, but in the real code is terrible
+I'm afraid I'll have to show read as well though.
 
 
 
