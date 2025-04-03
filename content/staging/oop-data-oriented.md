@@ -52,8 +52,8 @@ As a quick syntax primer, `a -> b ->{g} c` is a function from `a` and
 `b` to `c` that performs effects defined by the `g` ability, `'{g} a`
 is syntactic sugar for the type of the thunk `() ->{g} a`, and lower
 case letters in type signatures indicate generic type parameters.
-Function calls are just whitespace (`f a b`), and `do ...` is
-syntactic sugar for thunks `_ -> ...`.
+Function calls are just whitespace (`f a b`), `do ...` is syntactic
+sugar for thunks `_ -> ...`, and `|>` creates function pipelines.
 
 Here's the canonical bank transfer example, Bob sends 10 pounds
 (represented as pennies) to Alice:
@@ -90,8 +90,9 @@ is persisted on our distributed storage, and the implementation of
 
 ## Persistent data structures
 
-Typed table and transactions are powerful building blocks, and we can
-build data structures just like we would for in-memory data.
+Transactions on typed key-value tables are a flexible building block,
+and we can build data structures just like we would for in-memory
+data.
 
 Let's build a `Counter`:
 ```haskell
@@ -115,12 +116,62 @@ Counter.getAndIncrement counter =
   n
 ```
 
-Equipped with our counter, add Log
-then move to the real example with publish 
-  Table Key (Log Event)
-  [(Key, Event)]
-remark that the final version of the code is already ugly, but in the real code is terrible
-I'm afraid I'll have to show read as well though.
+We can use our `Counter` to build an append-only log, similar to a
+Kafka partition, by pairing a `Counter` with `Table Nat a`. The
+`Counter` will keep track of the current size of the log so we know where
+to append next, and the table will host the elements, indexed by their
+offset.
+
+```haskell
+type Log a = Log Counter (Table Nat a)
+
+Log.named: Text -> Log a
+Log.named name = Log (Counter.named (name ++ "-size")) (Table name)
+```
+
+Reading an element from the log is straightforward:
+
+```haskell
+Log.at.tx : Nat -> Log a ->{Transaction} Optional a
+Log.at.tx n log =
+  (Log _ elems) = log
+  tryRead.tx elems n
+```
+
+Appending to the log is slightly more involved but still pretty easy:
+
+```haskell
+Log.append.tx: a -> Log a ->{Transaction} ()
+Log.append.tx v log =
+  (Log size elems) = log
+  n = incrementAndGet size
+  write.tx elems n v
+```
+
+note that `size` and `elems` cannot go out of sync since we're still
+in the `Transaction` ability.
+
+A call to `append.tx` executes atomically when we call `transact`:
+
+```haskell
+type Track = Track Text
+
+playlist: Log 
+playlist = Log.named "my-playlist"
+
+transact myDb do
+  myLog |> append.tx (Track "Obstacles")
+```
+
+and we can append multiple elements atomically as well:
+
+```haskell
+transact myDb do
+  myLog |> append.tx (Track "Sea above, sky below")
+  myLog |> append.tx (Track "Featherweight")
+```
+
+semantics: named is pure, read/write perf
 
 
 
