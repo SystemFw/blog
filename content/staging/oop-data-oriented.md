@@ -132,8 +132,8 @@ Log.named name = Log (Counter.named (name ++ "-size")) (Table name)
 Reading an element from the log is straightforward:
 
 ```haskell
-Log.at.tx : Nat -> Log a ->{Transaction} Optional a
-Log.at.tx n log =
+Log.at : Nat -> Log a ->{Transaction} Optional a
+Log.at n log =
   (Log _ elems) = log
   tryRead.tx elems n
 ```
@@ -141,10 +141,10 @@ Log.at.tx n log =
 Appending to the log is slightly more involved but still pretty easy:
 
 ```haskell
-Log.append.tx: a -> Log a ->{Transaction} ()
-Log.append.tx v log =
+Log.append a -> Log a ->{Transaction} ()
+Log.append v log =
   (Log size elems) = log
-  n = incrementAndGet size
+  n = getAndIncrement size
   write.tx elems n v
 ```
 
@@ -160,15 +160,15 @@ playlist: Log
 playlist = Log.named "my-playlist"
 
 transact myDb do
-  myLog |> append.tx (Track "Obstacles")
+  myLog |> append (Track "Obstacles")
 ```
 
 and we can append multiple elements atomically as well:
 
 ```haskell
 transact myDb do
-  myLog |> append.tx (Track "Sea above, sky below")
-  myLog |> append.tx (Track "Featherweight")
+  myLog |> append (Track "Sea above, sky below")
+  myLog |> append (Track "Featherweight")
 ```
 
 Let's conclude this section with a couple of notes on semantics that
