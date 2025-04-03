@@ -11,9 +11,8 @@ the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneselves to a wide range of
 ideas.
 
-Outside of a long one-to-one conversation, however, is challenging to show a
-fully worked example of this process, which by its very nature is not
-self contained.
+It is challenging, however,to show a fully worked example of this
+process, which by its very nature is not self contained.
 
 Well, this post aims to do exactly that.
 TODO if I split it in parts, describe them
