@@ -12,6 +12,7 @@ show a fully worked example of this process, which by its very nature
 is not self contained.
 
 Well, this post aims to do exactly that.
+TODO if I split it in parts, describe them
 
 
 ## Intro
@@ -20,8 +21,8 @@ My day job involves designing and implementing distributed systems for
 [Unison Cloud](unison.cloud), the next-gen cloud platform we're
 building on top of the [Unison](unison-lang.org) language.
 
-The first step in our journey is about a unique capability of our
-Cloud: manipulating persistent and transactional storage as it was an
+Let's start by talking about a unique capability of our Cloud:
+manipulating persistent and transactional storage as if it was an
 in-memory datastructure.
 
 We expose this feature as a set of _abilities_ , Unison's take on
@@ -50,15 +51,15 @@ type signatures indicate generic type parameters.
 Function calls are just whitespace (`f a b`), and `do ...` is
 syntactic sugar for thunks `_ -> ...`.
 
-Here's an example showing a bank transfer of 10 "pounds" (here
-represented horribly as just a non-negative integer) between Alice and
-Bob.
+Here's an example showing a bank transfer of 10 "pounds" ( horribly
+represented as just a non-negative integer) between Alice and Bob.
 
 ```haskell
 -- populated with data elsewhere
 accounts: Table UserId Nat
 accounts = Table.Table "accounts"
 
+transfer: Database ->{Exception, Storage} ()
 transfer database = 
   bob = UserId "Bob"
   alice = UserId "Alice"
