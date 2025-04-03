@@ -29,7 +29,7 @@ We expose this feature as a set of _abilities_ , Unison's take on
 algebraic effects that can express custom control flow abstractions as
 ordinary straight-line code.
 
-The model is fairly simple: you write programs in the *Transaction*
+The model is fairly simple: you write programs in the `Transaction`
 ability that operate on one or more typed key-value tables, and call
 `transact` to delimit a transactional boundary.
 
@@ -57,7 +57,7 @@ represented as just a non-negative integer) between Alice and Bob.
 ```haskell
 -- populated with data elsewhere
 accounts: Table UserId Nat
-accounts = Table.Table "accounts"
+accounts = Table "accounts"
 
 transfer: Database ->{Exception, Storage} ()
 transfer database = 
@@ -82,6 +82,37 @@ Cloud.run do
 The code snippet above runs `transfer` on Unison Cloud, where the data
 is persisted on our distributed storage, and the implementation of
 `transact` guarantees that the funds are transferred atomically.
+
+## Persistent data structures
+
+Typed table and transactions are powerful building blocks, and we can
+build data structures just like we would for in-memory data.
+
+Let's build a `Counter`:
+```haskell
+type Counter = Counter (Table () Nat)
+
+Counter.named: Text -> Counter
+Counter.named name = Counter db (Table name)
+```
+
+The idea is that we can represent the state of the counter in a table
+with a single key of the unit type `()` . Just like any other other
+data structure, we can write functions that operate on our `Counter`,
+using the `Transaction` ability to retain atomicity:
+
+```haskell
+Counter.getAndIncrement: Counter ->{Transaction} Nat
+Counter.getAndIncrement counter =
+  (Counter state) = counter
+  n = tryRead.tx state () |> Optional.getOrElse 0
+  write.tx state () (n + 1)
+  n
+```
+
+
+
+
 
 
 
