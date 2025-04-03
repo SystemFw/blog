@@ -11,10 +11,9 @@ the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneselves to a wide range of
 ideas.
 
-
-Outside the context of a long conversation, however, is challenging to
-show a fully worked example of this process, which by its very nature
-is not self contained.
+Outside of a long one-to-one conversation, however, is challenging to show a
+fully worked example of this process, which by its very nature is not
+self contained.
 
 Well, this post aims to do exactly that.
 TODO if I split it in parts, describe them
@@ -25,6 +24,14 @@ TODO if I split it in parts, describe them
 My day job involves designing and implementing distributed systems for
 [Unison Cloud](unison.cloud), the next-gen cloud platform we're
 building on top of the [Unison](unison-lang.org) language.
+
+One of the unique features of our cloud is the power to manipulate
+persistent and transactional storage as if it was an in-memory
+datastructure.
+
+This capability is modelled as a set of _abilities_ , Unison's take on
+algebraic effects that can express custom control flow abstractions as
+ordinary straight-line code.
 
 Let's start by talking about a unique capability of our Cloud:
 manipulating persistent and transactional storage as if it was an
@@ -49,10 +56,10 @@ ability Transaction where
 transact : Database -> '{Transaction, Exception, Random, Batch} a ->{Exception, Storage} a
 ```
 
-As a quick syntax primer, `a ->{g} b` is a function from `a` to `b`
-that performs effects defined by the `g` ability, `'{g} a` is
-syntactic sugar for the type of the thunk `() ->{g} a`, and lower case letters in
-type signatures indicate generic type parameters.
+As a quick syntax primer, `a -> b ->{g} c` is a function from `a` and
+`b` to `c` that performs effects defined by the `g` ability, `'{g} a`
+is syntactic sugar for the type of the thunk `() ->{g} a`, and lower
+case letters in type signatures indicate generic type parameters.
 Function calls are just whitespace (`f a b`), and `do ...` is
 syntactic sugar for thunks `_ -> ...`.
 
