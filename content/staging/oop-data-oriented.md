@@ -16,7 +16,11 @@ process, which by its very nature is not self contained.
 
 Well, this post aims to do exactly that. Let's dive in.
 
-TODO if I split it in parts, describe them
+TODO if I split it in parts, describe them?
+or maybe just 
+Part I: Unison transactions (replacing intro)
+Part II: OO and Data Oriented design 
+Conclusion(s)
 
 
 ## Intro
@@ -27,10 +31,10 @@ building on top of the [Unison](unison-lang.org) language.
 
 A unique characteristic of our cloud is the power to manipulate
 persistent and transactional storage as if it was an in-memory
-datastructure.
+data structure.
 
 We expose this feature as a set of _abilities_ (Unison's take on
-algebraic effects) which let us express custom control flow
+algebraic effects) which can express custom control flow
 abstractions as ordinary straight-line code.
 
 The model is fairly simple: you write programs in the `Transaction`
@@ -192,10 +196,64 @@ it can do because the Unison type system guarantees that the thunk
 passed to `transact` doesn't perform any other effects that wouldn't
 be safe to retry arbitrarily (like an HTTP call).
 
+## Case study
+
+Needs rewording
+We now have all the tools to look at the main protagonist of this post, which is a simplified version of a problem I've faced recently
+For the past few months I have been working on a streaming framework for Unison Cloud,
+Finish the intro
+
+`Key`, `Event`, `Table Key (Log Event)`
+
+```haskell
+publish: Database -> [(Key, Event)] ->{Remote} ()
+```
+We won't talk about `Remote`, mention `toRemote`
+
+```haskell
+publishBatch: Database -> [(Key, Event)] ->{Remote} ()
+publishBatch db events =
+   messages
+     |> groupMap at1 at2
+     |> foreach_ cases (key, events) ->
+          publish: Key -> [Event] ->{Remote} ()
+          publish key events = todo "Write this"
+         
+           publish key events
+```
+
+```haskell
+publishBatch: Database -> [(Key, Event)] ->{Remote} ()
+publishBatch db events =
+   messages
+     |> groupMap at1 at2
+     |> Remote.parMap cases (key, events) ->
+          publish: Key -> [Event] ->{Remote} ()
+          publish key events = todo "Write this"
+          
+          publish key events
+     |> ignore
+```
+
+```haskell
+publishBatch: Database -> [(Key, Event)] ->{Remote} ()
+publishBatch db events =
+   messages
+     |> groupMap at1 at2
+     |> toList
+     |> Remote.parMap cases (key, events) ->
+          publish: Key -> [Event] ->{Remote} ()
+          publish key events = todo "Write this"
+          
+          events
+            |> toList
+            |> chunk 10
+            |> foreach_ (events -> publish key events)
+```
 
 
-
-
+maybe rename the tuple to `messages`, and pattern match naively instead of using cases
+also figure out where to do groupMap and get the list or `groupMap` reduce
 
 
 
