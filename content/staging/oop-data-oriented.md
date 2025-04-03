@@ -55,8 +55,8 @@ case letters in type signatures indicate generic type parameters.
 Function calls are just whitespace (`f a b`), and `do ...` is
 syntactic sugar for thunks `_ -> ...`.
 
-Here's an example showing a bank transfer of 10 "pounds" ( horribly
-represented as just a non-negative integer) between Alice and Bob.
+Here's the canonical bank transfer example, Bob sends 10 pounds
+(represented as pennies) to Alice:
 
 ```haskell
 -- populated with data elsewhere
@@ -70,10 +70,11 @@ transfer database =
   transact database do
     from = read.tx accounts bob
     to = read.tx accounts alice
-    if balance >= 10 
+    amount = 10 * 100
+    if balance >= amount
     then 
-      write.tx accounts bob (from - 10) 
-      write.tx accounts alice (to + 10)
+      write.tx accounts bob (from - amount) 
+      write.tx accounts alice (to + amount)
     else 
       Exception.raiseGeneric "insufficient balance" bob
 
@@ -85,7 +86,7 @@ Cloud.run do
 
 The code snippet above runs `transfer` on Unison Cloud, where the data
 is persisted on our distributed storage, and the implementation of
-`transact` guarantees that the funds are transferred atomically.
+`transact` guarantees that the transaction executes atomically.
 
 ## Persistent data structures
 
