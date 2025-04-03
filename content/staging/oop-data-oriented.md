@@ -3,9 +3,14 @@ title: "OOP vs Data-oriented design...in a distributed FP language"
 date: 2025-04-03
 ---
 
-I enjoy drawing connections between seemingly distant areas of
-Software Engineering, and I've noted in several one-on-one
-conversations how much value I get from this strategy.
+It is often said that "Learning _x_ will make you a better
+programmer", for various values of _x_.
+
+In my experience the secret to making that true lies not so much in
+the choice of a given _x_, but rather in the ability to apply ideas
+from _x_ to _y_ , and then exposing oneselves to a wide range of
+ideas.
+
 
 Outside the context of a long conversation, however, is challenging to
 show a fully worked example of this process, which by its very nature
