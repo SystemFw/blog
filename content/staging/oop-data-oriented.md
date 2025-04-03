@@ -8,13 +8,14 @@ programmer", for various values of _x_.
 
 In my experience the secret to making that true lies not so much in
 the choice of a given _x_, but rather in the ability to apply ideas
-from _x_ to _y_ , and then exposing oneselves to a wide range of
+from _x_ to _y_ , and then exposing oneself to a wide range of
 ideas.
 
-It is challenging, however,to show a fully worked example of this
+It is challenging, however, to show a fully worked example of this
 process, which by its very nature is not self contained.
 
-Well, this post aims to do exactly that.
+Well, this post aims to do exactly that. Let's dive in.
+
 TODO if I split it in parts, describe them
 
 
@@ -24,21 +25,13 @@ My day job involves designing and implementing distributed systems for
 [Unison Cloud](unison.cloud), the next-gen cloud platform we're
 building on top of the [Unison](unison-lang.org) language.
 
-One of the unique features of our cloud is the power to manipulate
+A unique characteristic of our cloud is the power to manipulate
 persistent and transactional storage as if it was an in-memory
 datastructure.
 
-This capability is modelled as a set of _abilities_ , Unison's take on
-algebraic effects that can express custom control flow abstractions as
-ordinary straight-line code.
-
-Let's start by talking about a unique capability of our Cloud:
-manipulating persistent and transactional storage as if it was an
-in-memory datastructure.
-
-We expose this feature as a set of _abilities_ , Unison's take on
-algebraic effects that can express custom control flow abstractions as
-ordinary straight-line code.
+We expose this feature as a set of _abilities_ (Unison's take on
+algebraic effects) which let us express custom control flow
+abstractions as ordinary straight-line code.
 
 The model is fairly simple: you write programs in the `Transaction`
 ability that operate on one or more typed key-value tables, and call
