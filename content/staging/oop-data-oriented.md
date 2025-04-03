@@ -171,6 +171,18 @@ transact myDb do
   myLog |> append.tx (Track "Featherweight")
 ```
 
+Let's conclude this section with a couple of notes on semantics that
+will be useful later.
+
+The first is that the `Table` constructor, and by extension
+`Counter.named` and `Log.named`, don't actually create anything in
+storage there and then. A `Table` is just a logical handle, all the
+action happens during `transact`, which takes the actual `Database` we
+will modify. This is actually guaranteed by the types too:
+`Counter.named` and `Log.named` don't advertise any abilities, which
+means that they have no side-effects.
+
+
 semantics: named is pure, read/write perf
 
 
