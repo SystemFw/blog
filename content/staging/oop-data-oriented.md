@@ -182,8 +182,15 @@ will modify. This is actually guaranteed by the types too:
 `Counter.named` and `Log.named` don't advertise any abilities, which
 means that they have no side-effects.
 
-
-semantics: named is pure, read/write perf
+The second is about the execution model of transactions, to help us
+reason about performance. The implementation of `transact` uses
+Optimistic Concurrency Control, which means that reads go to storage,
+whilst writes are buffered in memory. When the transaction completes,
+`transact` will try to atomically commit all the writes to storage at
+once. If there is a conflict, it retries the whole transaction, which
+it can do because the Unison type system guarantees that the thunk
+passed to `transact` doesn't perform any other effects that wouldn't
+be safe to retry arbitrarily (like an HTTP call).
 
 
 
