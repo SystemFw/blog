@@ -222,8 +222,8 @@ publish: Database -> [(Key, Event)] ->{Remote} ()
 
 `Remote` is the ambient ability in Unison Cloud, it's very powerful
 but we won't cover it here for space reasons, just know that we can
-call `toRemote` to embed other cloud abilities in it, like `Storage`
-and `Exception` in our case.
+call `toRemote` to embed other cloud abilities in it, like `Storage`,
+`Exception` or `Random`.
 
 Ok, let's plan the implementation out. We need to start grouping the
 batch of events by key, which we can do with:
@@ -232,37 +232,113 @@ batch of events by key, which we can do with:
 List.groupMap : (a -> k) -> (a -> v) -> [a] -> Map k (List.Nonempty v)
 ```
 
-We want to upload batches of events for different keys in parallel, 
-which we can do with `Remote.parMap`.
+We then  want to upload batches of events for different keys in parallel, 
+let's use `Remote.parMap`:
 
 ```haskell
 Remote.parMap : (a ->{Remote} t) -> [a] ->{Remote} [t]
 ```
 
-At that point we will be dealing with batches of events for a single
+At this point we will be dealing with batches of events for a single
 key that have to be appended sequentially, so we can have a
 transaction that fetches the relevant `Log` and iterates through the
 keyed batch to append the events.
 
-Here's the full code:
+Here's the full code. Note the use of the `cases` keyword to pattern
+match on the `(key, events)` tuple in a lambda:
 
+```haskell
+publish: Database -> [(Key, Event)] ->{Remote} ()
+publish db messages = 
+  messages
+    |> List.groupMap at1 at2
+    |> Map.toList
+    |> Remote.parMap cases (key, events) ->
+         toRemote do
+           transact db do
+             log = read.tx streams key
+             events
+               |> toList
+               |> foreach_ (event -> log |> append event)
+    |> ignore
 ```
+
+there's a bug (fill in)
+
+```haskell
+publish: Database -> [(Key, Event)] ->{Remote} ()
+publish db messages = 
+  messages
+    |> List.groupMap at1 at2
+    |> Map.toList
+    |> Remote.parMap cases (key, events) ->
+         toRemote do
+           transact db do
+             log = match tryRead.tx streams key with
+               Some log -> log
+               None ->
+                 log = Log.named randomName()
+                 write.tx streams key log
+                 log
+             events
+               |> toList
+               |> foreach_ (event -> log |> append event)
+    |> ignore
+```
+
+
+
+## Optimisation 
+
+```haskell
 publish: Database -> [(Key, Event)] ->{Remote} ()
 publish db messages = 
   messages
    |> List.groupMap at1 at2
    |> Map.toList
-   |> Remote.parMap (messages ->
+   |> Remote.parMap cases (key, events) ->
        toRemote do
-         (key, events) = messages
-         transact db do
-           log = read.tx streams key
-           events
-            |> toList
-            |> foreach_ (event -> log |> append event)
-     )
+         events
+          |> chunk 10
+          |> foreach_ (chunk ->
+               transact db do
+                 log = match tryRead.tx streams key with
+                   Some log -> log
+                   None ->
+                     log = Log.named randomName()
+                     write.tx streams key log
+                     log
+                 events
+                   |> toList
+                   |> foreach_ (event -> log |> append event)
+             )
+   |> ignore
+```
+
+```haskell
+publish: Database -> [(Key, Event)] ->{Remote} ()
+publish db messages = 
+  messages
+   |> List.groupMap at1 at2
+   |> Map.toList
+   |> Remote.parMap cases (key, events) ->
+       toRemote do
+         log = transact db do
+           match tryRead.tx streams key with
+             Some log -> log
+             None ->
+               log = Log.named randomName()
+               write.tx streams key log
+               log
+         events
+          |> chunk 10
+          |> foreach_ (chunk ->
+               transact db do
+                 events
+                   |> toList
+                   |> foreach_ (event -> log |> append event)
+             )
    |> ignore
 ```
 
 
-## Optimisation 
