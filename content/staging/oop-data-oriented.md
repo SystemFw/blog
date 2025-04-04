@@ -16,14 +16,7 @@ process, which by its very nature is not self contained.
 
 Well, this post aims to do exactly that. Let's dive in.
 
-TODO if I split it in parts, describe them?
-or maybe just 
-Part I: Unison transactions (replacing intro)
-Part II: OO and Data Oriented design 
-Conclusion(s)
-
-
-## Intro
+## Intro: distributed transactions in Unison
 
 My day job involves designing and implementing distributed systems for
 [Unison Cloud](unison.cloud), the next-gen cloud platform we're
@@ -96,8 +89,6 @@ Cloud.run do
 The code snippet above runs `transfer` on Unison Cloud, where the data
 is persisted on our distributed storage, and the implementation of
 `transact` guarantees that the transaction executes atomically.
-
-## Persistent data structures
 
 Transactions on typed key-value tables are a flexible building block,
 and we can build data structures just like we would for in-memory
@@ -201,70 +192,77 @@ it can do because the Unison type system guarantees that the thunk
 passed to `transact` doesn't perform any other effects that wouldn't
 be safe to retry arbitrarily (like an HTTP call).
 
-## Case study
+## Case study: stream storage
 
-Needs rewording
-We now have all the tools to look at the main protagonist of this post, which is a simplified version of a problem I've faced recently
-For the past few months I have been working on a streaming framework for Unison Cloud,
-Finish the intro
+We can now look at the problem this post will be centred around, which
+is a simplified version of something I've encounted while developing
+[volturno](https://share.unison-lang.org/@systemfw/volturno/code/main/latest),
+a distributed stream processing framework.
 
-`Key`, `Event`, `Table Key (Log Event)`
+Imagine we need to design the storage layer for keyed data streams.
+For our toy version, we can go with something like this:
+
+```haskell
+type Key
+type Event
+
+streams: Table Key (Log Event)
+```
+
+Where we basically store a log of events for each key (the real code
+uses sharding, but we will keep the simpler version above in this
+post).
+
+We want to implement a function to publish a batch of events to our
+`streams` `Table`:
 
 ```haskell
 publish: Database -> [(Key, Event)] ->{Remote} ()
 ```
-We won't talk about `Remote`, mention `toRemote`
+
+`Remote` is the ambient ability in Unison Cloud, it's very powerful
+but we won't cover it here for space reasons, just know that we can
+call `toRemote` to embed other cloud abilities in it, like `Storage`
+and `Exception` in our case.
+
+Ok, let's plan the implementation out. We need to start grouping the
+batch of events by key, which we can do with:
 
 ```haskell
-publishBatch: Database -> [(Key, Event)] ->{Remote} ()
-publishBatch db events =
-   messages
-     |> groupMap at1 at2
-     |> foreach_ cases (key, events) ->
-          publish: Key -> [Event] ->{Remote} ()
-          publish key events = todo "Write this"
-         
-           publish key events
+List.groupMap : (a -> k) -> (a -> v) -> [a] -> Map k (List.Nonempty v)
 ```
 
-```haskell
-publishBatch: Database -> [(Key, Event)] ->{Remote} ()
-publishBatch db events =
-   messages
-     |> groupMap at1 at2
-     |> Remote.parMap cases (key, events) ->
-          publish: Key -> [Event] ->{Remote} ()
-          publish key events = todo "Write this"
-          
-          publish key events
-     |> ignore
-```
+We want to upload batches of events for different keys in parallel, 
+which we can do with `Remote.parMap`.
 
 ```haskell
-publishBatch: Database -> [(Key, Event)] ->{Remote} ()
-publishBatch db events =
-   messages
-     |> groupMap at1 at2
-     |> toList
-     |> Remote.parMap cases (key, events) ->
-          publish: Key -> [Event] ->{Remote} ()
-          publish key events = todo "Write this"
-          
-          events
+Remote.parMap : (a ->{Remote} t) -> [a] ->{Remote} [t]
+```
+
+At that point we will be dealing with batches of events for a single
+key that have to be appended sequentially, so we can have a
+transaction that fetches the relevant `Log` and iterates through the
+keyed batch to append the events.
+
+Here's the full code:
+
+```
+publish: Database -> [(Key, Event)] ->{Remote} ()
+publish db messages = 
+  messages
+   |> List.groupMap at1 at2
+   |> Map.toList
+   |> Remote.parMap (messages ->
+       toRemote do
+         (key, events) = messages
+         transact db do
+           log = read.tx streams key
+           events
             |> toList
-            |> chunk 10
-            |> foreach_ (events -> publish key events)
+            |> foreach_ (event -> log |> append event)
+     )
+   |> ignore
 ```
 
 
-maybe rename the tuple to `messages`, and pattern match naively instead of using cases
-also figure out where to do groupMap and get the list or `groupMap` reduce
-I don't think I want to show all the iterations of the code logic, just describe the requirement
-
-
-
-
-
-
-
-
+## Optimisation 
