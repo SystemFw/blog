@@ -263,7 +263,14 @@ publish db messages =
     |> ignore
 ```
 
-there's a bug (fill in)
+That looks pretty good, but unfortunately it has a bug. We fetch the
+relevant log with `read.tx streams key`, which will fail if the log
+isn't there, _but nothing guarantees the log will be there_. The logs
+are per key, so we cannot create them all in advance as we don't know
+all the keys in advance. Instead, we have to create a log on demand,
+if we want to write some messages to it but we cannot find it in
+storage. We will use `randomName: '{Random} Text` to generate a name
+for our log:
 
 ```haskell
 publish: Database -> [(Key, Event)] ->{Remote} ()
