@@ -89,7 +89,8 @@ transfer database =
 -- no infra needed to run code on cloud!
 Cloud.run do
   db = Database.default()
-  Cloud.submit Environment.default() do transfer db
+  Cloud.submit Environment.default() do -- supports the Storage ability
+    transfer db
 ```
 
 The code snippet above runs `transfer` on Unison Cloud, where the data
