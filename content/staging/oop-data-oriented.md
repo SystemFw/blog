@@ -48,7 +48,11 @@ ability Transaction where
   write.tx : Table k v -> k -> v ->{Transaction} ()
   tryRead.tx : Table k v -> k ->{Transaction} Optional v
   delete.tx : Table k v -> k ->{Transaction} ()
-  
+
+-- like tryRead.tx, but fails on key not found
+read.tx: Table k v -> k ->{Transaction, Exception} v
+
+
 transact : Database -> '{Transaction, Exception, Random, Batch} a ->{Exception, Storage} a
 ```
 
@@ -82,7 +86,7 @@ transfer database =
     else 
       Exception.raiseGeneric "insufficient balance" bob
 
--- no infra needed to run code on cloud
+-- no infra needed to run code on cloud!
 Cloud.run do
   db = Database.default()
   Cloud.submit Environment.default() do transfer db
@@ -254,6 +258,7 @@ publishBatch db events =
 
 maybe rename the tuple to `messages`, and pattern match naively instead of using cases
 also figure out where to do groupMap and get the list or `groupMap` reduce
+I don't think I want to show all the iterations of the code logic, just describe the requirement
 
 
 
