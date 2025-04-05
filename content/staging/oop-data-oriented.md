@@ -336,7 +336,7 @@ Ok, but now note how `tryRead.tx` is read from storage multiple times
 (one per chunk), even though we know that after the first chunk it
 will certainly have been created (by us) if it didn't exist.
 
-Well, we can move the code that checks or create the log to a separate
+Well, we can move the code that checks or creates the log to a separate
 transaction at the start:
 
 ```haskell
