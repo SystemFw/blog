@@ -303,7 +303,7 @@ conscious about optimising our code properly. To start with, we're
 publishing all the events for a given key in a single transaction.
 Transactions actually have a size limit, so this isn't wise.
 On the other hand, we don't want to publish each event in its own transaction
-and give up batching entirely. We'll compromise by sending events in
+and give up batching entirely, so we'll compromise by sending events in
 batches of 25, using `chunk: Nat -> [a] -> [[a]]` for help:
 
 
