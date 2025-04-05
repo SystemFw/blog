@@ -60,6 +60,8 @@ Here's the canonical bank transfer example, Bob sends 10 pounds
 (represented as pennies) to Alice:
 
 ```haskell
+type UserId = UserId Text
+
 -- populated with data elsewhere
 accounts: Table UserId Nat
 accounts = Table "accounts"
