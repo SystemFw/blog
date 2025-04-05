@@ -370,7 +370,7 @@ something else modifies it straight after, each call to `Log.append`
 is checking the size of the log transactionally before appending
 anyway.
 
-This version of the code also avoids reading the log on each chunk,
+This version of the code does avoid reading the log on each chunk,
 but it's still not optimal: if the log doesn't exist and we do need to
 create it, we will have this extra transaction just to create the log,
 instead of creating it in the same transaction that also adds the
