@@ -441,3 +441,9 @@ particularly prominent in a functional programming language, which is
 typically geared towards elegant code.
 
 So, is this the best we can do? Turns out ... segue into DoD/OOP
+
+TODO maybe add a helper for the per-key publish , and then just use
+that to write the various examples instead of repeating the full code
+`publishKey`, "there is a bug in `publishKey`", need to see if it's
+still worth introducing `cases` (default yes)
+
