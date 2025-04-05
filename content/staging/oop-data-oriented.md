@@ -432,7 +432,7 @@ events |> mapChunked (chunk ->
 )
 ```
 
-On top of that, there is another instinct that's even more pernicious:
+On top of that, there's another instinct that's even more pernicious:
 a subtle bias to make the behaviour of the system worse in order to
 have prettier code. Not every optimisation is worth its complexity of
 course, however pretty code is first and foremost a tool to achieve
