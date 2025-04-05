@@ -418,25 +418,23 @@ Now, it's reasonable at this point to want to introduce some named
 helpers to clean it up, but that's not as great an idea as it sounds
 in this type of system: named helpers might preserve (or even clarify)
 the _intent_ of the code, but they obscure the access patterns to the
-data, which is important information for systems code to convey. The
-very first snippet in this section can look quite harmless, for
-example:
+data, which is important information for systems code to convey. 
+A couple of named helpers (`mapChunked`, `getLog`) can make the very
+first snippet in this section look quite harmless, for example:
 
 ```haskell
-events
- |> chunk 25
- |> foreach_ (chunk ->
-      transact db do
-        log = getLog key
-        events
-          |> toList
-          |> foreach_ (event -> log |> append event)
-    )
+events |> mapChunked (chunk ->
+  transact db do
+    log = getLog key
+    events
+      |> toList
+      |> foreach_ (event -> log |> append event)
+)
 ```
 
-There is also another instinct, which is even more pernicious: a
-subtle bias to make the behaviour of the system worse in order to have
-prettier code. Not every optimisation is worth its complexity of
+On top of that, there is another instinct that's even more pernicious:
+a subtle bias to make the behaviour of the system worse in order to
+have prettier code. Not every optimisation is worth its complexity of
 course, however pretty code is first and foremost a tool to achieve
 the desired behaviour, not the other way around. This risk is
 particularly prominent in a functional programming language, which is
