@@ -197,7 +197,7 @@ be safe to retry arbitrarily (like an HTTP call).
 We can now look at the problem this post will be centred around, which
 is a simplified version of something I've encounted while developing
 [volturno](https://share.unison-lang.org/@systemfw/volturno/code/main/latest),
-a distributed stream processing framework.
+a distributed stream processing framework (think Kafka + Flink).
 
 Imagine we need to design the storage layer for keyed data streams.
 For our toy version, we can go with something like this:
@@ -267,10 +267,10 @@ That looks pretty good, but unfortunately it has a bug. We fetch the
 relevant log with `read.tx streams key`, which will fail if the log
 isn't there, _but nothing guarantees the log will be there_. The logs
 are per key, so we cannot create them all in advance as we don't know
-all the keys in advance. Instead, we have to create a log on demand,
-if we want to write some messages to it but we cannot find it in
-storage. We will use `randomName: '{Random} Text` to generate a name
-for our log:
+all the keys in advance. Instead, we will creat each log on demand if
+we cannot find it in storage when we want to write some messages to
+it. We will use `randomName: '{Random} Text` to generate a name for
+our log:
 
 ```haskell
 publish: Database -> [(Key, Event)] ->{Remote} ()
@@ -294,8 +294,16 @@ publish db messages =
 ```
 
 
+## Wrestling with optimisation 
 
-## Optimisation 
+We're dealing with a performance sensitive system, so we have to be
+conscious about optimising our code properly. To start with, we're
+publishing all the events for a given key in a single transaction.
+Transactions actually have a size limit, so this isn't wise.
+Conversely, we don't want to publish each event in its own transaction
+and give up batching entirely. We'll compromise by sending events in
+batches of 25, using `chunk: Nat -> [a] -> [[a]]` for help:
+
 
 ```haskell
 publish: Database -> [(Key, Event)] ->{Remote} ()
@@ -306,7 +314,7 @@ publish db messages =
    |> Remote.parMap cases (key, events) ->
        toRemote do
          events
-          |> chunk 10
+          |> chunk 25
           |> foreach_ (chunk ->
                transact db do
                  log = match tryRead.tx streams key with
@@ -321,6 +329,13 @@ publish db messages =
              )
    |> ignore
 ```
+
+Ok, but now note how `tryRead.tx` is read from storage multiple times
+(one per chunk), even though we know that after the first chunk it
+will certainly have been created (by us) if it didn't exist.
+
+Well, we can move the code that checks or create the log to a separate
+transaction at the start:
 
 ```haskell
 publish: Database -> [(Key, Event)] ->{Remote} ()
@@ -338,7 +353,7 @@ publish db messages =
                write.tx streams key log
                log
          events
-          |> chunk 10
+          |> chunk 25
           |> foreach_ (chunk ->
                transact db do
                  events
@@ -348,4 +363,81 @@ publish db messages =
    |> ignore
 ```
 
+Remember that the above is still correct: even if we get the `log` and
+something else modifies it straight after, each call to `Log.append`
+is checking the size of the log transactionally before appending
+anyway.
 
+This version of the code also avoids reading the log on each chunk,
+but it's still not optimal: if the log doesn't exist and we do need to
+create it, we will have this extra transaction just to create the log,
+instead of creating it in the same transaction that also adds the
+first chunk. In other words, we're wasting one transactional roundtrip
+which could carry some messages instead.
+
+The optimal behaviour requires trickier code, we want to get (and
+potentially create) the log on the first chunk, and then carry it
+across the other chunks afterwards, using a fold:
+
+```haskell
+publish: Database -> [(Key, Event)] ->{Remote} ()
+publish db messages = 
+  messages
+   |> List.groupMap at1 at2
+   |> Map.toList
+   |> Remote.parMap cases (key, events) ->
+       toRemote do
+         events
+          |> chunk 25
+          |> foldLeft_ None (log chunk ->
+               transact db do
+                 log' = match log with
+                   Some log -> log
+                   None -> match tryRead.tx streams key with
+                     Some log -> log
+                     None ->
+                       log = Log.named randomName()
+                       write.tx streams key log
+                       log
+                 events
+                     |> toList
+                     |> foreach_ (event -> log' |> append event)
+                 log'
+             )
+   |> ignore
+```
+
+Ok, this behaves as we want it to... but it's pretty gnarly. It's not
+_terrible_ in this short snippet, but the real code dealt with
+additional concerns such as error handling, and this log creation
+logic was really tipping the scale and making it hard to understand.
+
+Now, it's reasonable at this point to want to introduce some named
+helpers to clean it up, but that's not as great an idea as it sounds
+in this type of system: named helpers might preserve (or even clarify)
+the _intent_ of the code, but they obscure the access patterns to the
+data, which is important information for systems code to convey. The
+very first snippet in this section can look quite harmless, for
+example:
+
+```haskell
+events
+ |> chunk 25
+ |> foreach_ (chunk ->
+      transact db do
+        log = getLog key
+        events
+          |> toList
+          |> foreach_ (event -> log |> append event)
+    )
+```
+
+There is also another instinct, which is even more pernicious: a
+subtle bias to make the behaviour of the system worse in order to have
+prettier code. Not every optimisation is worth its complexity of
+course, however pretty code is first and foremost a tool to achieve
+the desired behaviour, not the other way around. This risk is
+particularly prominent in a functional programming language, which is
+typically geared towards elegant code.
+
+So, is this the best we can do? Turns out ... segue into DoD/OOP
