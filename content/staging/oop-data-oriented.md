@@ -153,7 +153,7 @@ Log.append v log =
 note that `size` and `elems` cannot go out of sync since we're still
 in the `Transaction` ability.
 
-A call to `append.tx` executes atomically when we call `transact`:
+A call to `Log.append` executes atomically when we call `transact`:
 
 ```haskell
 type Track = Track Text
