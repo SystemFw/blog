@@ -269,7 +269,7 @@ That looks pretty good, but unfortunately it has a bug. We fetch the
 relevant log with `read.tx streams key`, which will fail if the log
 isn't there, _but nothing guarantees the log will be there_. The logs
 are per key, so we cannot create them all in advance as we don't know
-all the keys in advance. Instead, we will creat each log on demand if
+all the keys in advance. Instead, we will create each log on demand if
 we cannot find it in storage when we want to write some messages to
 it. We will use `randomName: '{Random} Text` to generate a name for
 our log:
