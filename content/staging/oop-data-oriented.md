@@ -303,7 +303,6 @@ On the other hand, we don't want to publish each event in its own transaction
 and give up batching entirely, so we'll compromise by sending events in
 batches of 25, using `chunk: Nat -> [a] -> [[a]]` for help:
 
-
 ```haskell
 publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
 publishKey db key events =
@@ -400,17 +399,18 @@ sounds in this type of system: named helpers might preserve (or even
 clarify) the _intent_ of the code, but they obscure the access
 patterns to the data, which is important information for systems code
 to convey. A couple of named helpers (`mapChunked`, `getLog`) can make
-the very first snippet in this section look quite harmless, for
-example:
+the very first version we had look quite harmless, for example:
 
 ```haskell
-events |> mapChunked (chunk ->
-  transact db do
-    log = getLog key
-    events
-      |> toList
-      |> foreach_ (event -> log |> append event)
-)
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  events |> mapChunked (chunk ->
+    transact db do
+      log = getLog key
+      events
+        |> toList
+        |> foreach_ (event -> log |> append event)
+  )
 ```
 
 On top of that, there's another instinct that's even more pernicious:
