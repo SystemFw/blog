@@ -503,7 +503,7 @@ Beyond learning a specific techniques from _x_ , it is the compounding of this t
 
 
 
-Appendix: 3 practical points for exploiting far out ideas
+## Appendix: 3 practical points for exploiting far out ideas
 
 - A lot of interesting ideas are found in somewhat niche communities:
   functional programming, game development, formal methods, futuristic HCI, etc.
@@ -511,11 +511,11 @@ Appendix: 3 practical points for exploiting far out ideas
 
 - Many bad ideas just make sense at first. Many good ideas sound like
   utter nonsense at first. Don't take everything at face value, but
-  don't close your mind too early.
+  don't close your mind too early either.
 
 - Unfortunately, cool ideas are often presented as universal truths
-  that ought to apply to every field of coding. Instead, they are
-  typically borne out of a specific context. Strive to really
+  that ought to apply to every field of software engineering. Instead,
+  they are typically borne out of a specific context. Strive to really
   understand that context, and you will find ways to apply those ideas
   in interesting, unexpected places. Equally as importantly, you will
   also know when to safely dismiss them.
