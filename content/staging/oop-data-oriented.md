@@ -211,7 +211,7 @@ type Event
 streams: Table Key (Log Event)
 ```
 
-Where we basically store a log of events for each key (the real code
+where we basically store a log of events for each key (the real code
 uses sharding, but we will keep the simpler version above in this
 post).
 
@@ -256,43 +256,40 @@ publish db messages =
     |> List.groupMap at1 at2
     |> Map.toList
     |> Remote.parMap cases (key, events) ->
-         toRemote do
-           transact db do
-             log = read.tx streams key
-             events
-               |> toList
-               |> foreach_ (event -> log |> append event)
+         toRemote do publishKey db key events
     |> ignore
+    
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  transact db do
+    log = read.tx streams key
+    events
+      |> toList
+      |> foreach_ (event -> log |> append event)
 ```
 
-That looks pretty good, but unfortunately it has a bug. We fetch the
-relevant log with `read.tx streams key`, which will fail if the log
-isn't there, _but nothing guarantees the log will be there_. The logs
-are per key, so we cannot create them all in advance as we don't know
-all the keys in advance. Instead, we will create each log on demand if
-we cannot find it in storage when we want to write some messages to
-it. We will use `randomName: '{Random} Text` to generate a name for
-our log:
+That looks pretty good, but unfortunately `publishKey` has a bug. We
+fetch the relevant log with `read.tx streams key`, which will fail if
+the log isn't there, _but nothing guarantees the log will be there_.
+The logs are per key, so we cannot create them all in advance as we
+don't know all the keys in advance. Instead, we will create each log
+on demand if we cannot find it in storage when we want to write some
+messages to it. We will use `randomName: '{Random} Text` to generate a
+name for our log:
 
 ```haskell
-publish: Database -> [(Key, Event)] ->{Remote} ()
-publish db messages = 
-  messages
-    |> List.groupMap at1 at2
-    |> Map.toList
-    |> Remote.parMap cases (key, events) ->
-         toRemote do
-           transact db do
-             log = match tryRead.tx streams key with
-               Some log -> log
-               None ->
-                 log = Log.named randomName()
-                 write.tx streams key log
-                 log
-             events
-               |> toList
-               |> foreach_ (event -> log |> append event)
-    |> ignore
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  transact db do
+    log = match tryRead.tx streams key with
+      Some log -> log
+      None ->
+        log = Log.named randomName()
+        write.tx streams key log
+        log
+    events
+      |> toList
+      |> foreach_ (event -> log |> append event)
 ```
 
 
@@ -308,28 +305,22 @@ batches of 25, using `chunk: Nat -> [a] -> [[a]]` for help:
 
 
 ```haskell
-publish: Database -> [(Key, Event)] ->{Remote} ()
-publish db messages = 
-  messages
-   |> List.groupMap at1 at2
-   |> Map.toList
-   |> Remote.parMap cases (key, events) ->
-       toRemote do
-         events
-          |> chunk 25
-          |> foreach_ (chunk ->
-               transact db do
-                 log = match tryRead.tx streams key with
-                   Some log -> log
-                   None ->
-                     log = Log.named randomName()
-                     write.tx streams key log
-                     log
-                 events
-                   |> toList
-                   |> foreach_ (event -> log |> append event)
-             )
-   |> ignore
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  events
+    |> chunk 25
+    |> foreach_ (chunk ->
+         transact db do
+           log = match tryRead.tx streams key with
+             Some log -> log
+             None ->
+               log = Log.named randomName()
+               write.tx streams key log
+               log
+           events
+             |> toList
+             |> foreach_ (event -> log |> append event)
+       )
 ```
 
 Ok, but now note how `tryRead.tx` is read from storage multiple times
@@ -340,29 +331,23 @@ Well, we can move the code that checks or creates the log to a separate
 transaction at the start:
 
 ```haskell
-publish: Database -> [(Key, Event)] ->{Remote} ()
-publish db messages = 
-  messages
-   |> List.groupMap at1 at2
-   |> Map.toList
-   |> Remote.parMap cases (key, events) ->
-       toRemote do
-         log = transact db do
-           match tryRead.tx streams key with
-             Some log -> log
-             None ->
-               log = Log.named randomName()
-               write.tx streams key log
-               log
-         events
-          |> chunk 25
-          |> foreach_ (chunk ->
-               transact db do
-                 events
-                   |> toList
-                   |> foreach_ (event -> log |> append event)
-             )
-   |> ignore
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  log = transact db do
+    match tryRead.tx streams key with
+      Some log -> log
+      None ->
+        log = Log.named randomName()
+        write.tx streams key log
+        log
+  events
+    |> chunk 25
+    |> foreach_ (chunk ->
+         transact db do
+           events
+             |> toList
+             |> foreach_ (event -> log |> append event)
+       )
 ```
 
 Remember that the above is still correct: even if we get the `log` and
@@ -374,53 +359,49 @@ This version of the code does avoid reading the log on each chunk,
 but it's still not optimal: if the log doesn't exist and we do need to
 create it, we will have this extra transaction just to create the log,
 instead of creating it in the same transaction that also adds the
-first chunk. In other words, we're wasting one transactional roundtrip
-which could carry some messages instead.
+first chunk. In other words, we're "wasting" one transactional
+roundtrip, that could carry some messages instead.
 
 The optimal behaviour requires trickier code, we want to get (and
 potentially create) the log on the first chunk, and then carry it
 across the other chunks afterwards, using a fold:
 
 ```haskell
-publish: Database -> [(Key, Event)] ->{Remote} ()
-publish db messages = 
-  messages
-   |> List.groupMap at1 at2
-   |> Map.toList
-   |> Remote.parMap cases (key, events) ->
-       toRemote do
-         events
-          |> chunk 25
-          |> foldLeft_ None (log chunk ->
-               transact db do
-                 log' = match log with
-                   Some log -> log
-                   None -> match tryRead.tx streams key with
-                     Some log -> log
-                     None ->
-                       log = Log.named randomName()
-                       write.tx streams key log
-                       log
-                 events
-                     |> toList
-                     |> foreach_ (event -> log' |> append event)
-                 log'
-             )
-   |> ignore
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  events
+    |> chunk 25
+    |> foldLeft_ None (log chunk ->
+         transact db do
+           log' = match log with
+             Some log -> log
+             None -> match tryRead.tx streams key with
+               Some log -> log
+               None ->
+                 log = Log.named randomName()
+                 write.tx streams key log
+                 log
+           events
+             |> toList
+             |> foreach_ (event -> log' |> append event)
+           log'
+       )
 ```
 
-Ok, this behaves as we want it to... but it's pretty gnarly. It's not
-_terrible_ in this short snippet, but the real code dealt with
-additional concerns such as error handling, and this log creation
-logic was really tipping the scale and making it hard to understand.
+Ok, this behaves as we want it to... but it's starting to get pretty
+gnarly. It's not _terrible_ in this short snippet, but the real code
+dealt with additional concerns such as error handling, and this log
+creation logic was really tipping the scale and making it hard to
+understand.
 
-Now, it's reasonable at this point to want to introduce some named
-helpers to clean it up, but that's not as great an idea as it sounds
-in this type of system: named helpers might preserve (or even clarify)
-the _intent_ of the code, but they obscure the access patterns to the
-data, which is important information for systems code to convey. 
-A couple of named helpers (`mapChunked`, `getLog`) can make the very
-first snippet in this section look quite harmless, for example:
+Now, it's reasonable at this point to want to introduce some more
+named helpers to clean it up, but that's not as great an idea as it
+sounds in this type of system: named helpers might preserve (or even
+clarify) the _intent_ of the code, but they obscure the access
+patterns to the data, which is important information for systems code
+to convey. A couple of named helpers (`mapChunked`, `getLog`) can make
+the very first snippet in this section look quite harmless, for
+example:
 
 ```haskell
 events |> mapChunked (chunk ->
