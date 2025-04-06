@@ -46,7 +46,7 @@ ability Transaction where
 read.tx: Table k v -> k ->{Transaction, Exception} v
 
 
-transact : Database -> '{Transaction, Exception, Random, Batch} a ->{Exception, Storage} a
+transact : Database -> '{Transaction, Exception, Random} a ->{Exception, Storage} a
 ```
 
 As a quick syntax primer, `a -> b ->{g} c` is a function from `a` and
