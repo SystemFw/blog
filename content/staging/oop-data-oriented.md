@@ -462,8 +462,60 @@ class Event(..)
 class Streams(streams: Map[Key, Log[Event]])
 ```
 
+why it's good
+criticism about mutation from fp camp doesn't apply
+context for DoD, game design, memory access, manual memory management
+why it's bad:
+lots of pointers, so
+tiny allocations
+access via multiple hops
+deallocation is tricky cause you have to free individually
+hard to understand data access patterns behind encapsulation
 
-I think just go "unison is not an OO language" and start directly with
-the comparison, with the no GC thought experiment, and then talk about
-the Data Oriented design philosophy, instead of a completely
-standalone section on OO vs DoD which requires extra examples
+what does data driven design code look like: often data is kept in
+flat arrays for cache friendliness, pointers are replaced by indexes,
+allocation can happen in batch, deallocation can happen in batch, and
+generally this makes it easier to deal with lifetimes.
+
+Beyond the specific technique, there is a philosophical lesson: having
+your code reflect the domain is a false goal, instead we should just
+look at it as a data transformation, identify which data we need to
+transform, and then figure out the simplest way for the _machine_ to
+carry that transformation.
+
+Now, it's easy to dismiss this as supremely irrelevant to us: we _do_
+have a GC, we enjoy it very much thank you, and we're in a much higher
+level language anyway where this minutiae ought not to matter.
+
+But let's 
+
+This post is already very long, but I do want to conclude with a few takeaways
+
+
+
+Takeaway no 1
+it's not DoD >> OOP, understand the tradeoffs
+
+Takeway no 2
+
+we didn't just improve our code, we gained a better understanding of fundamental aspects: modularity vs tight integration, etc
+Beyond learning a specific techniques from _x_ , it is the compounding of this type of understanding that, in my experience, actually makes you a better programmer
+
+
+
+Appendix: 3 practical points for exploiting far out ideas
+
+- A lot of interesting ideas are found in somewhat niche communities:
+  functional programming, game development, formal methods, futuristic HCI, etc.
+  Be curious.
+
+- Many bad ideas just make sense at first. Many good ideas sound like
+  utter nonsense at first. Don't take everything at face value, but
+  don't close your mind too early.
+
+- Unfortunately, cool ideas are often presented as universal truths
+  that ought to apply to every field of coding. Instead, they are
+  typically borne out of a specific context. Strive to really
+  understand that context, and you will find ways to apply those ideas
+  in interesting, unexpected places. Equally as importantly, you will
+  also know when to safely dismiss them.
