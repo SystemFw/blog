@@ -465,7 +465,7 @@ class Event(..)
 
 class Streams(streams: Map[Key, Log[Event]])
 ```
-
+[-- fill this in
 why it's good
 criticism about mutation from fp camp doesn't apply
 context for DoD, game design, memory access, manual memory management
@@ -480,6 +480,7 @@ what does data driven design code look like: often data is kept in
 flat arrays for cache friendliness, pointers are replaced by indexes,
 allocation can happen in batch, deallocation can happen in batch, and
 generally this makes it easier to deal with lifetimes.
+--]
 
 Beyond the specific technique, there is a philosophical lesson: having
 your code reflect the domain is a false goal, instead we should just
@@ -491,21 +492,46 @@ Now, it's easy to dismiss this as supremely irrelevant to us: we _do_
 have a GC, we enjoy it very much thank you, and we're in a much higher
 level language anyway where this minutiae ought not to matter.
 
-But let's 
+But let's zoom out a bit: it is true that in a higher level language
+there's less emphasis about counting care about every single memory
+access, however in our transactional code the pointer hopping mapped
+to reads from storage, and we _did_ care about optimising those. We
+also didn't have to deal with manual deallocation of memory, but the
+chief complication in `publishKey` could indeed be framed as a problem
+with _lifetimes_, specifically about having to create these `Log`
+instances at the right time.
+ 
+So let's try to apply Data Oriented Design to our problem and see if
+it bears any fruit.
 
-This post is already very long, but I do want to conclude with a few takeaways
+## Improve the code
 
+## Conclusion
 
-## OOP vs Data Oriented Design
-Takeaway no 1
-it's not DoD >> OOP, understand the tradeoffs
+You shouldn't walk away from this post thinking that there is a
+universal winner between the two approaches we discussed today.
+Instead, you should look critically at the tradeoffs. 
 
-## What did we gain?
+The OO design is more composable, it gives us nice building blocks
+that we can package in a library and reuse in interesting ways to
+easily assemble novel behaviour. Conversely, if we're willing to give
+up flexibility, the data oriented design can result in simpler code,
+and with an easier path to optimal performance.
 
-we didn't just improve our code, we gained a better understanding of fundamental aspects: modularity vs tight integration, etc
-Beyond learning a specific techniques from _x_ , it is the compounding of this type of understanding that, in my experience, actually makes you a better programmer
+There is something really deep here in my opinion, about the nature of
+abstraction itself. Abstraction is the most powerful tool we have to
+expand the ceiling of our skill when we don't fully grasp the
+problem/solution space, and it also adapts gracefully if the problem
+space changes. However, if we do understand that space, tearing the
+abstraction apart reveals hidden details that lead to a more optimal
+solution, albeit one that's more set in stone.
 
+I would argue that a greater appreciation of these tradeoffs is as big
+a payoff from our journey than the code improvement that we got. 
 
+In fact, beyond any specific technique, it is the compounding of this
+type of understanding that, in my experience, actually makes you a
+better programmer.
 
 ## Appendix: 3 practical points for exploiting far out ideas
 
@@ -520,7 +546,7 @@ Beyond learning a specific techniques from _x_ , it is the compounding of this t
 - Unfortunately, cool ideas are often presented as universal truths
   that ought to apply to every field of software engineering. Instead,
   they are typically borne out of a specific context. Strive to really
-  understand that context, and you will find ways to apply those ideas
-  in interesting, unexpected places that share just a tiny bit of that
+  understand it, and you will find ways to apply those ideas in
+  interesting, unexpected places that share just a tiny bit of that
   context. Equally as importantly, you will know when you can safely
   dismiss them as well.
