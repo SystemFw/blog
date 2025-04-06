@@ -12,7 +12,7 @@ from _x_ to _y_ , and then exposing oneself to a wide range of
 such ideas.
 
 It is challenging, however, to show a fully worked example of this
-process, which by its very nature is not self contained.
+process, which is not self contained by its very nature.
 
 Well, this post aims to do exactly that. Let's dive in.
 
