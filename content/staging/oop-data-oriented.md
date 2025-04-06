@@ -1,5 +1,5 @@
 ---
-title: "OOP vs Data-oriented design...in a distributed FP language"
+title: "OOP vs Data oriented design...in a distributed FP language"
 date: 2025-04-03
 ---
 
@@ -101,7 +101,7 @@ Let's build a `Counter`:
 type Counter = Counter (Table () Nat)
 
 Counter.named: Text -> Counter
-Counter.named name = Counter db (Table name)
+Counter.named name = Counter (Table name)
 ```
 
 The idea is that we can represent the state of the counter in a table
