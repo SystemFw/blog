@@ -523,8 +523,8 @@ abstraction itself. Abstraction is the most powerful tool we have to
 expand the ceiling of our skill when we don't fully grasp the
 problem/solution space, and it also adapts gracefully if the problem
 space changes. However, if we do understand that space, tearing the
-abstraction apart reveals hidden details that lead to a more optimal
-solution, albeit one that's more set in stone.
+abstraction apart reveals hidden details that can lead us to a more
+optimal solution, albeit one that's more set in stone.
 
 I would argue that a greater appreciation of these tradeoffs is as big
 a payoff from our journey than the code improvement that we got. 
