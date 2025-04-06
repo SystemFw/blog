@@ -353,15 +353,14 @@ publishKey db key events =
 
 Remember that the above is still correct: even if we get the `log` and
 something else modifies it straight after, each call to `Log.append`
-is checking the size of the log transactionally before appending
-anyway.
+is checking the size of the log transactionally before appending.
 
 This version of the code does avoid reading the log on each chunk,
 but it's still not optimal: if the log doesn't exist and we do need to
 create it, we will have this extra transaction just to create the log,
 instead of creating it in the same transaction that also adds the
 first chunk. In other words, we're "wasting" one transactional
-roundtrip, that could carry some messages instead.
+roundtrip that could carry some messages instead.
 
 The optimal behaviour requires trickier code, we want to get (and
 potentially create) the log on the first chunk, and then carry it
@@ -422,12 +421,46 @@ the desired behaviour, not the other way around. This risk is
 particularly prominent in a functional programming language, which is
 typically geared towards elegant code.
 
-So, is this the best we can do? Turns out ... segue into DoD/OOP
+So, is this the best we can do? Turns out it's not, but to see how we
+need to go looking for ideas in some unexpected places...
 
-TODO maybe add a helper for the per-key publish , and then just use
-that to write the various examples instead of repeating the full code
-`publishKey`, "there is a bug in `publishKey`", need to see if it's
-still worth introducing `cases` (default yes)
+## OOP and Data Oriented Design
+
+Unison is decidedly not an object oriented language: it has no
+classes, no methods, no inheritance, not even interfaces. And yet, the
+design we've seen embodies some of the ideas that have made OO
+popular: it's based on data types that mirror their logical domain,
+keep their internals encapsulated, and expore their behaviour through
+an explicit api.
+
+In fact, here's how our data model could look like in a
+generic-looking OO language:
+
+```scala
+class Counter(state: Int) {
+  def getAndIncrement(): Int {
+    res := state
+    state = state + 1
+    return res
+  }
+}
+
+class Log[A](counter: Counter, elems: Array[A]) {
+  def at(n: Int): Int {
+     return elems[n]
+  }
+   
+  def append(a: A) {
+    n = counter.getAndIncrement()
+    elems[n] = a
+  }
+}
+
+class Key(..)
+class Event(..)
+
+class Streams(streams: Map[Key, Log[Event]])
+```
 
 
 I think just go "unison is not an OO language" and start directly with
