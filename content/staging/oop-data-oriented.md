@@ -14,7 +14,11 @@ such ideas.
 It is challenging, however, to show a fully worked example of this
 process, which is not self contained by its very nature.
 
-Well, this post aims to do exactly that. Let's dive in.
+Well, this post aims to do exactly that. Let's dive in. 
+
+TODO maybe add a tiny summary to entice the reader a bit more, like
+"exactly that. We'll start here, then go there, then finish etc. Let's
+dive in"
 
 ## Intro: distributed transactions in Unison
 
@@ -492,11 +496,11 @@ But let's
 This post is already very long, but I do want to conclude with a few takeaways
 
 
-
+## OOP vs Data Oriented Design
 Takeaway no 1
 it's not DoD >> OOP, understand the tradeoffs
 
-Takeway no 2
+## What did we gain?
 
 we didn't just improve our code, we gained a better understanding of fundamental aspects: modularity vs tight integration, etc
 Beyond learning a specific techniques from _x_ , it is the compounding of this type of understanding that, in my experience, actually makes you a better programmer
