@@ -348,6 +348,7 @@ publishKey db key events =
              |> toList
              |> foreach_ (event -> log |> append event)
        )
+    |> ignore
 ```
 
 Remember that the above is still correct: even if we get the `log` and
