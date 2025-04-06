@@ -323,7 +323,7 @@ publishKey db key events =
        )
 ```
 
-Ok, but now note how `tryRead.tx` is read from storage multiple times
+Ok, but now note how `log` is read from storage multiple times
 (one per chunk), even though we know that after the first chunk it
 will certainly have been created (by us) if it didn't exist.
 
