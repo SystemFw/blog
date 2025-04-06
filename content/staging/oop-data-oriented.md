@@ -517,5 +517,6 @@ Beyond learning a specific techniques from _x_ , it is the compounding of this t
   that ought to apply to every field of software engineering. Instead,
   they are typically borne out of a specific context. Strive to really
   understand that context, and you will find ways to apply those ideas
-  in interesting, unexpected places. Equally as importantly, you will
-  also know when to safely dismiss them.
+  in interesting, unexpected places that share just a tiny bit of that
+  context. Equally as importantly, you will know when you can safely
+  dismiss them as well.
