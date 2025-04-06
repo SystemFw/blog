@@ -234,7 +234,7 @@ batch of events by key, which we can do with:
 List.groupMap : (a -> k) -> (a -> v) -> [a] -> Map k (List.Nonempty v)
 ```
 
-We then  want to upload batches of events for different keys in parallel, 
+We then want to upload batches of events for different keys in parallel, 
 let's use `Remote.parMap`:
 
 ```haskell
@@ -447,3 +447,8 @@ that to write the various examples instead of repeating the full code
 `publishKey`, "there is a bug in `publishKey`", need to see if it's
 still worth introducing `cases` (default yes)
 
+
+I think just go "unison is not an OO language" and start directly with
+the comparison, with the no GC thought experiment, and then talk about
+the Data Oriented design philosophy, instead of a completely
+standalone section on OO vs DoD which requires extra examples
