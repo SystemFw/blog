@@ -16,7 +16,7 @@ process, which is not self contained by its very nature.
 
 Well, this post aims to do exactly that. Let's dive in. 
 
-TODO maybe add a tiny summary to entice the reader a bit more, like
+TODO: maybe add a tiny summary to entice the reader a bit more, like
 "exactly that. We'll start here, then go there, then finish etc. Let's
 dive in"
 
@@ -521,7 +521,7 @@ it bears any fruit.
 
 ### Improve the code
 
-TODO fill this section (and improve title)
+TODO: fill this section (and improve title)
 
 recap data access pattern, then describe data analysis, and new code
 
@@ -545,7 +545,7 @@ space changes. However, if we do understand that space, tearing the
 abstraction apart reveals hidden details that can lead us to a more
 optimal solution, albeit one that's more set in stone.
 
-TODO ^ this paragraph needs to be better. 
+TODO: ^ this paragraph needs to be better. 
 
 I would argue that a greater appreciation of these tradeoffs is as big
 a payoff from our journey than the code improvement that we got. 
