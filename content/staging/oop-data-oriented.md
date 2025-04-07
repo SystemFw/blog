@@ -560,9 +560,9 @@ better programmer.
   functional programming, game development, formal methods, futuristic HCI, etc.
   Be curious.
 
-- Many bad ideas just make sense at first. Many good ideas sound like
-  utter nonsense at first. Don't take everything at face value, but
-  don't close your mind too early either.
+- At a first glance, many bad ideas make perfect sense, and many good
+  ideas sound like utter nonsense. Don't take everything at face
+  value, but don't close your mind too early either.
 
 - Unfortunately, cool ideas are often presented as universal truths
   that ought to apply to every field of software engineering. Instead,
