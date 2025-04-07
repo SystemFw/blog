@@ -533,6 +533,8 @@ it bears any fruit.
 
 ## Improve the code
 
+recap data access pattern, then describe data analysis, and new code
+
 ## Conclusion
 
 You shouldn't walk away from this post thinking that there is a
