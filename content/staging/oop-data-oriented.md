@@ -480,9 +480,10 @@ various instances of `Log`, which have pointers to instances of
 
 This is problematic for two reasons:
 
-- From a performance point of view, accessing a piece of data has to
-  do a lot of hopping to/from memory . Also, creating data requires a
-  bunch of tiny individual heap allocations.
+- From a performance point of view, accessing a piece of data involves
+  several roundtrips to memory as we hop from pointer to pointer.
+  Also, creating data requires a bunch of tiny individual heap
+  allocations.
 - From a simplicity point of view, manual memory management is error
   prone as each pointer has to have its memory deallocated
   individually, and in a specific order. E.g. freeing our `Streams`
@@ -504,7 +505,7 @@ then identity the simplest, most efficient way for the _machine_ to
 perform the desired transformation.
 
 Now, it's easy to dismiss all this as supremely irrelevant to us: we
-_do_ have a GC, we enjoy it very much thank you, and we're in a much
+_do_ have a GC, we enjoy it very much thank you, and we're in a far
 higher level language anyway where this minutiae ought not to matter.
 
 But let's zoom out a bit: it is true that in a higher level language
@@ -571,3 +572,6 @@ better programmer.
   interesting, unexpected places that share just a tiny bit of that
   context. Equally as importantly, you will know when you can safely
   dismiss them as well.
+
+
+TODO Data Oriented Design and abstraction resolution or, Learning _ might make you a better programmer
