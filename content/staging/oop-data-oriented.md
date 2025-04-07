@@ -502,31 +502,31 @@ This is problematic for two reasons:
   freeing each `Log` involves freeing the `Counter` and iterating over
   the `Array` to free each `A`, etc.
 
-Data Oriented Design on the other hand tends to structure data in flat
-arrays, indexed by integer IDs rather than pointers. It can then be
-accessed efficiently by reading whole chunks of memory, and it's
-allocated and deallocated in bulk, without worrying about the
-lifetimes of individual pieces of data.
+Data Oriented Design on the other hand would forego nested pointers in
+favour of structuring data as flat arrays indexed by integer IDs. We
+could then access it efficiently by reading whole chunks of memory,
+and allocate it and deallocate it bulk, without worrying about the
+lifetimes of its individual pieces.
 
 But beyond specific technical strategies, Data Oriented Design
-predicates a very different way to approach data modelling: we should
-not strive for code to reflect the logical domain, instead we should
-frame programs as data transformations, and then identity the
-simplest, most efficient way for the _machine_ to perform the desired
-transformation.
+advocates for a very different way to approach data modelling: we
+should not strive for code to reflect the logical domain we're working
+in, and we should instead frame programs as data transformations, and
+then identity the simplest, most efficient way for the _machine_ to
+perform the desired transformation.
 
 Now, it's easy to dismiss all this as supremely irrelevant to us: we
 _do_ have a GC, we enjoy it very much thank you, and we're in a much
 higher level language anyway where this minutiae ought not to matter.
 
 But let's zoom out a bit: it is true that in a higher level language
-there's less emphasis about counting care about every single memory
-access, however in our transactional code the pointer hopping mapped
-to reads from storage, and we _did_ care about optimising those. We
-also didn't have to deal with manual deallocation of memory, but the
-chief complication in `publishKey` could indeed be framed as a problem
-with _lifetimes_, specifically about having to create these `Log`
-instances at the right time.
+there's less emphasis about counting every single memory access,
+however in our transactional code the pointer hopping mapped to reads
+from storage, and we _did_ care about minimising those. We also didn't
+have to deal with manual deallocation of memory, but the chief
+complication in `publishKey` could indeed be framed as a problem with
+_lifetimes_, specifically about having to create these `Log` instances
+at the right time.
  
 So let's try to apply Data Oriented Design to our problem and see if
 it bears any fruit.
