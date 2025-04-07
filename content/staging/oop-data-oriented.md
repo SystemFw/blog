@@ -96,9 +96,10 @@ The code snippet above runs `transfer` on Unison Cloud, where the data
 is persisted on our distributed storage, and the implementation of
 `transact` guarantees that the transaction executes atomically.
 
+### Data structures
+
 Transactions on typed key-value tables are a flexible building block,
-and we can build data structures just like we would for in-memory
-data.
+and we can build data structures like we would for in-memory data.
 
 Let's build a `Counter`:
 ```haskell
@@ -231,8 +232,8 @@ but we won't cover it here for space reasons, just know that we can
 call `toRemote` to embed other cloud abilities in it, like `Storage`,
 `Exception` or `Random`.
 
-Ok, let's plan the implementation out. We need to start grouping the
-batch of events by key, which we can do with:
+Ok, let's plan the implementation out. We need to start by grouping
+the batch of events by key, which we can do with:
 
 ```haskell
 List.groupMap : (a -> k) -> (a -> v) -> [a] -> Map k (List.Nonempty v)
@@ -278,7 +279,7 @@ the log isn't there, _but nothing guarantees the log will be there_.
 The logs are per key, so we cannot create them all in advance as we
 don't know all the keys in advance. Instead, we will create each log
 on demand if we cannot find it in storage when we want to write some
-messages to it. We will use `randomName: '{Random} Text` to generate a
+events to it. We will use `randomName: '{Random} Text` to generate a
 name for our log:
 
 ```haskell
@@ -297,7 +298,7 @@ publishKey db key events =
 ```
 
 
-## Wrestling with optimisation 
+### Wrestling with optimisation 
 
 We're dealing with a performance sensitive system, so we have to be
 conscious about optimising our code properly. To start with, we're
@@ -434,10 +435,10 @@ Unison is decidedly not an object oriented language: it has no
 classes, no methods, no inheritance, not even interfaces. And yet, the
 design we've seen embodies some of the ideas that have made OO
 popular: it's based on data types that mirror their logical domain,
-keep their internals encapsulated, and expore their behaviour through
+keep their internals encapsulated, and expose their behaviour through
 an explicit api.
 
-In fact, here's how our data model could look like in a
+In fact, here's how our data model could be written in a
 generic-looking OO language:
 
 ```scala
@@ -465,32 +466,58 @@ class Event(..)
 
 class Streams(streams: Map[Key, Log[Event]])
 ```
-[-- fill this in
-why it's good
-criticism about mutation from fp camp doesn't apply
-context for DoD, game design, memory access, manual memory management
-why it's bad:
-lots of pointers, so
-tiny allocations
-access via multiple hops
-deallocation is tricky cause you have to free individually
-hard to understand data access patterns behind encapsulation
 
-what does data driven design code look like: often data is kept in
-flat arrays for cache friendliness, pointers are replaced by indexes,
-allocation can happen in batch, deallocation can happen in batch, and
-generally this makes it easier to deal with lifetimes.
---]
+There is a lot to like about this model: the behaviour of each
+component is easily understood just via its public api, and complex
+behaviour is achieved by combining these small components together.
 
-Beyond the specific technique, there is a philosophical lesson: having
-your code reflect the domain is a false goal, instead we should just
-look at it as a data transformation, identify which data we need to
-transform, and then figure out the simplest way for the _machine_ to
-carry that transformation.
+Furthermore, the common FP criticism about the dangers of mutation
+wouldn't translate to our original code: transactions guarantee
+serializability, which is very easy to reason about.
 
-Now, it's easy to dismiss this as supremely irrelevant to us: we _do_
-have a GC, we enjoy it very much thank you, and we're in a much higher
-level language anyway where this minutiae ought not to matter.
+There is however another angle for critiquing this model, using the
+perspective of Data Oriented Design. The ideas behind Data Oriented
+Design come largely from videogame development, in a context where
+optimising memory access matters a lot, and you're managing memory
+manually.
+
+So let's apply this lens to the code snippet above. We're going to
+assume a runtime representation similar to Java, Scala or Ruby, except
+without a GC.
+
+The main thing to note is how many pointers are involved at runtime
+ here: `Streams` has a pointer to a `Map`, which has pointers to
+ various instances of `Log`, which have pointers to instances of
+ `Counter`, and so on.
+
+This is problematic for two reasons:
+
+- From a performance point of view, accessing a piece of data has to
+  do a lot of hopping to/from memory . Also, creating data requires a
+  bunch of tiny individual heap allocations.
+- From a simplicity point of view, manual memory management is error
+  prone as each pointer has to have its memory deallocated
+  individually, and in a specific order. E.g. freeing our `Streams`
+  class involves iterating over the `Map` to free each `Log`, and
+  freeing each `Log` involves freeing the `Counter` and iterating over
+  the `Array` to free each `A`, etc.
+
+Data Oriented Design on the other hand tends to structure data in flat
+arrays, indexed by integer IDs rather than pointers. It can then be
+accessed efficiently by reading whole chunks of memory, and it's
+allocated and deallocated in bulk, without worrying about the
+lifetimes of individual pieces of data.
+
+But beyond specific technical strategies, Data Oriented Design
+predicates a very different way to approach data modelling: we should
+not strive for code to reflect the logical domain, instead we should
+frame programs as data transformations, and then identity the
+simplest, most efficient way for the _machine_ to perform the desired
+transformation.
+
+Now, it's easy to dismiss all this as supremely irrelevant to us: we
+_do_ have a GC, we enjoy it very much thank you, and we're in a much
+higher level language anyway where this minutiae ought not to matter.
 
 But let's zoom out a bit: it is true that in a higher level language
 there's less emphasis about counting care about every single memory
