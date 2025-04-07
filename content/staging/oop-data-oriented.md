@@ -71,10 +71,10 @@ accounts: Table UserId Nat
 accounts = Table "accounts"
 
 transfer: Database ->{Exception, Storage} ()
-transfer database = 
+transfer db = 
   bob = UserId "Bob"
   alice = UserId "Alice"
-  transact database do
+  transact db do
     from = read.tx accounts bob
     to = read.tx accounts alice
     amount = 10 * 100
@@ -99,7 +99,7 @@ is persisted on our distributed storage, and the implementation of
 ### Data structures
 
 Transactions on typed key-value tables are a flexible building block,
-and we can build data structures like we would for in-memory data.
+and we can build data structures like we do for in-memory data.
 
 Let's build a `Counter`:
 ```haskell
@@ -261,16 +261,14 @@ publish db messages =
     |> List.groupMap at1 at2
     |> Map.toList
     |> Remote.parMap cases (key, events) ->
-         toRemote do publishKey db key events
+         toRemote do publishKey db key (toList events)
     |> ignore
     
 publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
 publishKey db key events =
   transact db do
     log = read.tx streams key
-    events
-      |> toList
-      |> foreach_ (event -> log |> append event)
+    events |> foreach_ (event -> log |> append event)
 ```
 
 That looks pretty good, but unfortunately `publishKey` has a bug. We
@@ -292,9 +290,7 @@ publishKey db key events =
         log = Log.named randomName()
         write.tx streams key log
         log
-    events
-      |> toList
-      |> foreach_ (event -> log |> append event)
+    events |> foreach_ (event -> log |> append event)
 ```
 
 
@@ -321,9 +317,7 @@ publishKey db key events =
                log = Log.named randomName()
                write.tx streams key log
                log
-           events
-             |> toList
-             |> foreach_ (event -> log |> append event)
+           chunk |> foreach_ (event -> log |> append event)
        )
 ```
 
@@ -348,11 +342,8 @@ publishKey db key events =
     |> chunk 25
     |> foreach_ (chunk ->
          transact db do
-           events
-             |> toList
-             |> foreach_ (event -> log |> append event)
+           chunk |> foreach_ (event -> log |> append event)
        )
-    |> ignore
 ```
 
 Remember that the above is still correct: even if we get the `log` and
@@ -385,11 +376,10 @@ publishKey db key events =
                  log = Log.named randomName()
                  write.tx streams key log
                  log
-           events
-             |> toList
-             |> foreach_ (event -> log' |> append event)
+           chunk |> foreach_ (event -> log' |> append event)
            log'
        )
+    |> ignore
 ```
 
 Ok, this behaves as we want it to... but it's starting to get pretty
@@ -412,9 +402,7 @@ publishKey db key events =
   events |> mapChunked (chunk ->
     transact db do
       log = getLog key
-      events
-        |> toList
-        |> foreach_ (event -> log |> append event)
+      events |> foreach_ (event -> log |> append event)
   )
 ```
 
@@ -468,7 +456,7 @@ class Streams(streams: Map[Key, Log[Event]])
 ```
 
 There is a lot to like about this model: the behaviour of each
-component is easily understood just via its public api, and complex
+component is easily understood just via its public api, and richer
 behaviour is achieved by combining these small components together.
 
 Furthermore, the common FP criticism about the dangers of mutation
@@ -486,9 +474,9 @@ assume a runtime representation similar to Java, Scala or Ruby, except
 without a GC.
 
 The main thing to note is how many pointers are involved at runtime
- here: `Streams` has a pointer to a `Map`, which has pointers to
- various instances of `Log`, which have pointers to instances of
- `Counter`, and so on.
+here: `Streams` has a pointer to a `Map`, which has pointers to
+various instances of `Log`, which have pointers to instances of
+`Counter`, and so on.
 
 This is problematic for two reasons:
 
@@ -531,7 +519,9 @@ at the right time.
 So let's try to apply Data Oriented Design to our problem and see if
 it bears any fruit.
 
-## Improve the code
+### Improve the code
+
+TODO fill this section (and improve title)
 
 recap data access pattern, then describe data analysis, and new code
 
@@ -554,6 +544,8 @@ problem/solution space, and it also adapts gracefully if the problem
 space changes. However, if we do understand that space, tearing the
 abstraction apart reveals hidden details that can lead us to a more
 optimal solution, albeit one that's more set in stone.
+
+TODO ^ this paragraph needs to be better. 
 
 I would argue that a greater appreciation of these tradeoffs is as big
 a payoff from our journey than the code improvement that we got. 
