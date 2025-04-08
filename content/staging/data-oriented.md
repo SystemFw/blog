@@ -537,18 +537,20 @@ Instead, you should look critically at the tradeoffs.
 The OO design is more composable, it gives us nice building blocks
 that we can package in a library and reuse in interesting ways to
 easily assemble novel behaviour. Conversely, if we're willing to give
-up flexibility, the data oriented design can result in simpler code,
+up flexibility, Data Oriented Design can result in simpler code,
 and with an easier path to optimal performance.
 
-There is something really deep here in my opinion, about the nature of
-abstraction itself. Abstraction is the most powerful tool we have to
-expand the ceiling of our skill when we don't fully grasp the
-problem/solution space, and it also adapts gracefully if the problem
-space changes. However, if we do understand that space, tearing the
-abstraction apart reveals hidden details that can lead us to a more
-optimal solution, albeit one that's more set in stone.
+There is something deeper here, regarding the nature of abstraction
+itself: abstraction generalises solutions to similar problems by
+_forgetting about their differences_. 
 
-TODO: ^ this paragraph needs to be better. 
+For example, we can generalise several scenarios where data needs to
+be linearised into the concept of a `Log`, which leaves space in our
+brain to think about other parts of the problem and therefore raises
+the ceiling of what we're able to accomplish. However, the most
+_optimal_ solution for a given subproblem relies almost by definition
+on the aspects that make it unique in a class of similar problems, and
+those are more easily discovered by tearing abstraction down.
 
 I would argue that a greater appreciation of these tradeoffs is as big
 a payoff from our journey than the code improvement that we got. 
@@ -575,5 +577,3 @@ better programmer.
   context. Equally as importantly, you will know when you can safely
   dismiss them as well.
 
-
-TODO: Data Oriented Design and abstraction resolution or, Learning _ might make you a better programmer
