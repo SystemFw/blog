@@ -526,6 +526,8 @@ TODO: fill this section (and improve title)
 
 recap data access pattern, then describe data analysis, and new code
 
+TODO: point about dynamic Log lifetime
+
 ## Conclusion
 
 You shouldn't walk away from this post thinking that there is a
@@ -574,4 +576,4 @@ better programmer.
   dismiss them as well.
 
 
-TODO Data Oriented Design and abstraction resolution or, Learning _ might make you a better programmer
+TODO: Data Oriented Design and abstraction resolution or, Learning _ might make you a better programmer
