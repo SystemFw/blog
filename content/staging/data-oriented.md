@@ -1,5 +1,5 @@
 ---
-title: "OOP vs Data oriented design...in a distributed FP language"
+title: "OOP vs Data Oriented Design...in a distributed FP language"
 date: 2025-04-03
 ---
 
@@ -520,7 +520,7 @@ at the right time.
 So let's try to apply Data Oriented Design to our problem and see if
 it bears any fruit.
 
-### Improve the code
+### Data Oriented Design in action
 
 TODO: fill this section (and improve title)
 
