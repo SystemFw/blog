@@ -14,7 +14,7 @@ such ideas.
 It is challenging, however, to show a fully worked example of this
 process, which is not self contained by its very nature.
 
-Well, this post aims to do exactly that. Let's dive in. 
+Well, this post aims to do exactly that. We will look at the problem involving distributed transactions in a very high level functional language, and optimise it with a  Let's dive in. 
 
 TODO: maybe add a tiny summary to entice the reader a bit more, like
 "exactly that. We'll start here, then go there, then finish etc. Let's
@@ -522,6 +522,39 @@ it bears any fruit.
 
 ### Data Oriented Design in action
 
+Let's look back at the most optimised version of our code:
+
+```haskell
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  events
+    |> chunk 25
+    |> foldLeft_ None (log chunk ->
+         transact db do
+           log' = match log with
+             Some log -> log
+             None -> match tryRead.tx streams key with
+               Some log -> log
+               None ->
+                 log = Log.named randomName()
+                 write.tx streams key log
+                 log
+           chunk |> foreach_ (event -> log' |> append event)
+           log'
+       )
+    |> ignore
+```
+
+complications is to ensure log is only read on first chunk if it exists, and created in the same transaction that carries the first chunk if it doensn't.
+ Keep in mind that there is another storage read from in `append`, but that read has to be done for each chunk, we have to check the index in each transaction to make sure we don't override any existing events if a concurrent call to `publishKey` has published some in between two of our chunks.
+ 
+Ok, on to applying Data Oriented Design, we will forget about existing abstractions and look at the basic data
+fill code
+show how it's more performant than the most optimised version.
+
+Talk about difference in expressiveness, which imposes a cost on us
+    
+    
 TODO: fill this section (and improve title)
 
 recap data access pattern, then describe data analysis, and new code
@@ -550,7 +583,9 @@ brain to think about other parts of the problem and therefore raises
 the ceiling of what we're able to accomplish. However, the most
 _optimal_ solution for a given subproblem relies almost by definition
 on the aspects that make it unique in a class of similar problems, and
-those are more easily discovered by tearing abstraction down.
+those are more easily discovered by tearing abstraction down. In our
+case, foregoing the `Log` abstraction showed how we don't have to
+worry about log lifetimes at all.
 
 I would argue that a greater appreciation of these tradeoffs is as big
 a payoff from our journey than the code improvement that we got. 
@@ -566,8 +601,8 @@ better programmer.
   Be curious.
 
 - At a first glance, many bad ideas make perfect sense, and many good
-  ideas sound like utter nonsense. Don't take everything at face
-  value, but don't close your mind too early either.
+  ideas sound like utter nonsense. Don't take anything at face value,
+  but don't close your mind too early either.
 
 - Unfortunately, cool ideas are often presented as universal truths
   that ought to apply to every field of software engineering. Instead,
