@@ -552,53 +552,112 @@ the same roundtrip that carries the first chunk of events, if it
 doesn't.
 
 Also note that `append` involves another read from storage to fetch
-the latest size of the log: that call _has_ to happen once per chunk
+the latest size of the log: that call _has_ to happen once per chunk,
 so that we don't overwrite any events if a concurrent call to
 `publishKey` has published some events in between two of our chunks.
-It might seem like the storage read happens once _per message_ rather
+It might seem like this storage read happens once _per message_ rather
 than once per chunk, but subsequent calls to `append` in a single
 transaction will read the log size from memory since previous appends
 have buffered a write to it (this ensures that transactions see a
 consistent snapshot).
 
-Ok, now let's approach the same problem using Data Oriented Design, we
-will forget about our existing abstractions and instead look at the
-essential data transformations that define our problem.
+Ok, now let's apply Data Oriented Design instead, we will forget about
+our existing abstractions and instead look at the essential data
+transformations that define our problem.
 
-What data do we need to read a message in a keyed log? Such a message
-would be identified by its key, and by its index in the log, so we
+What data do we need to read a message in a keyed stream? Such a message
+would be identified by its key, and by its index in the stream, so we
 have a mapping:
 
 ```
 (Key, Nat) ---> Event
 ```
 
-That's not enough information
+That's not enough information to write new events though, we also have
+to keep track of the size of each stream, to know which index to write
+at next. There is one stream per key, so we need a mapping:
+```
+Key ---> Nat
+```
+
+We can easily represent these mappings as `Table`s:
+
+```haskell
+streams: Table (Key, Nat) Event
+streamSizes: Table Key Nat
+```
+
+writing a chunk of events is now straightforward: in a single
+transaction we read the size of the stream for a given key, compute
+the range of indexes the new events will have, and write the new size
+to `streamSizes` table and the events to the `streams` table. We do
+that for every chunk in our input batch.
+
+Here's the new and improved code:
+
+```haskell
+streams: Table (Key, Nat) Event
+streams = Table "streams"
+
+streamSizes: Table Key Nat
+streamSizes = Table "stream-sizes"
+
+publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
+publishKey db key events =
+  events
+    |> chunk 25
+    |> foreach (chunk ->
+         transact db do
+           start = tryRead.tx streamSizes key |> Optional.getOrElse 0
+           write.tx streamSizes key (start + size chunk)
+           chunk
+             |> indexed
+             |> foreach cases (event, n) -> write.tx streams (key, start + n) event
+       )
+```
+
+That's a lot less convoluted! 
+
+But not just that, it's also _more_ performant than the most optimised
+version we had previously: both versions read the log size on each
+chunk, but the previous version would also have to read and
+potentially write the `Log` object itself on each call, that's just
+gone here. And note how much easier it is to reason about the access
+patterns to storage in the first place, previously we'd have to look
+at `publishKey`, `Log.append` and `Counter.getAndIncrement`, whereas
+now we just have to look at `publishKey`.
 
 
+But hold on, you might say, how can the log management just disappear,
+have we lost anything in the transition to this new design? Well, in
+retrospect we can see how the previous design was more powerful than we
+actually need, this representation:
 
+```
+streams: Table Key (Log Event)
+```
 
+can also represent dynamic logs, for example a log that expires every
+15 minutes and gets replaced by a new one. 
 
+We don't need this power here, but are forced to pay for it
+regardless, both in the complexity of dealing with log creation, and
+with the performance hit of having each call to `publishKey` read the
+`Log` object, even though its identity will never change, only its
+contents will.
 
-Ok, let's now apply Data Oriented Design to see if we can make the
-code any simpler, we will forget about our existing abstractions and
-look at the data transformations that define our problem.
+Data Oriented Design's focus on data transformations helped us hone in
+on exactly what we need, and delivered code that is _both_ simpler and
+faster in this scenario.
 
-We will start by thinking about which information is essential to _read_ a message in a given log, such a message would be identi
+It's also interesting to see how the code changed much in the same way
+as it does when Data Oriented Design is applied to in-memory OO code: 
+TODO: ^ deal with this sentence
 
-
-
-fill code
-show how it's more performant than the most optimised version.
-
-Talk about difference in expressiveness, which imposes a cost on us
-    
-    
-TODO: fill this section (and improve title)
-
-recap data access pattern, then describe data analysis, and new code
-
-TODO: point about dynamic Log lifetime
+we no longer have these self contained objects like Log and Counter,
+connected by nested pointers (dynamic table names), with pointer
+hopping (`streams` --> `Log` --> `Counter`) and instead data is layed
+out in flat tables with static indexes.
 
 ## Conclusion
 
