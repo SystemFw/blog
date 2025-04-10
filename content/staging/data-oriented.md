@@ -191,8 +191,9 @@ means that they have no side-effects.
 
 The second is about the execution model of transactions, to help us
 reason about performance. The implementation of `transact` uses
-Optimistic Concurrency Control, which means that reads go to storage,
-whilst writes are buffered in memory. When the transaction completes,
+Optimistic Concurrency Control, which means that the first read of
+each key goes to storage, whilst writes (and reads to keys that have
+written to) are buffered in memory. When the transaction completes,
 `transact` will try to atomically commit all the writes to storage at
 once. If there is a conflict, it retries the whole transaction, which
 it can do because the Unison type system guarantees that the thunk
@@ -545,10 +546,48 @@ publishKey db key events =
     |> ignore
 ```
 
-complications is to ensure log is only read on first chunk if it exists, and created in the same transaction that carries the first chunk if it doensn't.
- Keep in mind that there is another storage read from in `append`, but that read has to be done for each chunk, we have to check the index in each transaction to make sure we don't override any existing events if a concurrent call to `publishKey` has published some in between two of our chunks.
- 
-Ok, on to applying Data Oriented Design, we will forget about existing abstractions and look at the basic data
+Remember that the complexity in this code is to ensure that each call
+to `publishKey` fetches the log once, if it exists, and creates it in
+the same roundtrip that carries the first chunk of events, if it
+doesn't.
+
+Also note that `append` involves another read from storage to fetch
+the latest size of the log: that call _has_ to happen once per chunk
+so that we don't overwrite any events if a concurrent call to
+`publishKey` has published some events in between two of our chunks.
+It might seem like the storage read happens once _per message_ rather
+than once per chunk, but subsequent calls to `append` in a single
+transaction will read the log size from memory since previous appends
+have buffered a write to it (this ensures that transactions see a
+consistent snapshot).
+
+Ok, now let's approach the same problem using Data Oriented Design, we
+will forget about our existing abstractions and instead look at the
+essential data transformations that define our problem.
+
+What data do we need to read a message in a keyed log? Such a message
+would be identified by its key, and by its index in the log, so we
+have a mapping:
+
+```
+(Key, Nat) ---> Event
+```
+
+That's not enough information
+
+
+
+
+
+
+Ok, let's now apply Data Oriented Design to see if we can make the
+code any simpler, we will forget about our existing abstractions and
+look at the data transformations that define our problem.
+
+We will start by thinking about which information is essential to _read_ a message in a given log, such a message would be identi
+
+
+
 fill code
 show how it's more performant than the most optimised version.
 
