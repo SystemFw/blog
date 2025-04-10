@@ -646,17 +646,15 @@ with the performance hit of having each call to `publishKey` read the
 `Log` object, even though its identity will never change, only its
 contents will.
 
-Data Oriented Design's focus on data transformations helped us hone in
-on exactly what we need, and delivered code that is _both_ simpler and
+Focusing on essential data transformations helped us hone in on
+exactly what we need, and delivered code that is _both_ simpler and
 faster in this scenario.
 
-It's also interesting to see how the code changed much in the same way
-as it does when Data Oriented Design is applied to in-memory OO code: 
-TODO: ^ deal with this sentence
-
-we no longer have these self contained objects like Log and Counter,
+It's also interesting how Data Oriented Design changed our code in
+much the same way it does when applied to an in-memory OO codebase: we
+no longer have these self contained objects like `Log` and `Counter`,
 connected by nested pointers (dynamic table names), with pointer
-hopping (`streams` --> `Log` --> `Counter`) and instead data is layed
+hopping (`streams` --> `Log` --> `Counter`). Instead, data is layed
 out in flat tables with static indexes.
 
 ## Conclusion
