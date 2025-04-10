@@ -1,6 +1,6 @@
 ---
 title: "OOP vs Data Oriented Design...in a distributed FP language"
-date: 2025-04-03
+date: 2025-04-10
 ---
 
 It is often said that "Learning _x_ will make you a better
