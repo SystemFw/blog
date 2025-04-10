@@ -269,7 +269,7 @@ publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
 publishKey db key events =
   transact db do
     log = read.tx streams key
-    events |> foreach_ (event -> log |> append event)
+    events |> foreach (event -> log |> append event)
 ```
 
 That looks pretty good, but unfortunately `publishKey` has a bug. We
@@ -291,7 +291,7 @@ publishKey db key events =
         log = Log.named randomName()
         write.tx streams key log
         log
-    events |> foreach_ (event -> log |> append event)
+    events |> foreach (event -> log |> append event)
 ```
 
 
@@ -310,7 +310,7 @@ publishKey: Database -> Key -> [Event] ->{Storage, Exception} ()
 publishKey db key events =
   events
     |> chunk 25
-    |> foreach_ (chunk ->
+    |> foreach (chunk ->
          transact db do
            log = match tryRead.tx streams key with
              Some log -> log
@@ -318,7 +318,7 @@ publishKey db key events =
                log = Log.named randomName()
                write.tx streams key log
                log
-           chunk |> foreach_ (event -> log |> append event)
+           chunk |> foreach (event -> log |> append event)
        )
 ```
 
@@ -341,9 +341,9 @@ publishKey db key events =
         log
   events
     |> chunk 25
-    |> foreach_ (chunk ->
+    |> foreach (chunk ->
          transact db do
-           chunk |> foreach_ (event -> log |> append event)
+           chunk |> foreach (event -> log |> append event)
        )
 ```
 
@@ -377,7 +377,7 @@ publishKey db key events =
                  log = Log.named randomName()
                  write.tx streams key log
                  log
-           chunk |> foreach_ (event -> log' |> append event)
+           chunk |> foreach (event -> log' |> append event)
            log'
        )
     |> ignore
@@ -403,7 +403,7 @@ publishKey db key events =
   events |> mapChunked (chunk ->
     transact db do
       log = getLog key
-      events |> foreach_ (event -> log |> append event)
+      events |> foreach (event -> log |> append event)
   )
 ```
 
@@ -540,7 +540,7 @@ publishKey db key events =
                  log = Log.named randomName()
                  write.tx streams key log
                  log
-           chunk |> foreach_ (event -> log' |> append event)
+           chunk |> foreach (event -> log' |> append event)
            log'
        )
     |> ignore
