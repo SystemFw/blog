@@ -78,12 +78,12 @@ transfer db =
     from = read.tx accounts bob
     to = read.tx accounts alice
     amount = 10 * 100
-    if balance >= amount
+    if from >= amount
     then 
       write.tx accounts bob (from - amount) 
       write.tx accounts alice (to + amount)
     else 
-      Exception.raiseGeneric "insufficient balance" bob
+      Exception.raiseGeneric "insufficient balance" (bob, from)
 
 -- no infra needed to run code on cloud!
 Cloud.run do
@@ -148,7 +148,7 @@ Log.at n log =
 Appending to the log is slightly more involved but still pretty easy:
 
 ```haskell
-Log.append a -> Log a ->{Transaction} ()
+Log.append: a -> Log a ->{Transaction} ()
 Log.append v log =
   (Log size elems) = log
   n = getAndIncrement size
@@ -167,15 +167,15 @@ playlist: Log
 playlist = Log.named "my-playlist"
 
 transact myDb do
-  myLog |> append (Track "Obstacles")
+  playlist |> append (Track "Obstacles")
 ```
 
 and we can append multiple elements atomically as well:
 
 ```haskell
 transact myDb do
-  myLog |> append (Track "Sea above, sky below")
-  myLog |> append (Track "Featherweight")
+  playlist |> append (Track "Sea above, sky below")
+  playlist |> append (Track "Featherweight")
 ```
 
 Let's conclude this section with a couple of notes on semantics that
