@@ -11,6 +11,7 @@ the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneself to a wide range of
 such ideas.
 
+TODO: streamline
 It's challenging, however, to show a fully worked example of this
 process, which is not self contained by its very nature.
 
@@ -26,6 +27,7 @@ My day job involves designing and implementing distributed systems for
 [Unison Cloud](unison.cloud), the next-gen cloud platform we're
 building on top of the [Unison](unison-lang.org) language.
 
+TODO: flow
 A unique characteristic of our cloud is the power to manipulate
 persistent and transactional storage as if it was an in-memory
 data structure.
@@ -33,6 +35,7 @@ data structure.
 We expose this feature as a set of _abilities_ (Unison's take on
 algebraic effects) which can express custom control flow
 abstractions as ordinary straight-line code.
+
 
 The model is fairly simple: you write programs in the `Transaction`
 ability that operate on one or more typed key-value tables, and call
