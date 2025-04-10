@@ -11,14 +11,14 @@ the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneself to a wide range of
 such ideas.
 
-It is challenging, however, to show a fully worked example of this
+It's challenging, however, to show a fully worked example of this
 process, which is not self contained by its very nature.
 
-Well, this post aims to do exactly that. We will look at the problem involving distributed transactions in a very high level functional language, and optimise it with a  Let's dive in. 
-
-TODO: maybe add a tiny summary to entice the reader a bit more, like
-"exactly that. We'll start here, then go there, then finish etc. Let's
-dive in"
+Well, this post aims to do exactly that: we will look at a problem
+involving distributed transactions in a very high level functional
+language, and solve it with a technique used to rearchitect object
+oriented code in the presence of manual memory management. Let's dive
+in.
 
 ## Intro: distributed transactions in Unison
 
