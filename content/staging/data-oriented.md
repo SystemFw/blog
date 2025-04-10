@@ -378,7 +378,7 @@ publishKey db key events =
                  write.tx streams key log
                  log
            chunk |> foreach (event -> log' |> append event)
-           log'
+           Some log'
        )
     |> ignore
 ```
@@ -541,7 +541,7 @@ publishKey db key events =
                  write.tx streams key log
                  log
            chunk |> foreach (event -> log' |> append event)
-           log'
+           Some log'
        )
     |> ignore
 ```
