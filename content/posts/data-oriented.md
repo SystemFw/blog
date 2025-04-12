@@ -491,7 +491,7 @@ This is problematic for two reasons:
 Data Oriented Design on the other hand would forego nested pointers in
 favour of structuring data as flat arrays indexed by integer IDs. We
 could then access it efficiently by reading whole chunks of memory,
-and allocate it and deallocate it bulk, without worrying about the
+and allocate it and deallocate it in bulk, without worrying about the
 lifetimes of its individual pieces.
 
 But beyond specific technical strategies, Data Oriented Design
@@ -586,7 +586,7 @@ streamSizes: Table Key Nat
 writing a chunk of events is now straightforward: in a single
 transaction we read the size of the stream for a given key, compute
 the range of indexes the new events will have, and write the new size
-to `streamSizes` table and the events to the `streams` table. We do
+to `streamSizes` table, and the events to the `streams` table. We do
 that for every chunk in our input batch.
 
 Here's the new and improved code:
@@ -617,7 +617,8 @@ That's a lot less convoluted!
 But not just that, it's also _more_ performant than the most optimised
 version we had previously: both versions read the log size on each
 chunk, but the previous version would also have to read and
-potentially write the `Log` object itself on each call, that's just
+potentially write the `Log` object itself on the first chunk of each
+call, that's just
 gone here. And note how much easier it is to reason about the access
 patterns to storage in the first place, previously we'd have to look
 at `publishKey`, `Log.append` and `Counter.getAndIncrement`, whereas
