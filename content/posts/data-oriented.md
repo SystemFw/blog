@@ -687,7 +687,7 @@ In fact, beyond any specific technique, it is the compounding of this
 type of understanding that, in my experience, actually makes you a
 better programmer.
 
-## Appendix: 3 practical points for exploiting far out ideas
+### Appendix: 3 practical points for exploiting far out ideas
 
 - A lot of interesting ideas are found in somewhat niche communities:
   functional programming, game development, formal methods, futuristic HCI, etc.
