@@ -11,15 +11,11 @@ the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneself to a wide range of
 such ideas.
 
-TODO: streamline
-It's challenging, however, to show a fully worked example of this
-process, which is not self contained by its very nature.
-
-Well, this post aims to do exactly that: we will look at a problem
-involving distributed transactions in a very high level functional
-language, and solve it with a technique used to rearchitect object
-oriented code in the presence of manual memory management. Let's dive
-in.
+This post aims show a fully worked example of this process: we will
+look at a problem involving distributed transactions in a very high
+level functional language, and solve it with a technique used to
+rearchitect object oriented code in the presence of manual memory
+management. Let's dive in.
 
 ## Intro: distributed transactions in Unison
 
@@ -27,19 +23,16 @@ My day job involves designing and implementing distributed systems for
 [Unison Cloud](unison.cloud), the next-gen cloud platform we're
 building on top of the [Unison](unison-lang.org) language.
 
-TODO: flow
 A unique characteristic of our cloud is the power to manipulate
-persistent and transactional storage as if it was an in-memory
-data structure.
-
-We expose this feature as a set of _abilities_ (Unison's take on
-algebraic effects) which can express custom control flow
-abstractions as ordinary straight-line code.
-
+persistent and transactional storage as if it was an in-memory data
+structure, via a set of _abilities_ : Unison's take on algebraic
+effects that can express custom control flow abstractions as ordinary
+straight-line code.
 
 The model is fairly simple: you write programs in the `Transaction`
 ability that operate on one or more typed key-value tables, and call
-`transact` to delimit a transactional boundary.
+`transact` to delimit a transactional boundary, which will require the
+`Storage` ability.
 
 ```haskell
 type Table k v = Table Text
@@ -51,7 +44,6 @@ ability Transaction where
 
 -- like tryRead.tx, but fails on key not found
 read.tx: Table k v -> k ->{Transaction, Exception} v
-
 
 transact : Database -> '{Transaction, Exception, Random} a ->{Exception, Storage} a
 ```
@@ -91,7 +83,8 @@ transfer db =
 -- no infra needed to run code on cloud!
 Cloud.run do
   db = Database.default()
-  Cloud.submit Environment.default() do -- supports the Storage ability
+  -- `submit` accepts thunks with the Storage ability
+  Cloud.submit Environment.default() do 
     transfer db
 ```
 
@@ -127,10 +120,10 @@ Counter.getAndIncrement counter =
 ```
 
 We can use our `Counter` to build an append-only log, similar to a
-Kafka partition, by pairing a `Counter` with `Table Nat a`. The
-`Counter` will keep track of the current size of the log so we know where
-to append next, and the table will host the elements, indexed by their
-offset.
+Kafka partition, by pairing a `Counter` with a `Table Nat a`. The
+`Counter` will keep track of the current size of the log so we know
+where to append next, and the table will host the elements, indexed by
+their offset.
 
 ```haskell
 type Log a = Log Counter (Table Nat a)
@@ -196,7 +189,7 @@ The second is about the execution model of transactions, to help us
 reason about performance. The implementation of `transact` uses
 Optimistic Concurrency Control, which means that the first read of
 each key goes to storage, whilst writes (and reads to keys that have
-written to) are buffered in memory. When the transaction completes,
+been written to) are buffered in memory. When the transaction completes,
 `transact` will try to atomically commit all the writes to storage at
 once. If there is a conflict, it retries the whole transaction, which
 it can do because the Unison type system guarantees that the thunk
