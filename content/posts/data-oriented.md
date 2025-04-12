@@ -4,8 +4,7 @@ date: 2025-04-10
 ---
 
 It is often said that "Learning _x_ will make you a better
-programmer", for various values of _x_.
-
+programmer", for various values of _x_.  
 In my experience the secret to making that true lies not so much in
 the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneself to a wide range of
