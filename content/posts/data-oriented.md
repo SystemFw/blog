@@ -496,9 +496,9 @@ lifetimes of its individual pieces.
 But beyond specific technical strategies, Data Oriented Design
 advocates for a very different way to approach data modelling: we
 should not strive for code to reflect the logical domain we're working
-in, and we should instead frame programs as data transformations, and
-then identity the simplest, most efficient way for the _machine_ to
-perform the desired transformation.
+in, but rather frame programs as data transformations, and then
+identity the simplest, most efficient way for the _machine_ to perform
+the desired transformation.
 
 Now, it's easy to dismiss all this as supremely irrelevant to us: we
 _do_ have a GC, we enjoy it very much thank you, and we're in a far
