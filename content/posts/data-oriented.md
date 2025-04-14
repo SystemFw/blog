@@ -428,9 +428,9 @@ generic-looking OO language:
 ```scala
 class Counter(state: Int) {
   def getAndIncrement(): Int {
-    res := state
+    result = state
     state = state + 1
-    return res
+    return result
   }
 }
 
