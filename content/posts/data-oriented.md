@@ -585,8 +585,8 @@ streamSizes: Table Key Nat
 writing a chunk of events is now straightforward: in a single
 transaction we read the size of the stream for a given key, compute
 the range of indexes the new events will have, and write the new size
-to `streamSizes` table, and the events to the `streams` table. We do
-that for every chunk in our input batch.
+to the `streamSizes` table, and the events to the `streams` table. We
+do that for every chunk in our input batch.
 
 Here's the new and improved code:
 
