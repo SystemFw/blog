@@ -7,7 +7,7 @@ It is often said that "Learning _x_ will make you a better
 programmer", for various values of _x_.  
 In my experience the secret to making that true lies not so much in
 the choice of a given _x_, but rather in the ability to apply ideas
-from _x_ to _y_ , and then getting exposure to a wide range of
+from _x_ to _y_, and then getting exposure to a wide range of
 such ideas.
 
 This post aims to show a fully worked example of this process: we will
