@@ -557,7 +557,7 @@ have buffered a write to it (this ensures that transactions see a
 consistent snapshot).
 
 Ok, now let's apply Data Oriented Design instead, we will forget about
-our existing abstractions and instead look at the essential data
+our existing abstractions in favour of looking at the essential data
 transformations that define our problem.
 
 What data do we need to read a message in a keyed stream? Such a message
