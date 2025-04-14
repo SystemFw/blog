@@ -10,7 +10,7 @@ the choice of a given _x_, but rather in the ability to apply ideas
 from _x_ to _y_ , and then exposing oneself to a wide range of
 such ideas.
 
-This post aims show a fully worked example of this process: we will
+This post aims to show a fully worked example of this process: we will
 look at a problem involving distributed transactions in a very high
 level functional language, and solve it with a technique used to
 rearchitect object oriented code in the presence of manual memory
