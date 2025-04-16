@@ -648,7 +648,7 @@ faster in this scenario.
 
 It's also interesting how Data Oriented Design changed our code in
 much the same way it does when applied to an in-memory OO codebase: we
-no longer have these self contained objects like `Log` and `Counter`,
+no longer have these self-contained objects like `Log` and `Counter`,
 connected by nested pointers (dynamic table names), with pointer
 hopping (`streams` --> `Log` --> `Counter`). Instead, data is layed
 out in flat tables with static indexes.
