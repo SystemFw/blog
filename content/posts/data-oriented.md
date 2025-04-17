@@ -228,8 +228,8 @@ but we won't cover it here for space reasons, just know that we can
 call `toRemote` to embed other cloud abilities in it, like `Storage`,
 `Exception` or `Random`.
 
-Ok, let's plan the implementation out. We need to start by grouping
-the batch of events by key, which we can do with:
+Ok, let's plan the implementation out. We need to group the batch of
+events by key, which we can do with:
 
 ```haskell
 List.groupMap : (a -> k) -> (a -> v) -> [a] -> Map k (List.Nonempty v)
