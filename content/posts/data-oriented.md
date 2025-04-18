@@ -505,8 +505,8 @@ _do_ have a GC, we enjoy it very much thank you, and we're in a far
 higher level language anyway where this minutiae ought not to matter.
 
 But let's zoom out a bit: it is true that in a higher level language
-there's less emphasis about counting every single memory access,
-however in our transactional code the pointer hopping mapped to reads
+there's less emphasis on counting every single memory access, however
+in our transactional code the pointer hopping mapped to reads
 from storage, and we _did_ care about minimising those. We also didn't
 have to deal with manual deallocation of memory, but the chief
 complication in `publishKey` could indeed be framed as a problem with
