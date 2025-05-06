@@ -94,6 +94,7 @@ site =
     constField "github_username" "SystemFw" <>
     defaultContext
 
+-- TODO: compute date automatically
 post :: Context String
 post =
     dateField "date" "%B %e, %Y" <>
