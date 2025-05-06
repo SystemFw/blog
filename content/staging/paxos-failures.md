@@ -63,3 +63,41 @@ This post will primarily focus on writes, which is where the bulk of
 the complexity lies.
 
 
+## System and Fault model
+
+When describing a distributed algorithm, we have to specify a _fault
+model_, i.e. which failures we are promising to deal with and which
+ones we're ignoring, and a _system model_, i.e. which capabilities we
+assume to be able to use to deal with them.
+
+This part is often described in a couple of words of jargon at the
+start of each paper and so it's easy to skim over for new
+practitioners, but it's absolutely crucial, so we'll spend some time
+explaining the model Paxos uses, which is an asychronous non-Byzantine
+model with crash faults.
+
+Basically, there is a set of processes that communicate by sending
+messages to each other.
+These messages can be delayed, reordered, or dropped entirely. Even
+when delivered successfully, we don't know exactly _when_ they are
+delivered (this is what _asynchronous_ refers to), so we cannot say
+things like "if we don't get a reply within x seconds, we know the
+message was dropped".
+
+Processing is also asynchronous, so we don't know exactly when a
+message will be processed. We do assume that eventually messages will
+be processed, or the algorithm cannot progress, but we won't be able
+to rely on this information for correctness since we don't know when.
+
+Processes are allowed to restart and keep participating in the
+algorithm, and are assumed to have access to stable storage. This
+means that a process can come back up and remember state that it has
+set when it was previously running.
+
+However, processes are also allowed to _crash_, which means they stop
+working, and never resume working again. Their state is also
+permanently lost.
+
+Note that we won't be able to detect with certainty that a process has
+crashed: in particular in this model it's impossible to distinguish a
+crashed process from a slow process, or from messages being dropped.
