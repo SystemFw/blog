@@ -87,12 +87,13 @@ message was dropped".
 Processing is also asynchronous, so we don't know exactly when a
 message will be processed. We do assume that eventually messages will
 be processed, or the algorithm cannot progress, but we won't be able
-to rely on this information for correctness since we don't know when.
+to rely on this information for correctness since we don't know when
+that will happen.
 
 Processes are allowed to restart and keep participating in the
 algorithm, and are assumed to have access to stable storage. This
 means that a process can come back up and remember state that it has
-set when it was previously running.
+written when it was previously running.
 
 However, processes are also allowed to _crash_, which means they stop
 working, and never resume working again. Their state is also
@@ -101,3 +102,7 @@ permanently lost.
 Note that we won't be able to detect with certainty that a process has
 crashed: in particular in this model it's impossible to distinguish a
 crashed process from a slow process, or from messages being dropped.
+
+how does failure look like, when it is valid
+
+anything else before we describe things that aren't covered (reconfig, storage faults, byzantine failures)
