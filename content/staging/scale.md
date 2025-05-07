@@ -1,5 +1,5 @@
 ---
-title: "Scalability vs performance"
+title: "What is scalability?"
 date: 2025-05-06
 ---
 
@@ -42,3 +42,6 @@ A) derivative of perf wrt to load
 B) derivative of A wrt to resources
 
 maybe the post should be: 2 words for scalability
+
+I need to add the dimension of adding resources, and angle it more as
+"How do I think of scalability"
