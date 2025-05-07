@@ -28,9 +28,10 @@ known interchangeably as Classic Paxos, Synod, or Single-Decree Paxos,
 but this post will often just call it Paxos for brevity.
 
 My favourite explanation of the exact kind of consensus Single-Decree
-Paxos implements is by Mahesh Balakhrisnan (TODO: link), and we'll
-follow it here: Paxos implements a distributed data structure known as
-a WOR, which stands for Write-Once Register.
+Paxos implements is by [Mahesh
+Balakhrisnan](https://maheshba.bitbucket.io/blog/2021/11/15/Paxos.html)
+, and we'll follow it here: Paxos implements a distributed data
+structure known as a WOR, which stands for Write-Once Register.
 
 The api of a WOR is minimal:
 
@@ -45,7 +46,7 @@ but the types don't capture the full semantics, in particular:
 - `write` can be called sequentially or concurrently by one or
   multiple processes, and it will only succeed in setting the value
   once. All other calls to `write` are a no-op. This is what it means
-  for the register to be _write-once.
+  for the register to be _write-once_.
 - `read` is allowed to return `null` when the register isn't set yet,
   but once it's set, it will always return `A` and won't return `null`
   again. It will also never return any `A` from a call to `write` that
@@ -88,8 +89,8 @@ know exactly when a message will be processed.
 We do assume that eventually messages will arrive and be processed, or
 the algorithm cannot progress, but we won't be able to rely on this
 information for correctness since we don't know when that will happen.
-(In technical jargon: we are relying on partial synchrony for
-liveness, but we only assume asynchrony for safety).
+(In technical jargon: we are relying on partial synchrony
+for liveness, but we only assume asynchrony for safety).
 
 Processes are allowed to restart and keep participating in the
 algorithm, and are assumed to have access to stable storage. This
