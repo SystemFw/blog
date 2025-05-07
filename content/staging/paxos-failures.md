@@ -108,10 +108,32 @@ crashed: in particular in this model it's impossible to distinguish a
 crashed process from a slow process, or from messages being dropped.
 
 Of course no guarantees can be given if all processes crash, so we
-will later see how Paxos defines a maximum number of crash failures it
-can tolerate before it no longer works. For Paxos, _not working_ means
+will later see how Paxos defines a maximum number of failures it can
+tolerate before it no longer works. For Paxos, _not working_ means
 that operations don't succeed, but they never return inconsistent
 results.
 
+The guarantees given by Paxos are remarkable since the fault model it
+uses is quite bleak, which is to say, pretty realistic. However, it's
+worth spelling out faults that are _not_ covered in its model:
 
-anything else before we describe things that aren't covered (reconfig, storage faults, byzantine failures)
+- The set of processes is fixed, and known to all participants. It can
+  shrink as a result of crash failures, but it won't grow, nor will
+  ever be replaced by another set of processes. In other words,
+  _reconfiguration_ is not supported. This is not a realistic
+  assumption in the real world, where we want to eventually replace
+  machines that have crashed, or scale a cluster up and down.
+  Reconfiguration is left as an exercise to the reader in many
+  consensus papers but it's actually very tricky, and treated in more
+  full-fledged versions of Paxos.
+- There is no storage fault model. Storage goes away when a process
+  crashes, but it's assumed to work reliably when the process is
+  running. This is not realistic either as disk corruption in the
+  medium term is very possible. Again, there are dedicated papers to
+  this problem.
+- The processes are assumed to be run the protocol correctly, and will
+  not act maliciously. Similarly, messages won't be tampered with. In
+  technical jargon, there are no _Byzantine faults_, which is actually
+  an acceptable tradeoff for most systems, with the notable exception
+  of blockchains.
+    
