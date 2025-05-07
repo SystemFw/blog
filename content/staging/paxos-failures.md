@@ -43,9 +43,9 @@ class Wor[A] {
 
 but the types don't capture the full semantics, in particular:
 - `write` can be called sequentially or concurrently by one or
-  multiple processes, and it will only succeed once. All other calls
-  to `write` are a no-op. This is what it means for the register to be
-  _write-once.
+  multiple processes, and it will only succeed in setting the value
+  once. All other calls to `write` are a no-op. This is what it means
+  for the register to be _write-once.
 - `read` is allowed to return `null` when the register isn't set yet,
   but once it's set, it will always return `A` and won't return `null`
   again. It will also never return any `A` from a call to `write` that
@@ -82,13 +82,14 @@ These messages can be delayed, reordered, or dropped entirely. Even
 when delivered successfully, we don't know exactly _when_ they are
 delivered (this is what _asynchronous_ refers to), so we cannot say
 things like "if we don't get a reply within x seconds, we know the
-message was dropped".
+message was dropped". Processing is also asynchronous, so we don't
+know exactly when a message will be processed.
 
-Processing is also asynchronous, so we don't know exactly when a
-message will be processed. We do assume that eventually messages will
-be processed, or the algorithm cannot progress, but we won't be able
-to rely on this information for correctness since we don't know when
-that will happen.
+We do assume that eventually messages will arrive and be processed, or
+the algorithm cannot progress, but we won't be able to rely on this
+information for correctness since we don't know when that will happen.
+(In technical jargon: we are relying on partial synchrony for
+liveness, but we only assume asynchrony for safety).
 
 Processes are allowed to restart and keep participating in the
 algorithm, and are assumed to have access to stable storage. This
@@ -103,6 +104,11 @@ Note that we won't be able to detect with certainty that a process has
 crashed: in particular in this model it's impossible to distinguish a
 crashed process from a slow process, or from messages being dropped.
 
-how does failure look like, when it is valid
+Of course no guarantees can be given if all processes crash, so we
+will later see how Paxos defines a maximum number of crash failures it
+can tolerate before it no longer works. For Paxos, _not working_ means
+that operations don't succeed, but they never return inconsistent
+results.
+
 
 anything else before we describe things that aren't covered (reconfig, storage faults, byzantine failures)
