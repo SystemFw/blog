@@ -59,11 +59,10 @@ but the types don't capture the full semantics, in particular:
 
 You might be wondering why we need to involve multiple machines when
 implementing a WOR, and the answer is that we want _fault-tolerance_.
-We will soon see which faults Paxos is designed to prevent, and under
-which conditions.
-
-This post will primarily focus on writes, which is where the bulk of
-the complexity lies.
+We will see exactly which faults Paxos is designed to tolerate, and
+under which conditions: when these conditions no longer hold, `read`
+and `write` will return an error or time out, but they will never give
+inconsistent results, linearisability is always respected.
 
 
 ## System and Fault model
@@ -91,8 +90,8 @@ know exactly when a message will be processed.
 We do assume that eventually messages will arrive and be processed, or
 the algorithm cannot progress, but we won't be able to rely on this
 information for correctness since we don't know when that will happen.
-(In technical jargon: we are relying on partial synchrony
-for liveness, but for safety we only assume asynchrony).
+(In technical jargon: we are relying on partial synchrony for
+liveness, but we provide safety under asynchrony).
 
 Processes are allowed to restart and keep participating in the
 algorithm, and are assumed to have access to stable storage. This
@@ -107,15 +106,8 @@ Note that we won't be able to detect with certainty that a process has
 crashed: in particular in this model it's impossible to distinguish a
 crashed process from a slow process, or from messages being dropped.
 
-Of course no guarantees can be given if all processes crash, so we
-will later see how Paxos defines a maximum number of failures it can
-tolerate before it no longer works. For Paxos, _not working_ means
-that operations don't succeed, but they never return inconsistent
-results.
-
-The guarantees given by Paxos are remarkable since the fault model it
-uses is quite bleak, which is to say, pretty realistic. However, it's
-worth spelling out faults that are _not_ covered in its model:
+Now, this model is looking pretty bleak, which is to say, fairly
+realistic, but it's worth spelling out which faults it does not cover:
 
 - The set of processes is fixed, and known to all participants. It can
   shrink as a result of crash failures, but it won't grow, nor will
@@ -123,9 +115,9 @@ worth spelling out faults that are _not_ covered in its model:
   _reconfiguration_ is not supported. This is not a realistic
   assumption in the real world, where we want to eventually replace
   machines that have crashed, or scale a cluster up and down.
-  Reconfiguration is left as an exercise to the reader in many
-  consensus papers but it's actually very tricky, and treated in more
-  full-fledged versions of Paxos.
+  Reconfiguration is often left as an exercise for the reader, but
+  it's actually very tricky and several papers are dedicated
+  exclusively to it.
 - There is no storage fault model. Storage goes away when a process
   crashes, but it's assumed to work reliably when the process is
   running. This is not realistic either as disk corruption in the
@@ -137,3 +129,13 @@ worth spelling out faults that are _not_ covered in its model:
   an acceptable tradeoff for most systems, with the notable exception
   of blockchains.
     
+## The Paxos Algorithm
+
+Let's have a look at the actual algorithm. We will use the simplest,
+least optimised version possible, and what we're targeting here is a
+_description_ of Single Decree Paxos, rather than an explanation. In
+particular, it should hopefully be clear _what_ Paxos does, although
+not necessarily why. We will then see how each idea is necessary by
+showing which failures it addresses.
+
+
