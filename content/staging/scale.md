@@ -37,3 +37,8 @@ varies as we change the load.
 
 Let's imagine Batman and Robin are having a cake-eating context, 
 
+I feel like really we need two words: 
+A) derivative of perf wrt to load
+B) derivative of A wrt to resources
+
+maybe the post should be: 2 words for scalability
