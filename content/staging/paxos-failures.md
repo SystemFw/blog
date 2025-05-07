@@ -92,7 +92,7 @@ We do assume that eventually messages will arrive and be processed, or
 the algorithm cannot progress, but we won't be able to rely on this
 information for correctness since we don't know when that will happen.
 (In technical jargon: we are relying on partial synchrony
-for liveness, but we only assume asynchrony for safety).
+for liveness, but for safety we only assume asynchrony).
 
 Processes are allowed to restart and keep participating in the
 algorithm, and are assumed to have access to stable storage. This
