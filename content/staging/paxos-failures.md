@@ -18,7 +18,9 @@ variety and subtlety of the failure modes introduced by distribution.
 The invariant-first approach that Leslie Lamport (Paxos' creator) uses
 is also very insightful, but can come later.
 
-This post does not assume any prior knowledge of distributed systems.
+This post does not assume any prior knowledge of distributed systems,
+and it strives to explain common jargon to enable you to go read the
+relevant papers directly.
 
 ## What is Paxos?
 
