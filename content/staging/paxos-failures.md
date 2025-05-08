@@ -182,3 +182,24 @@ various tradeoffs, so here's a simple one: each writer has a static
 `process_id`, and a monotonically increasing integer `counter` which
 is persisted to storage on each increment. The proposal number is then
 `(counter, process_id)`.
+
+When a client process contacts a writer to issue a write, the
+algorithm proceeds as follows:
+
+**Phase 1**:
+1. A writer selects a proposal number `n` and sends `prepare(n)` to
+   the storage servers.
+2. When a storage server receives `prepare(n)`, if `n` is greater or
+   equal than any `prepare` request it has previously responded to, it
+   replies with `promise(n, maybe<n_, v_>)`, which is a promise to
+   never `accept` any proposals numbered less than `n`. If it has
+   `accept`ed a previous proposal, it also includes its proposal
+   number, and the value it accepted. Storage servers keep the last
+   promised proposal number and last accepted proposal, and write
+   those values to stable storage before issuing any replies.
+3. If the writer receives `promise(n, ...)` from a _majority_ of
+   storage servers, it proceeds to Phase 2. Otherwise if it times out,
+   it will retry with a greater proposal number.
+
+**Phase 2**:
+1. The writer selects a value `v` to write to the WOR. If any of the `promise` replies contain a previously `accept`ed proposal, it needs to select that value. If there's more than one, it needs to select the one associated with the highest proposal number
