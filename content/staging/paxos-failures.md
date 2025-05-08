@@ -187,7 +187,7 @@ When a client process contacts a writer to issue a write, the
 algorithm proceeds as follows:
 
 **Phase 1**:
-1. A writer selects a proposal number `n` and sends `prepare(n)` to
+1. The writer selects a proposal number `n` and sends `prepare(n)` to
    the storage servers.
 2. When a storage server receives `prepare(n)`, if `n` is greater or
    equal than any `prepare` request it has previously responded to, it
@@ -204,10 +204,10 @@ algorithm proceeds as follows:
 
 **Phase 2**:
 1. The writer selects a value `v` to write to the WOR. If any of the
-   `promise` replies from Phase 1 contains a previously a `accept`ed
+   `promise` replies from Phase 1 contains a previously `accept`ed
    proposal, it needs to select the value from that proposal. If
-   there's more than one, it needs to select the one associated with
-   the highest proposal number. If no previously `accept`ed proposal
+   there's more than one, it needs to select the value associated with
+   the highest-numbered proposal. If no previously `accept`ed proposal
    is present in the `promise` replies, then it can select the value
    that the client is trying to write.
 2. The writer sends `propose(n, v)` to all the storage servers that
@@ -221,10 +221,25 @@ algorithm proceeds as follows:
    writer can return success to the client. Otherwise if it times out,
    it will retry Phase 1 with a greater proposal number.
 
-Qs:
-- why 2 phases
-- why majority and not just one or all of them
-- what are these rules about greater proposal numbers
-- why does the writer have to choose an existing value and not its own
-- why are there more than one such values if it's a wor?
+Crystal clear, right 😛 ? When I first read this algorithm, I
+found it absolutely mistifying. It's not that the rules are
+particularly hard to follow, but... what are they for?
+
+For example:
+- Why are there 2 phases?
+- Moving from Phase 1 to Phase 2 and from Phase 2 to completion is
+  predicated on receiving a response from a majority of storage
+  servers. Why a majority? Why not just one, or all of them, or 40% of
+  them?
+- There are rules about proposal numbers, what's the point of that?
+- The writer in some cases proposes a value that's not the one the
+  client sent. Why?
+- In the same rule, there's mention of _multiple_ such values. Why are
+  there multiple values if the register is write-once?
+
+And yet, believe it or not, this algorithm is the simplest thing that
+could possibly work if we want fault-tolerance, and will show that by
+trying simpler algorithms and then relentlessly breaking them.
+
+## Failing our way to Paxos
 
