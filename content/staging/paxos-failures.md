@@ -177,7 +177,7 @@ we're trying to write, and a _proposal number_ `n`. Proposal numbers
 are unique and should support a `<` comparison, but they don't have to
 be consecutive. Paxos doesn't mandate a specific way of generating
 proposal numbers, and there are a wealth of different designs with
-various tradeoffs, here's a simple one: each writer has a static
+various tradeoffs, so here's a simple one: each writer has a static
 `process_id`, and a monotonically increasing integer `counter` which
 is persisted to storage on each increment. The proposal number is then
 `(counter, process_id)`.
