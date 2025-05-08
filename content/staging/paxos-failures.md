@@ -155,21 +155,32 @@ need `2f + 1` storage servers. For example, a Paxos cluster with 5
 writers and 5 storage servers can still function if 4 writers and 2
 storage servers crash.
 
-Writing proceeds in two phases, each involving two types of messages.
-If it cannot be completed because of a crash, a message lost, a
-timeout, etc. it can be retried by the same writer or by another
-writer. Each retry, which we'll call a _round_, is marked by a _round
+Writing is divided into Phase 1, where writers send `prepare` messages
+and storage servers reply with `promise` messages, and Phase 2, where
+writers send `propose` message and storage servers reply with `accept`
+messages. A real implementation will also have a bunch of negative
+messages like `cannotAccept`, but here we'll just avoid replying in
+that case, which lets us model all the non-success cases as timeouts,
+since we need timeouts to deal with crashes and message loss anyway.
+
+If a write cannot be completed, it can be retried by the same writer or by another
+writer.
+
+
+Rewrite below with proposal and proposal number?
+
+Each retry, which we'll call a _round_, is marked by a _round
 number_ (also known as proposal number, ballot number, or epoch). A
 _proposal_ is a pair of the value we're trying to write, and the round
 number.
 
-Round numbers are unique and should support a `>` comparison, but they
+Round numbers are unique and should support a `<` comparison, but they
 don't have to be consecutive, and a new round can be started at any
 time, even if the previous hasn't completed. The algorithm is also
 robust to messages from older rounds arriving late, when another round
 is in progress. Paxos doesn't mandate a specific way of generating
 round numbers, and there are a wealth of different designs with
 various tradeoffs, here's a simple one: each writer has a static
-`process_id`, and a monotonically increasing integer `n` which is
+`process_id`, and a monotonically increasing integer `counter` which is
 persisted to storage on each increment.
-The round number is then `(n, process_id)`.
+The round number is then `(counter, process_id)`.
