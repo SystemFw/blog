@@ -159,9 +159,10 @@ Writing is divided into Phase 1, where writers send `prepare` messages
 and storage servers reply with `promise` messages, and Phase 2, where
 writers send `propose` messages and storage servers reply with `accept`
 messages. A real implementation will also have a bunch of negative
-messages like `cannotAccept`, but here we'll just avoid replying in
-that case, which lets us model all the non-success cases as timeouts,
-since we need timeouts to deal with crashes and message loss anyway.
+messages like `cannotAccept` as an optimisation, but here we'll just
+avoid replying in that case, which lets us model all the non-success
+cases as timeouts, since we need timeouts to deal with crashes and
+message loss anyway.
 
 A write can be attempted at any time, even when another attempt is in
 progress, by the same writer or by another writer. The algorithm is
