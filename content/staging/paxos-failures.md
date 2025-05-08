@@ -57,12 +57,12 @@ but the types don't capture the full semantics, in particular:
   single-thread, single-machine process, even though that's not the
   case internally.
 
-You might be wondering why we need to involve multiple machines when
-implementing a WOR, and the answer is that we want _fault-tolerance_.
-We will see exactly which faults Paxos is designed to tolerate, and
-under which conditions: when these conditions no longer hold, `read`
-and `write` will return an error or time out, but they will never give
-inconsistent results, linearisability is always respected.
+The reason we're implementing a WOR using multiple machines is to
+achieve _fault-tolerance_, and we will later describe exactly which
+faults Paxos is designed to tolerate, and under which conditions. When
+these conditions no longer hold, `read` and `write` will return an
+error or time out, but they will never give inconsistent results:
+linearisability is always respected.
 
 
 ## System and Fault model
@@ -131,11 +131,10 @@ realistic, but it's worth spelling out which faults it does not cover:
     
 ## The Paxos Algorithm
 
-Let's have a look at the actual algorithm. We will use the simplest,
-least optimised version possible, and what we're targeting here is a
-_description_ of Single Decree Paxos, rather than an explanation. In
-particular, it should hopefully be clear _what_ Paxos does, although
-not necessarily why. We will then see how each idea is necessary by
-showing which failures it addresses.
+Let's have a look at the actual algorithm, using the simplest, least
+optimised version possible. What we're targeting here is a description
+of what Single Decree Paxos does, rather than an explanation of why it
+does it. We will then see how each idea is necessary by showing which
+failures it addresses.
 
 
