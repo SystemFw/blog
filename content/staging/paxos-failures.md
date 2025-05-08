@@ -203,3 +203,11 @@ algorithm proceeds as follows:
 
 **Phase 2**:
 1. The writer selects a value `v` to write to the WOR. If any of the `promise` replies contain a previously `accept`ed proposal, it needs to select that value. If there's more than one, it needs to select the one associated with the highest proposal number
+
+Qs:
+- why 2 phases
+- why majority and not just one or all of them
+- what are these rules about greater proposal numbers
+- why does the writer have to choose an existing value and not its own
+- why are there more than one such values if it's a wor?
+
