@@ -157,23 +157,27 @@ storage servers crash.
 
 Writing is divided into Phase 1, where writers send `prepare` messages
 and storage servers reply with `promise` messages, and Phase 2, where
-writers send `propose` message and storage servers reply with `accept`
+writers send `propose` messages and storage servers reply with `accept`
 messages. A real implementation will also have a bunch of negative
 messages like `cannotAccept`, but here we'll just avoid replying in
 that case, which lets us model all the non-success cases as timeouts,
 since we need timeouts to deal with crashes and message loss anyway.
 
-If a write cannot be completed, it can be retried by the same writer
-or by another writer. We'll call each attempt a _proposal_, and it
-will have the value `v` we're trying to write, and a _proposal
-number_. Proposal numbers are unique and should support a `<`
-comparison, but they don't have to be consecutive, and a new proposal
-can be started at any time, even if the previous hasn't completed. The
-algorithm is also robust to messages from older proposals arriving
-late, when another proposal is in progress. Paxos doesn't mandate a
-specific way of generating proposal numbers, and there are a wealth of
-different designs with various tradeoffs, here's a simple one: each
-writer has a static `process_id`, and a monotonically increasing
-integer `counter` which is persisted to storage on each increment. The
-proposal number is then `(counter, process_id)`.
+A write can be attempted at any time, even when another attempt is in
+progress, by the same writer or by another writer. The algorithm is
+also robust to messages from older attempts arriving late, when a new
+attempt is in progress. This gives us a uniform strategy to deal with
+all kinds of errors or uncertainty: we will just attempt the write
+again. Assuming there are no more than `f` failures, eventually an
+attempt will either succeed, or it will be a no-op if another attempt
+has succeeded unbeknownst to us.
 
+ We'll call each attempt a _proposal_, and it will have the value `v`
+we're trying to write, and a _proposal number_ `n`. Proposal numbers
+are unique and should support a `<` comparison, but they don't have to
+be consecutive. Paxos doesn't mandate a specific way of generating
+proposal numbers, and there are a wealth of different designs with
+various tradeoffs, here's a simple one: each writer has a static
+`process_id`, and a monotonically increasing integer `counter` which
+is persisted to storage on each increment. The proposal number is then
+`(counter, process_id)`.
