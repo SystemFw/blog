@@ -126,11 +126,11 @@ realistic, but it's worth spelling out which faults it does not cover:
   running. This is not realistic either as disk corruption in the
   medium term is very possible. Again, there are dedicated papers to
   this problem.
-- The processes are assumed to be run the protocol correctly, and will
-  not act maliciously. Similarly, messages won't be tampered with. In
-  technical jargon, there are no _Byzantine faults_, which is actually
-  an acceptable tradeoff for most systems, with the notable exception
-  of blockchains.
+- The processes are assumed to be running the protocol correctly, and
+  will not act maliciously. Similarly, messages won't be tampered
+  with. In technical jargon, there are no _Byzantine faults_, which is
+  actually an acceptable tradeoff for most systems, with the notable
+  exception of blockchains.
     
 ## The Paxos Algorithm
 
@@ -153,5 +153,7 @@ majority of storage servers to be up, so to tolerate `f` failures, we
 need `2f + 1` storage servers. For example, a Paxos cluster with 5
 writers and 5 storage server can still function if 4 writers and 2
 storage servers crash.
+
+
 
 
