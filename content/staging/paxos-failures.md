@@ -3,6 +3,8 @@ title: "A failure-first understanding of Single Decree Paxos"
 date: 2025-05-06
 ---
 
+TODO: standardise on fault vs failure. fault-driven understanding?
+
 Paxos is a mythical beast standing in the way of every budding
 Distributed Systems Engineer. Classic Paxos is actually not _that_
 convoluted as distributed algorithms go, but it uses several deep
@@ -64,6 +66,9 @@ these conditions no longer hold, `read` and `write` will return an
 error or time out, but they will never give inconsistent results:
 linearisability is always respected.
 
+This post will focus on `write`, which highlights all the core ideas.
+Reading does have a couple of subtleties as well though, it might be
+the topic of a future post.
 
 ## System and Fault model
 
@@ -136,5 +141,19 @@ optimised version possible. What we're targeting here is a description
 of what Single Decree Paxos does, rather than an explanation of why it
 does it. We will then see how each idea is necessary by showing which
 failures it addresses.
+
+We have client processes interacting with our WOR, which is in turn
+implemented by a set of processes. Paxos divides these processes into
+_proposers_, _acceptors_ , and _learners_, although these roles don't
+have to be disjoint. We are focusing on `write` here, so we only need
+proposers, i.e. _writers_, and acceptors, i.e. _storage servers_. How
+many instances of each of these processes should we have? Paxos
+mandates lower bounds based on the number `f` of failures we want to
+be able to tolerate. We need at least one writer to be up, so to
+tolerate `f` failures, we need `f + 1` writers. We also need a
+majority of storage servers to be up, so to tolerate `f` failures, we
+need `2f + 1` storage servers. For example, a Paxos cluster with 5
+writers and 5 storage server can still function if 4 writers and 2
+storage servers crash.
 
 
