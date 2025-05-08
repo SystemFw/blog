@@ -170,8 +170,8 @@ also robust to messages from older attempts arriving late, when a new
 attempt is in progress. This gives us a uniform strategy to deal with
 all kinds of errors or uncertainty: we will just attempt the write
 again. Assuming there are no more than `f` failures, eventually an
-attempt will either succeed, or it will be a no-op if another attempt
-has succeeded unbeknownst to us.
+attempt will succeed, either setting the value, or with a no-op if
+another attempt has succeeded unbeknownst to us.
 
  We'll call each attempt a _proposal_, and it will have the value `v`
 we're trying to write, and a _proposal number_ `n`. Proposal numbers
