@@ -46,16 +46,15 @@ class WOR[A] {
 
 but the types don't capture the full semantics, in particular:
 - `write` can be called sequentially or concurrently by one or
-  multiple processes, and it will only succeed in setting the value
-  once. All other calls to `write` are a no-op. This is what it means
-  for the register to be _write-once_.
+  multiple processes, and it will only set the value once. All other
+  successful calls to `write` are a no-op. This is what it means for
+  the register to be _write-once_.
 - `read` is allowed to return `null` when the register isn't set yet,
   but once it's set, it will always return `A` and won't return `null`
   again. It will also never return any `A` from a call to `write` that
-  didn't succeed in setting the WOR. In other words, the WOR is
-  _linearisable_, i.e it gives the illusion of operating as a
-  single-thread, single-machine process, even though that's not the
-  case internally.
+  didn't set the WOR. In other words, the WOR is _linearisable_, i.e
+  it gives the illusion of operating as a single-thread,
+  single-machine process, even though that's not the case internally.
 
 The reason we're implementing a WOR using multiple machines is to
 achieve _fault-tolerance_, and we will later describe exactly which
@@ -86,7 +85,7 @@ messages to each other. These messages can be delayed, duplicated,
 reordered, or dropped entirely. Even when delivered successfully, we
 don't know exactly _when_ they are delivered (this is what
 _asynchronous_ refers to), so we cannot say things like "if we don't
-get a reply within x seconds, we know the message was dropped".
+get a reply within `x` seconds, we know the message was dropped".
 Processing is also asynchronous, so we don't know exactly when a
 message will be processed.
 
@@ -106,8 +105,9 @@ working, and never resume working again. Their state is also
 permanently lost.
 
 Note that we won't be able to detect with certainty that a process has
-crashed: in particular in this model it's impossible to distinguish a
-crashed process from a slow process, or from messages being dropped.
+crashed: in particular in the asynchronous model it's impossible to
+distinguish a crashed process from a slow process, or from messages
+being dropped.
 
 Now, this model is looking pretty bleak, which is to say, fairly
 realistic, but it's worth spelling out which faults it does not cover:
@@ -129,8 +129,8 @@ realistic, but it's worth spelling out which faults it does not cover:
 - The processes are assumed to be running the protocol correctly, and
   will not act maliciously. Similarly, messages won't be tampered
   with. In technical jargon, there are no _Byzantine faults_, which is
-  actually an acceptable tradeoff for most systems, with the notable
-  exception of blockchains.
+  actually an acceptable tradeoff for most systems, with the exception
+  of blockchains.
     
 ## The Paxos Algorithm
 
@@ -204,12 +204,12 @@ algorithm proceeds as follows:
 
 **Phase 2**:
 1. The writer selects a value `v` to write to the WOR. If any of the
-   `promise` replies contains a previously a `accept`ed proposal, it
-   needs to select the value from that proposal. If there's more than
-   one, it needs to select the one associated with the highest
-   proposal number. If no previously `accept`ed proposal is present in
-   the `promise` replies, then it can select the value that the client
-   is trying to write.
+   `promise` replies from Phase 1 contains a previously a `accept`ed
+   proposal, it needs to select the value from that proposal. If
+   there's more than one, it needs to select the one associated with
+   the highest proposal number. If no previously `accept`ed proposal
+   is present in the `promise` replies, then it can select the value
+   that the client is trying to write.
 2. The writer sends `propose(n, v)` to all the storage servers that
    replied in Phase 1.
 3. When a storage server receives a `propose(n, v)`, it accepts the
