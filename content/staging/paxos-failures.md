@@ -1,9 +1,7 @@
 ---
-title: "A failure-first understanding of Single Decree Paxos"
+title: "A fault-driven understanding of Single Decree Paxos"
 date: 2025-05-06
 ---
-
-TODO: standardise on fault vs failure. fault-driven understanding?
 
 Paxos is a mythical beast standing in the way of every budding
 Distributed Systems Engineer. Classic Paxos is actually not _that_
@@ -11,7 +9,7 @@ convoluted as distributed algorithms go, but it uses several deep
 ideas that are challenging to truly understand at first. Deep ideas
 tend to resist a single, all-encompassing explanation, and are best
 approached from multiple angles, until intuition comes. 
-The angle I'm going to use today is _failure-first understanding_,
+The angle I'm going to use today is _fault-driven understanding_,
 which is to say: which specific failure mode is addressed by each idea
 in Paxos? Which bad thing can happen that makes each idea necessary?
 
@@ -73,9 +71,9 @@ the topic of a future post.
 ## System and Fault model
 
 When describing a distributed algorithm, we have to specify a _fault
-model_, i.e. which failures we are promising to deal with and which
-ones we're ignoring, and a _system model_, i.e. which capabilities we
-assume to be able to use to deal with them.
+model_, i.e. which failure modes we are promising to deal with and
+which ones we're ignoring, and a _system model_, i.e. which
+capabilities we assume to be able to use to deal with them.
 
 This part is often described in a couple of words of jargon at the
 start of each paper and so it's easy to skim over for new
@@ -115,7 +113,7 @@ Now, this model is looking pretty bleak, which is to say, fairly
 realistic, but it's worth spelling out which faults it does not cover:
 
 - The set of processes is fixed, and known to all participants. It can
-  shrink as a result of crash failures, but it won't grow, nor will
+  shrink as a result of crash faults, but it won't grow, nor will
   ever be replaced by another set of processes. In other words,
   _reconfiguration_ is not supported. This is not a realistic
   assumption in the real world, where we want to eventually replace
