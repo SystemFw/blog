@@ -7,12 +7,12 @@ date: 2025-05-06
 engineering discussion, but a clear understanding of what scalability
 actually is is more subtle than it might seem. In particular,
 scalability is often conflated with performance, which doesn't account
-for the fact that a more scalable system can be (and often is TODO:
-link COST) less performant than a non-scalable one. Typical interview
-answers, on the other hand, seem to focus almost exclusively on _how_
-scalability can be achieved, e.g. vertically vs horizontally, again
-without a clear understanding of _what_ we're trying to achieve in the
-first place.
+for the fact that a more scalable system can be (and often is TODO: link COST)
+less performant than a non-scalable one. Typical interview answers, on
+the other hand, seem to focus almost exclusively on _how_ scalability
+can be achieved, e.g. vertically vs horizontally, again without a
+clear understanding of _what_ we're trying to achieve in the first
+place.
 
 The first step to a better understanding is a definition of
 _performance_ : performance measures how much of a given resource or
