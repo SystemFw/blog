@@ -143,8 +143,8 @@ failures it addresses.
 We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
 _proposers_, _acceptors_ , and _learners_, although these roles don't
-have to be disjoint. We are focusing on `write` here, so we only need
-proposers, i.e. _writers_, and acceptors, i.e. _storage servers_.
+have to be disjoint. We are focusing on `WOR.write` here, so we only
+need proposers, i.e. _writers_, and acceptors, i.e. _storage servers_.
 
 How many instances of each of these processes should we have? Paxos
 mandates lower bounds based on the number `f` of failures we want to
@@ -174,7 +174,7 @@ has succeeded unbeknownst to us.
 
  We'll call each attempt a _proposal_, and it will have the value `v`
 we're trying to write, and a _proposal number_ `n`. Proposal numbers
-are unique and should support a `<` comparison, but they don't have to
+should be unique and support a `<` comparison, but they don't have to
 be consecutive. Paxos doesn't mandate a specific way of generating
 proposal numbers, and there are a wealth of different designs with
 various tradeoffs, so here's a simple one: each writer has a static
