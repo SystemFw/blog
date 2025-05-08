@@ -143,8 +143,8 @@ failures it addresses.
 We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
 _proposers_, _acceptors_ , and _learners_, although these roles don't
-have to be disjoint. We are focusing on `WOR.write` here, so we only
-need proposers, i.e. _writers_, and acceptors, i.e. _storage servers_.
+have to be disjoint. We are focusing on `write` here, so we only need
+proposers, i.e. _writers_, and acceptors, i.e. _storage servers_.
 
 How many instances of each of these processes should we have? Paxos
 mandates lower bounds based on the number `f` of failures we want to
@@ -194,15 +194,32 @@ algorithm proceeds as follows:
    replies with `promise(n, maybe<n_, v_>)`, which is a promise to
    never `accept` any proposals numbered less than `n`. If it has
    `accept`ed a previous proposal, it also includes its proposal
-   number, and the value it accepted. Storage servers keep the last
-   promised proposal number and last accepted proposal, and write
-   those values to stable storage before issuing any replies.
+   number `n_`, and the value `v_` it accepted. Storage servers
+   remember the last promised proposal number and last accepted
+   proposal, and write those values to stable storage before issuing
+   any replies.
 3. If the writer receives `promise(n, ...)` from a _majority_ of
    storage servers, it proceeds to Phase 2. Otherwise if it times out,
-   it will retry with a greater proposal number.
+   it will retry Phase 1 with a greater proposal number.
 
 **Phase 2**:
-1. The writer selects a value `v` to write to the WOR. If any of the `promise` replies contain a previously `accept`ed proposal, it needs to select that value. If there's more than one, it needs to select the one associated with the highest proposal number
+1. The writer selects a value `v` to write to the WOR. If any of the
+   `promise` replies contains a previously a `accept`ed proposal, it
+   needs to select the value from that proposal. If there's more than
+   one, it needs to select the one associated with the highest
+   proposal number. If no previously `accept`ed proposal is present in
+   the `promise` replies, then it can select the value that the client
+   is trying to write.
+2. The writer sends `propose(n, v)` to all the storage servers that
+   replied in Phase 1.
+3. When a storage server receives a `propose(n, v)`, it accepts the
+   proposal unless it has responded to a `prepare` request with a
+   number greater than `n`. Upon acceptance, it saves `n` and `v` to
+   storage, and replies to the writer with `accept(n)`.
+4. Once the writer receives `accept(n)` from a majority of storage
+   servers, the write has either set a value or was a no-op, and the
+   writer can return success to the client. Otherwise if it times out,
+   it will retry Phase 1 with a greater proposal number.
 
 Qs:
 - why 2 phases
