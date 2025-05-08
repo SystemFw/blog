@@ -144,14 +144,15 @@ We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
 _proposers_, _acceptors_ , and _learners_, although these roles don't
 have to be disjoint. We are focusing on `write` here, so we only need
-proposers, i.e. _writers_, and acceptors, i.e. _storage servers_. How
-many instances of each of these processes should we have? Paxos
+proposers, i.e. _writers_, and acceptors, i.e. _storage servers_.
+
+How many instances of each of these processes should we have? Paxos
 mandates lower bounds based on the number `f` of failures we want to
 be able to tolerate. We need at least one writer to be up, so to
 tolerate `f` failures, we need `f + 1` writers. We also need a
 majority of storage servers to be up, so to tolerate `f` failures, we
 need `2f + 1` storage servers. For example, a Paxos cluster with 5
-writers and 5 storage server can still function if 4 writers and 2
+writers and 5 storage servers can still function if 4 writers and 2
 storage servers crash.
 
 
