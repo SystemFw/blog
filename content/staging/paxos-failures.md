@@ -159,7 +159,9 @@ Writing proceeds in two phases, each involving two types of messages.
 If it cannot be completed because of a crash, a message lost, a
 timeout, etc. it can be retried by the same writer or by another
 writer. Each retry, which we'll call a _round_, is marked by a _round
-number_ (also known as proposal number, ballot number, or epoch.)
+number_ (also known as proposal number, ballot number, or epoch). A
+_proposal_ is a pair of the value we're trying to write, and the round
+number.
 
 Round numbers are unique and should support a `>` comparison, but they
 don't have to be consecutive, and a new round can be started at any
@@ -169,4 +171,5 @@ is in progress. Paxos doesn't mandate a specific way of generating
 round numbers, and there are a wealth of different designs with
 various tradeoffs, here's a simple one: each writer has a static
 `process_id`, and a monotonically increasing integer `n` which is
-persisted to storage. The round number is then `(n, process_id)`.
+persisted to storage on each increment.
+The round number is then `(n, process_id)`.
