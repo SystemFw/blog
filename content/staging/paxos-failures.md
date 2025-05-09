@@ -103,7 +103,7 @@ However, processes are also allowed to crash, which means they stop
 working and never resume working again. Their state is also
 permanently lost. Calling this type of fault a _crash_ is common in
 academic jargon, but crashing in general parlance indicates a
-temporary failure so we will use the word _explosion_ to avoid any
+temporary failure, so we will use the word _explosion_ to avoid any
 confusion.
 
 Note that we won't be able to detect with certainty that a process has
@@ -235,7 +235,7 @@ For example:
 - There are rules about proposal numbers, what's the point of that?
 - The writer in some cases proposes a value that's not the one the
   client sent. Why?
-- In the same rule, there's mention of _multiple_ such values. Why are
+- In those cases, there's mention of _multiple_ such values. Why are
   there multiple values if the register is write-once?
 
 And yet, believe it or not, this algorithm is the simplest thing that
@@ -244,7 +244,7 @@ trying simpler algorithms and then relentlessly breaking them.
 
 ## Failing our way to Paxos
 
-The fundamental property that Paxos provides is _linearizability_. I
+The fundamental property that Paxos provides is _linearisability_. I
 won't provide a formal definition here, but in the context of a WOR,
 it means that it provides the following strong consistency guarantees:
 
