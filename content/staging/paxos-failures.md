@@ -38,7 +38,7 @@ The api of a WOR is minimal:
 
 ```
 class WOR[A] {
-  def write(a: A): Unit
+  def write(v: A): Unit
   def read(): Null | A
 }
 ```
@@ -49,11 +49,12 @@ but the types don't capture the full semantics, in particular:
   successful calls to `write` are a no-op. This is what it means for
   the register to be _write-once_.
 - `read` is allowed to return `null` when the register isn't set yet,
-  but once it's set, it will always return `A` and won't return `null`
-  again. It will also never return any `A` from a call to `write` that
-  didn't set the WOR. In other words, the WOR is _linearisable_, i.e
-  it gives the illusion of operating as a single-thread,
-  single-machine process, even though that's not the case internally.
+  but once it's set with value `v`, it will always return `v` and
+  won't return `null` again. It will also never return any value from
+  a call to `write` that didn't set the WOR. In other words, the WOR
+  is _linearisable_, i.e it gives the illusion of operating as a
+  single-thread, single-machine process, even though that's not the
+  case internally.
 
 The reason we're implementing a WOR using multiple machines is to
 achieve _fault-tolerance_, and we will later describe exactly which
@@ -262,9 +263,9 @@ it means that it provides the following strong consistency guarantees:
 The obvious implementation for the WOR rules is to have a single
 storage server with stable storage:
 
-- `write(a)` checks if there's already a value saved to stable
+- `write(v)` checks if there's already a value saved to stable
   storage. If so, it returns success. If there is no value, it writes
-  `a` to stable storage. After `a` is durable, it returns success.
+  `v` to stable storage. After `v` is durable, it returns success.
 - `read` reads the value from stable storage.
 
 In practice we also have to make sure that single-machine
@@ -275,6 +276,7 @@ properly.
 This is simple and correct but not fault-tolerant: if our storage
 server explodes then the WOR no longer works.
 
+TODO: remove remark about single writer for now, and say "a writer" later
 Let's see how we can address this problem, for now we will assume a
 single writer that doesn't fail, and try to address failures of the
 storage servers. We can use the same algorithm as above for each
