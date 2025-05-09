@@ -297,9 +297,30 @@ servers!
 
 You might be thinking that if one server has crashed, then writing to
 4 and returning success is fine since that server will never come
-back, but remember that _we cannot reliably detect crashes_
+back, but remember that in the asynchronous model with we cannot
+reliably distinguish crashes from message loss or delay.
 
 
+
+So what might happen is that we get 4 replies, we wait however long
+for the 5th reply and don't get it, even after a few retries, and then
+finally assume the 5th server has crashed and return success anyway.
+But actually, we just had a network partition and the 5th storage
+server is still running, and this breaks the rules: imagine the 4
+servers we wrote to all crash, which is allowed since `f = 4` in our
+example, then a reader goes to the 5th server, which doesn't have the
+write, and reads `null`, which breaks the rules since the WOR is not
+allowed to return `null` after a write has succeeded.
+
+
+
+### Quorums
+
+### 2-Phase Locking
+
+### Lock stealing
+
+### Write repair
 
 
 
