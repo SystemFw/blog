@@ -241,3 +241,43 @@ trying simpler algorithms and then relentlessly breaking them.
 
 ## Failing our way to Paxos
 
+The fundamental property that Paxos provides is _linearizability_. I
+won't provide a formal definition here, but in the context of a WOR,
+it means that it provides the following strong consistency guarantees:
+
+1) A `write` only succeeds if there is a value in the WOR (not
+  necessarily set by that `write`).
+2) After a `write` succeeds, a `read` will never return `null`.
+3) Multiple calls to `read`, even concurrent ones, will never see two
+  different values.
+4) The value seen by `read` is one that was sent by a `write` at some
+   point. This rule is silly in practice but without it we could have
+   a `WOR[Int]` that always returns 0, which respects rules 1-3.
+
+So the obvious implementation for these rules is to have a single
+process with stable storage: 
+- `write(a)` checks if there's already a value saved in stable
+  storage. If so, returns success. If there is no value, it writes `a`
+  to stable storage. After `a` is durable, it returns success.
+- `read` reads the value from stable storage.
+
+In practice we also have to make sure that single-machine
+multithreading is done correctly, but remember that one of the
+assumptions in our model is that each algorithm is implemented
+properly.
+
+This is simple and correct but not fault-tolerant: if the single
+process crashes, i.e. stops forever and loses all storage, then the
+WOR no longer works. In other words, the number of faults a single
+process can tolerate is `f = 0`, we want to support `f > 0`.
+
+So clearly we need to write the value of the WOR to storage in multiple processes.
+
+write to all machines --> unavailable for writes
+quorums --> one machine decides ultimately, requires quorum reads
+one failure --> stuck forever
+overwrite proposals --> lin broken if it gets read the critical machine crashes
+2pl --> unlock failures
+lock stealing --> completing writes
+completing writes --> multiple failed writes
+that's full paxos
