@@ -292,9 +292,9 @@ Paxos: _replication_.
 
 So to tolerate 4 failures, we'd have 5 storage servers, and the writer
 would write to all 5 before returning success. But now we have an
-issue: if even just one storage server explodes, then no write would
-even complete, as it would never be able to write to 5 storage
-servers!
+issue: if even just one storage server explodes _before_ any value has
+been written, then no write would even complete, as it would never be
+able to write to 5 storage servers!
 
 You might be thinking that if one storage server has exploded, then
 writing to 4 of them and returning success is fine since our model
@@ -316,7 +316,7 @@ So here's what can happen:
   
 So, to summarise, if the rule is to write to all storage servers, then
 one failure makes writes impossible, but if we write to a number of
-storage servers that is `< f`, we aren't fault-tolerant. The
+storage servers that is `< f`, then reads aren't fault-tolerant. The
 conclusion is that `f + 1` storage servers are not enough.
 
 ### Quorums
