@@ -208,9 +208,9 @@ algorithm proceeds as follows:
    `promise` replies from Phase 1 contains a previously `accept`ed
    proposal, it needs to select the value from that proposal. If
    there's more than one, it needs to select the value associated with
-   the highest-numbered proposal. If no previously `accept`ed proposal
-   is present in the `promise` replies, then it can select the value
-   that the client is trying to write.
+   the highest-numbered proposal. If no previously `accept`ed
+   proposals are present in the `promise` replies, then it can select
+   the value that the client is trying to write.
 2. The writer sends `propose(n, v)` to all the storage servers that
    replied in Phase 1.
 3. When a storage server receives a `propose(n, v)`, it accepts the
@@ -262,9 +262,9 @@ it means that it provides the following strong consistency guarantees:
 The obvious implementation for the WOR rules is to have a single
 storage server with stable storage:
 
-- `write(a)` checks if there's already a value saved in stable
-  storage. If so, returns success. If there is no value, it writes `a`
-  to stable storage. After `a` is durable, it returns success.
+- `write(a)` checks if there's already a value saved to stable
+  storage. If so, it returns success. If there is no value, it writes
+  `a` to stable storage. After `a` is durable, it returns success.
 - `read` reads the value from stable storage.
 
 In practice we also have to make sure that single-machine
@@ -296,24 +296,28 @@ issue: if even just one storage server explodes, then no write would
 even complete, as it would never be able to write to 5 storage
 servers!
 
-You might be thinking that if one server has exploded, then writing to
-4 and returning success is fine since that server will never come
-back, but remember that in the asynchronous model with we cannot
-reliably distinguish explosions from message loss or delay.
+You might be thinking that if one storage server has exploded, then
+writing to 4 of them and returning success is fine since our model
+only allows another 3 to fail but remember that in the asynchronous
+model we cannot reliably distinguish explosions from message loss or
+delay.
 
-
-
-So what might happen is that we get 4 replies, we wait however long
-for the 5th reply and don't get it, even after a few retries, and then
-finally assume the 5th server has exploded and return success anyway.
-But actually, we just had a network partition and the 5th storage
-server is still running, and this breaks the rules: imagine the 4
-servers we wrote to all exploded, which is allowed since `f = 4` in our
-example, then a reader goes to the 5th server, which doesn't have the
-write, and reads `null`, which breaks the rules since the WOR is not
-allowed to return `null` after a write has succeeded.
-
-
+So here's what can happen:
+- The writer writes `v` to 4 storage servers, but doesn't get a reply from
+  the 5th. After waiting for a while and/or retrying, it declares it
+  exploded and returns success.
+- The 5th storage server is still running, but all messages to and
+  from it were dropped.
+- The 4 servers that contain the value all explode, which is allowed
+  by our model since `f = 4`.
+- A reader reaches the 5th server, and reads `null`.
+- This breaks rule 2) : we cannot read `null` after a write has
+  succeeded.
+  
+So, to summarise, if the rule is to write to all storage servers, then
+one failure makes writes impossible, but if we write to a number of
+storage servers that is `< f`, we aren't fault-tolerant. The
+conclusion is that `f + 1` storage servers are not enough.
 
 ### Quorums
 
