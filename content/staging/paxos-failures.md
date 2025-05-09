@@ -300,7 +300,7 @@ able to write to 5 storage servers!
 
 You might be thinking that if one storage server has exploded, then
 writing to 4 of them and returning success is fine since our model
-only allows another 3 to fail but remember that in the asynchronous
+only allows another 3 to fail, but remember that in the asynchronous
 model we cannot reliably distinguish explosions from message loss or
 delay.
 
@@ -317,9 +317,10 @@ So here's what can happen:
   succeeded.
   
 So, to summarise, if the rule is to write to all storage servers, then
-one failure makes writes impossible, but if we write to a number of
-storage servers that is `< f`, then reads aren't fault-tolerant. The
-conclusion is that `f + 1` storage servers are not enough.
+one early explosion prevents any future writes, but if we write to a
+number of storage servers that is `< f`, then reads aren't
+fault-tolerant. The conclusion is that `f + 1` storage servers are not
+enough.
 
 ### Quorums
 
