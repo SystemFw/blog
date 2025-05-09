@@ -283,10 +283,10 @@ can tolerate.
 
 How many storage servers do we need for a given `f`? Well, at least
 `f + 1`, so that even if `f` of them explode after the value has been
-written, there is at one that still has it. The writer just has to
-make sure to only return success once the value has been written to
-all `f + 1` storage servers. This is the first big idea in Paxos:
-_replication_.
+written, there is still one that remembers the value. The writer just
+has to make sure to only return success once the value has been
+written to all `f + 1` storage servers. This is the first big idea in
+Paxos: _replication_.
 
 So to tolerate 4 failures, we'd have 5 storage servers, and the writer
 would write to all 5 before returning success. But now we have another
