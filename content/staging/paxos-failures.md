@@ -139,9 +139,10 @@ failures it addresses.
 
 We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
-_proposers_, _acceptors_ , and _learners_, although these roles don't
-have to be disjoint. We are focusing on `write` here, so we only need
-proposers, i.e. _writers_, and acceptors, i.e. _storage servers_.
+_proposers_ (writers), _acceptors_ (storage servers), and _learners_
+(readers), although these roles don't have to be disjoint. We are
+focusing on `write` here, so we'll only talk about writers and storage
+servers.
 
 How many instances of each of these processes should we have? Paxos
 mandates lower bounds based on the number `f` of failures we want to
@@ -156,10 +157,10 @@ Writing is divided into Phase 1, where writers send `prepare` messages
 and storage servers reply with `promise` messages, and Phase 2, where
 writers send `propose` messages and storage servers reply with `accept`
 messages. A real implementation will also have a bunch of negative
-messages like `cannotAccept` as an optimisation, but here we'll just
-avoid replying in that case, which lets us model all the non-success
-cases as timeouts, since we need timeouts to deal with crashes and
-message loss anyway.
+messages like `cannotAccept` as a basic optimisation, but here we'll
+just avoid replying in that case, which lets us model all the
+non-success cases as timeouts, since we need timeouts to deal with
+crashes and message loss anyway.
 
 A write can be attempted at any time, even when another attempt is in
 progress, by the same writer or by another writer. The algorithm is
