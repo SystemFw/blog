@@ -99,13 +99,16 @@ algorithm, and are assumed to have access to stable storage. This
 means that a process can come back up and remember state that it has
 written when it was previously running.
 
-However, processes are also allowed to _crash_, which means they stop
-working, and never resume working again. Their state is also
-permanently lost.
+However, processes are also allowed to crash, which means they stop
+working and never resume working again. Their state is also
+permanently lost. Calling this type of fault a _crash_ is common in
+academic jargon, but crashing in general parlance indicates a
+temporary failure so we will use the word _explosion_ to avoid any
+confusion.
 
 Note that we won't be able to detect with certainty that a process has
-crashed: in particular in the asynchronous model it's impossible to
-distinguish a crashed process from a slow process, or from messages
+exploded: in particular in the asynchronous model it's impossible to
+distinguish an exploded process from a slow process, or from messages
 being dropped.
 
 Now, this model is looking pretty bleak, which is to say, fairly
@@ -114,12 +117,12 @@ realistic, but it's worth spelling out which faults it does not cover:
 - The set of processes is fixed and known to all participants:
   _reconfiguration_ is not supported. This is not a realistic
   assumption in the real world, where we want to eventually replace
-  machines that have crashed, or scale a cluster up and down.
+  machines that have exploded, or scale a cluster up and down.
   Reconfiguration is often left as an exercise for the reader, but
   it's actually very tricky and several papers are dedicated
   exclusively to it.
 - There is no storage fault model. Storage goes away when a process
-  crashes, but it's assumed to work reliably when the process is
+  explodes, but it's assumed to work reliably when the process is
   running. This is not fully realistic either as disk corruption in
   the medium term is very possible. Again, there are dedicated papers
   to this problem.
@@ -151,7 +154,7 @@ tolerate `f` failures, we need `f + 1` writers. We also need a
 majority of storage servers to be up, so to tolerate `f` failures, we
 need `2f + 1` storage servers. For example, a Paxos cluster with 5
 writers and 5 storage servers can still function if 4 writers and 2
-storage servers crash.
+storage servers explode.
 
 Writing is divided into Phase 1, where writers send `prepare` messages
 and storage servers reply with `promise` messages, and Phase 2, where
@@ -160,7 +163,7 @@ messages. A real implementation will also have a bunch of negative
 messages like `cannotAccept` as a basic optimisation, but here we'll
 just avoid replying in that case, which lets us model all the
 non-success cases as timeouts, since we need timeouts to deal with
-crashes and message loss anyway.
+explosions and message loss anyway.
 
 A write can be attempted at any time, even when another attempt is in
 progress, by the same writer or by another writer. The algorithm is
@@ -270,18 +273,18 @@ assumptions in our model is that each algorithm is implemented
 properly.
 
 This is simple and correct but not fault-tolerant: if our storage
-server crashes, i.e. stops forever and loses all storage, then the WOR
-no longer works.
+server explodes then the WOR no longer works.
 
 Let's see how we can address this problem, for now we will assume a
 single writer that doesn't fail, and try to address failures of the
 storage servers. We can use the same algorithm as above for each
 storage server, but with multiple storage servers. However, if they
-all crash, then clearly nothing would work, so we need to parameterise
-our algorithm with the number of faults `f` it can tolerate.
+all explode, then clearly nothing would work, so we need to
+parameterise our algorithm with the number of faults `f` it can
+tolerate.
 
 Ok, then given `f`, how many storage servers do we need? Well, at
-least `f + 1`, so that even if `f` of them crash after the value has
+least `f + 1`, so that even if `f` of them explode after the value has
 been written, there is at least one that still has it. The writer just
 has to make sure to only return success once the value has been
 written to all `f + 1` storage servers. This is the first big idea in
@@ -289,23 +292,23 @@ Paxos: _replication_.
 
 So to tolerate 4 failures, we'd have 5 storage servers, and the writer
 would write to all 5 before returning success. But now we have an
-issue: if even just one storage server crashes, then no write would
+issue: if even just one storage server explodes, then no write would
 even complete, as it would never be able to write to 5 storage
 servers!
 
-You might be thinking that if one server has crashed, then writing to
+You might be thinking that if one server has exploded, then writing to
 4 and returning success is fine since that server will never come
 back, but remember that in the asynchronous model with we cannot
-reliably distinguish crashes from message loss or delay.
+reliably distinguish explosions from message loss or delay.
 
 
 
 So what might happen is that we get 4 replies, we wait however long
 for the 5th reply and don't get it, even after a few retries, and then
-finally assume the 5th server has crashed and return success anyway.
+finally assume the 5th server has exploded and return success anyway.
 But actually, we just had a network partition and the 5th storage
 server is still running, and this breaks the rules: imagine the 4
-servers we wrote to all crash, which is allowed since `f = 4` in our
+servers we wrote to all exploded, which is allowed since `f = 4` in our
 example, then a reader goes to the 5th server, which doesn't have the
 write, and reads `null`, which breaks the rules since the WOR is not
 allowed to return `null` after a write has succeeded.
