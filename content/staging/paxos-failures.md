@@ -291,7 +291,7 @@ Paxos: _replication_.
 So to tolerate 4 failures, we'd have 5 storage servers, and the writer
 would write to all 5 before returning success. But now we have another
 issue: if even just one storage server explodes _before_ any value has
-been written, then no write would even complete, as it would never be
+been written, then no write would ever complete, as it would never be
 able to write to 5 storage servers!
 
 You might be thinking that if one storage server has exploded, then
