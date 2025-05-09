@@ -228,7 +228,7 @@ particularly hard to follow, but... what are they for?
 For example:
 - Why are there 2 phases?
 - Moving from Phase 1 to Phase 2 and from Phase 2 to completion is
-  predicated on receiving a response from a majority of storage
+  predicated on receiving a response from a _majority_ of storage
   servers. Why a majority? Why not just one, or all of them, or 40% of
   them?
 - There are rules about proposal numbers, what's the point of that?
@@ -238,7 +238,7 @@ For example:
   there multiple values if the register is write-once?
 
 And yet, believe it or not, this algorithm is the simplest thing that
-could possibly work if we want fault-tolerance, and will show that by
+could possibly work if we want fault-tolerance, and we will show that by
 trying simpler algorithms and then relentlessly breaking them.
 
 ## Failing our way to Paxos
