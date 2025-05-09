@@ -369,3 +369,21 @@ lock stealing --> completing writes
 completing writes --> multiple failed writes
 that's full paxos
 
+## Conclusion
+
+Single Decree Paxos, especially the naively unoptimised version we
+used today, is about the simplest consensus algorithm there is, and
+yet it contains a surprising amount of extremely deep ideas.
+
+In fact, I look at Paxos in general not as an algorithm, but as a set
+of foundational ideas that can be assembled into a variety of
+solutions, from Jacks of all trades like Raft to [very specialised
+ones](https://neon.tech/blog/paxos).
+
+We looked at some of these ideas today, teasing them out from their
+initially cryptic formulation with the help of the Distributed Systems
+Engineer's constant companion: failure.
+
+If you enjoyed this post, we're reimagining what it means to program
+distributed programs with [Unison Cloud](https://www.unison.cloud/).
+Go check it out, and see you next time!
