@@ -111,9 +111,7 @@ being dropped.
 Now, this model is looking pretty bleak, which is to say, fairly
 realistic, but it's worth spelling out which faults it does not cover:
 
-- The set of processes is fixed, and known to all participants. It can
-  shrink as a result of crash faults, but it won't grow, nor will
-  ever be replaced by another set of processes. In other words,
+- The set of processes is fixed and known to all participants:
   _reconfiguration_ is not supported. This is not a realistic
   assumption in the real world, where we want to eventually replace
   machines that have crashed, or scale a cluster up and down.
@@ -122,9 +120,9 @@ realistic, but it's worth spelling out which faults it does not cover:
   exclusively to it.
 - There is no storage fault model. Storage goes away when a process
   crashes, but it's assumed to work reliably when the process is
-  running. This is not realistic either as disk corruption in the
-  medium term is very possible. Again, there are dedicated papers to
-  this problem.
+  running. This is not fully realistic either as disk corruption in
+  the medium term is very possible. Again, there are dedicated papers
+  to this problem.
 - The processes are assumed to be running the protocol correctly, and
   will not act maliciously. Similarly, messages won't be tampered
   with. In technical jargon, there are no _Byzantine faults_, which is
