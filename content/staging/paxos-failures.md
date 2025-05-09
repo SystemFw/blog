@@ -1,6 +1,5 @@
 ---
 title: "A fault-driven understanding of Single Decree Paxos"
-date: 2025-05-06
 ---
 
 Paxos is a mythical beast standing in the way of every budding

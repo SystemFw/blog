@@ -1,6 +1,5 @@
 ---
 title: "Programs as Values, Part VII: Exploring Chaining"
-date: 2022-01-27
 ---
 
 Last time we introduced the key concept of _chaining_: creating

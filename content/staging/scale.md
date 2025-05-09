@@ -1,6 +1,5 @@
 ---
 title: "What is scalability?"
-date: 2025-05-06
 ---
 
 "Will it scale?" is just about the most common question you hear in an
