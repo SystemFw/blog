@@ -2,6 +2,8 @@
 title: "A fault-driven understanding of Single Decree Paxos"
 ---
 
+TODO: see if we should replace crashes with explosions/explodes
+
 Paxos is a mythical beast standing in the way of every budding
 Distributed Systems Engineer. Classic Paxos is actually not _that_
 convoluted as distributed algorithms go, but it uses several deep
