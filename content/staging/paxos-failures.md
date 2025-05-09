@@ -273,27 +273,23 @@ multithreading is done correctly, but remember that one of the
 assumptions in our model is that each algorithm is implemented
 properly.
 
-This is simple and correct but not fault-tolerant: if our storage
+This is simple and correct but not fault-tolerant, if our storage
 server explodes then the WOR no longer works.
 
-TODO: remove remark about single writer for now, and say "a writer" later
-Let's see how we can address this problem, for now we will assume a
-single writer that doesn't fail, and try to address failures of the
-storage servers. We can use the same algorithm as above for each
-storage server, but with multiple storage servers. However, if they
-all explode, then clearly nothing would work, so we need to
-parameterise our algorithm with the number of faults `f` it can
-tolerate.
+Let's apply the same logic to multiple storage servers, with one
+caveat: if all of them explode, then clearly nothing would work, so we
+need to parameterise our algorithm with the number of faults `f` it
+can tolerate.
 
-Ok, then given `f`, how many storage servers do we need? Well, at
-least `f + 1`, so that even if `f` of them explode after the value has
-been written, there is at least one that still has it. The writer just
-has to make sure to only return success once the value has been
-written to all `f + 1` storage servers. This is the first big idea in
-Paxos: _replication_.
+How many storage servers do we need for a given `f`? Well, at least
+`f + 1`, so that even if `f` of them explode after the value has been
+written, there is at one that still has it. The writer just has to
+make sure to only return success once the value has been written to
+all `f + 1` storage servers. This is the first big idea in Paxos:
+_replication_.
 
 So to tolerate 4 failures, we'd have 5 storage servers, and the writer
-would write to all 5 before returning success. But now we have an
+would write to all 5 before returning success. But now we have another
 issue: if even just one storage server explodes _before_ any value has
 been written, then no write would even complete, as it would never be
 able to write to 5 storage servers!
@@ -323,6 +319,8 @@ fault-tolerant. The conclusion is that `f + 1` storage servers are not
 enough.
 
 ### Quorums
+
+Let's add more storage servers. Let's say we have we're tolerating 2 failures, so `f = 2`, and we have 10 storage servers. 
 
 ### 2-Phase Locking
 
