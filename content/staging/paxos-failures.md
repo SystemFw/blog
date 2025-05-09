@@ -2,17 +2,15 @@
 title: "A fault-driven understanding of Single Decree Paxos"
 ---
 
-TODO: see if we should replace crashes with explosions/explodes
-
 Paxos is a mythical beast standing in the way of every budding
 Distributed Systems Engineer. Classic Paxos is actually not _that_
 convoluted as distributed algorithms go, but it uses several deep
 ideas that are challenging to truly understand at first. Deep ideas
 tend to resist a single, all-encompassing explanation, and are best
-approached from multiple angles, until intuition comes. 
-The angle I'm going to use today is _fault-driven understanding_,
-which is to say: which specific failure mode is addressed by each idea
-in Paxos? Which bad thing can happen that makes each idea necessary?
+approached from multiple angles, until intuition comes. The angle I'm
+going to use today is _fault-driven understanding_, which is to say:
+which specific failure mode is addressed by each idea in Paxos? Which
+bad thing can happen that makes each idea necessary?
 
 I picked this approach because new practictioners underestimate the
 variety and subtlety of the failure modes introduced by distribution.
