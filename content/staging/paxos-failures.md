@@ -254,8 +254,11 @@ it means that it provides the following strong consistency guarantees:
    point. This rule is silly in practice but without it we could have
    a `WOR[Int]` that always returns 0, which respects rules 1-3.
 
-So the obvious implementation for these rules is to have a single
-process with stable storage: 
+### Replication
+
+The obvious implementation for the WOR rules is to have a single
+storage server with stable storage:
+
 - `write(a)` checks if there's already a value saved in stable
   storage. If so, returns success. If there is no value, it writes `a`
   to stable storage. After `a` is durable, it returns success.
@@ -266,10 +269,39 @@ multithreading is done correctly, but remember that one of the
 assumptions in our model is that each algorithm is implemented
 properly.
 
-This is simple and correct but not fault-tolerant: if the single
-process crashes, i.e. stops forever and loses all storage, then the
-WOR no longer works. In other words, the number of faults a single
-process can tolerate is `f = 0`, we want to support `f > 0`.
+This is simple and correct but not fault-tolerant: if our storage
+server crashes, i.e. stops forever and loses all storage, then the WOR
+no longer works.
+
+Let's see how we can address this problem, for now we will assume a
+single writer that doesn't fail, and try to address failures of the
+storage servers. We can use the same algorithm as above for each
+storage server, but with multiple storage servers. However, if they
+all crash, then clearly nothing would work, so we need to parameterise
+our algorithm with the number of faults `f` it can tolerate.
+
+Ok, then given `f`, how many storage servers do we need? Well, at
+least `f + 1`, so that even if `f` of them crash after the value has
+been written, there is at least one that still has it. The writer just
+has to make sure to only return success once the value has been
+written to all `f + 1` storage servers. This is the first big idea in
+Paxos: _replication_.
+
+So to tolerate 4 failures, we'd have 5 storage servers, and the writer
+would write to all 5 before returning success. But now we have an
+issue: if even just one storage server crashes, then no write would
+even complete, as it would never be able to write to 5 storage
+servers!
+
+You might be thinking that if one server has crashed, then writing to
+4 and returning success is fine since that server will never come
+back, but remember that _we cannot reliably detect crashes_
+
+
+
+
+
+
 
 So clearly we need to write the value of the WOR to storage in multiple processes.
 
