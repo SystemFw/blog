@@ -275,8 +275,12 @@ So clearly we need to write the value of the WOR to storage in multiple processe
 
 write to all machines --> unavailable for writes
 quorums --> one machine decides ultimately, requires quorum reads
-one failure --> stuck forever
-overwrite proposals --> lin broken if it gets read the critical machine crashes
+one failure --> stuck forever. Actually use 6 storage 3 writers for
+this rather than failure, so that I can explain completing writes
+later.
+overwrite proposals --> lin broken if it gets read the critical
+machine crashes. Maybe skip this as it gets into completing writes as
+well, just talk about writes being too eager.
 2pl --> unlock failures
 lock stealing --> completing writes
 completing writes --> multiple failed writes
