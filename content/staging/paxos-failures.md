@@ -215,6 +215,7 @@ algorithm proceeds as follows:
    servers, the write has either set a value or was a no-op, and the
    writer can return success to the client. Otherwise if it times out,
    it will retry Phase 1 with a greater proposal number.
+TODO: "majority" in 2.4 is a bit misleading, maybe change algo to write to all acceptors in phase 2.
 
 Crystal clear, right 😛 ? When I first read this algorithm, I
 found it absolutely mistifying. It's not that the rules are
@@ -330,6 +331,8 @@ The issue is that two writers that are competing to write different
 values to the WOR can reach disjoint sets of 4 storage servers, and so
 they both succeed. Then different reads will return different values
 depending on which set they hit.
+
+But this hints at a solution too: we want the writer to succeeds 
 
 ### 2-Phase Locking
 
