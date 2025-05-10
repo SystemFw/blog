@@ -215,7 +215,14 @@ algorithm proceeds as follows:
    servers, the write has either set a value or was a no-op, and the
    writer can return success to the client. Otherwise if it times out,
    it will retry Phase 1 with a greater proposal number.
-TODO: "majority" in 2.4 is a bit misleading, maybe change algo to write to all acceptors in phase 2.
+   
+TODO: "majority" in 2.4 is a bit misleading, maybe change algo to
+write to all acceptors in phase 2. Actually change it the other way:
+select a majority of acceptors to communicate with in 1.1, then the
+correctness criterion is receiving a response from all the acceptors
+it contacted. That's the simplest version of the algo, the one I have
+already introduce an optimisation by broadcasting and taking the
+fastest majority
 
 Crystal clear, right 😛 ? When I first read this algorithm, I
 found it absolutely mistifying. It's not that the rules are
