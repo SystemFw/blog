@@ -56,11 +56,6 @@ these conditions no longer hold, `read` and `write` will return an
 error or time out, but they will never give inconsistent results:
 linearisability is always respected.
 
-This post will focus on `write`, which highlights all the core ideas.
-Reading does have a couple of subtleties as well though, it might be
-the topic of a future post.
-TODO: review if this remark is necessary
-
 ## System and Fault model
 
 When describing a distributed algorithm, we have to specify a _fault
@@ -138,9 +133,9 @@ failures it addresses.
 We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
 _proposers_ (writers), _acceptors_ (storage servers), and _learners_
-(readers), although these roles don't have to be disjoint. We are
-focusing on `write` here, so we'll only talk about writers and storage
-servers. TODO: rephrase if initial remark `write` focus goes away.
+(readers), although these roles don't have to be disjoint. We will
+focus primarily on `write`, which is the core of the algorithm, so
+we'll only talk about writers and storage servers.
 
 How many instances of each of these processes should we have? Paxos
 mandates lower bounds based on the number `f` of failures we want to
@@ -157,8 +152,8 @@ writers send `propose` messages and storage servers reply with `accept`
 messages. A real implementation will also have a bunch of negative
 messages like `cannotAccept` as a basic optimisation, but here we'll
 just avoid replying in that case, which lets us model all the
-non-success cases as timeouts, since we need timeouts to deal with
-explosions and message loss anyway.
+non-success cases as timeouts, since we need timeouts anyway to deal with
+explosions and message loss.
 
 A write can be attempted at any time, even when another attempt is in
 progress, by the same writer or by another writer. It can also be
@@ -201,7 +196,7 @@ algorithm proceeds as follows:
    out, it will retry Phase 1 with a greater proposal number.
 
 **Phase 2**:
-1. The writer selects a value `v` to write to the WOR. If any of the
+1. The writer selects a value `v` to write to the WOR. If one of the
    `promise` replies from Phase 1 contains a previously `accept`ed
    proposal, it needs to select the value from that proposal. If
    there's more than one, it needs to select the value associated with
@@ -234,8 +229,8 @@ For example:
 - In those cases, there's mention of _multiple_ such values. Why are
   there multiple values if the register is write-once?
 
-And yet, believe it or not, this algorithm is the simplest thing that
-could possibly work if we want fault-tolerance, and we will show that by
+And yet, believe it or not, this is the simplest thing that could
+possibly work if we want fault-tolerance, and we will show that by
 trying simpler algorithms and then relentlessly breaking them.
 
 ## Failing our way to Paxos
@@ -278,12 +273,12 @@ can tolerate.
 
 How many storage servers do we need for a given `f`? Well, at least
 `f + 1`, so that even if `f` of them explode after the value has been
-written, there is still one that remembers the value. The writer just
+written, there is still one that remembers the value. A writer just
 has to make sure to only return success once the value has been
 written to all `f + 1` storage servers. This is the first big idea in
 Paxos: _replication_.
 
-So to tolerate 4 failures, we'd have 5 storage servers, and the writer
+So to tolerate 4 failures, we'd have 5 storage servers, and a writer
 would write to all 5 before returning success. But now we have another
 issue: if even just one storage server explodes _before_ any value has
 been written, then no write would ever complete, as it would never be
@@ -296,7 +291,7 @@ model we cannot reliably distinguish explosions from message loss or
 delay.
 
 So here's what can happen:
-- The writer writes `v` to 4 storage servers, but doesn't get a reply from
+- A writer writes `v` to 4 storage servers, but doesn't get a reply from
   the 5th. After waiting for a while and/or retrying, it declares it
   exploded and returns success.
 - The 5th storage server is still running, but all messages to and
@@ -315,9 +310,9 @@ enough.
 
 ### Quorums
 
-Let's add more storage servers. Let's say we're tolerating 2 failures,
-so `f = 2`, and we have 8 storage servers. How many of those does a
-writer need to write to before returning success?
+Let's add more storage servers. Say we're tolerating 2 failures, so `f
+= 2`, and we have 8 storage servers. How many of those does a writer
+need to write to before returning success?
 
 We could try 4 out of 8, so that:
 - if there are `f = 2` explosions before a write, the writer still has
@@ -331,7 +326,8 @@ without any failures.
 The issue is that two writers that are competing to write different
 values to the WOR can reach disjoint sets of 4 storage servers, and so
 they both succeed. Then different reads will return different values
-depending on which set they hit.
+depending on which set they hit. Solving this problem requires the
+second big idea in Paxos: _majority quorums_.
 
 But this hints at a solution too: we want the writer to succeeds 
 
