@@ -371,8 +371,8 @@ Single-Decree Paxos, especially the naively unoptimised version we
 used today, is about the simplest consensus algorithm there is, and
 yet it contains a surprising amount of extremely deep ideas.
 
-In fact, I look at Paxos in general not as an algorithm, but as a set
-of foundational ideas that can be assembled into a variety of
+In fact, I look at Paxos in general not as an algorithm, but rather a
+set of foundational ideas that can be assembled into a variety of
 solutions, from Jacks of all trades like Raft to [very specialised
 ones](https://neon.tech/blog/paxos).
 
