@@ -1,25 +1,18 @@
 ---
-title: "A fault-driven understanding of Single Decree Paxos"
+title: "A fault-driven understanding of Single-Decree Paxos"
 ---
 
 Paxos is a mythical beast standing in the way of every budding
-Distributed Systems Engineer. Classic Paxos is actually not _that_
-convoluted as distributed algorithms go, but it uses several deep
-ideas that are challenging to truly understand at first. Deep ideas
-tend to resist a single, all-encompassing explanation, and are best
-approached from multiple angles, until intuition comes. The angle I'm
-going to use today is _fault-driven understanding_, which is to say:
-which specific failure mode is addressed by each idea in Paxos? Which
-bad thing can happen that makes each idea necessary?
+Distributed Systems Engineer. Classic Paxos is not _convoluted_, but
+it uses deep ideas that resist immediate intuition.
 
-I picked this approach because new practictioners underestimate the
-variety and subtlety of the failure modes introduced by distribution.
-The invariant-first approach that Leslie Lamport (Paxos' creator) uses
-is also very insightful, but can come later.
+We'll aid our understanding with a fault-driven approach, which is to
+say: which specific failure mode is addressed by each idea in Paxos?
+What makes each one necessary?
 
 This post does not assume any prior knowledge of distributed systems,
 and it strives to explain common jargon to enable you to go read the
-relevant papers directly.
+relevant papers directly. Let's dive in.
 
 ## What is Paxos?
 
@@ -137,7 +130,7 @@ realistic, but it's worth spelling out which faults it does not cover:
 
 Let's have a look at the actual algorithm, using the simplest, least
 optimised version possible. What we're targeting here is a description
-of what Single Decree Paxos does, rather than an explanation of why it
+of what Single-Decree Paxos does, rather than an explanation of why it
 does it. We will then see how each idea is necessary by showing which
 failures it addresses.
 
@@ -371,7 +364,7 @@ that's full paxos
 
 ## Conclusion
 
-Single Decree Paxos, especially the naively unoptimised version we
+Single-Decree Paxos, especially the naively unoptimised version we
 used today, is about the simplest consensus algorithm there is, and
 yet it contains a surprising amount of extremely deep ideas.
 
