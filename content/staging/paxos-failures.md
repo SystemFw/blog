@@ -161,13 +161,14 @@ non-success cases as timeouts, since we need timeouts to deal with
 explosions and message loss anyway.
 
 A write can be attempted at any time, even when another attempt is in
-progress, by the same writer or by another writer. The algorithm is
-also robust to messages from older attempts arriving late, when a new
-attempt is in progress. This gives us a uniform strategy to deal with
-all kinds of errors or uncertainty: we will just attempt the write
-again. Assuming there are no more than `f` failures, eventually an
-attempt will succeed, either setting the value, or with a no-op if
-another attempt has succeeded unbeknownst to us.
+progress, by the same writer or by another writer. It can also be
+abandoned at any time, and the algorithm is robust to messages from
+older attempts arriving late, when a new attempt is in progress. This
+gives us a uniform strategy to deal with all kinds of errors or
+uncertainty: we will just attempt the write again. Assuming there are
+no more than `f` failures, eventually an attempt will succeed, either
+setting the value, or with a no-op if another attempt has succeeded
+unbeknownst to us.
 
  We'll call each attempt a _proposal_, and it will have the value `v`
 we're trying to write, and a _proposal number_ `n`. Proposal numbers
@@ -183,9 +184,10 @@ When a client process contacts a writer to issue a write, the
 algorithm proceeds as follows:
 
 **Phase 1**:
-1. The writer selects a proposal number `n` and sends `prepare(n)` to
-   the storage servers.
-2. When a storage server receives `prepare(n)`, if `n` is greater or
+1. The writer generates a new proposal number `n`.
+2. The writer selects a _ majority quorum_ of half the storage servers
+   plus one, and sends `prepare(n)` to them.
+3. When a storage server receives `prepare(n)`, if `n` is greater or
    equal than any `prepare` request it has previously responded to, it
    replies with `promise(n, maybe<n_, v_>)`, which is a promise to
    never `accept` any proposals numbered less than `n`. If it has
@@ -194,9 +196,9 @@ algorithm proceeds as follows:
    remember the last promised proposal number and last accepted
    proposal, and write those values to stable storage before issuing
    any replies.
-3. If the writer receives `promise(n, ...)` from a _majority_ of
-   storage servers, it proceeds to Phase 2. Otherwise if it times out,
-   it will retry Phase 1 with a greater proposal number.
+4. If the writer receives `promise(n, ...)` from all the storage
+   servers it contacted, it proceeds to Phase 2. Otherwise if it times
+   out, it will retry Phase 1 with a greater proposal number.
 
 **Phase 2**:
 1. The writer selects a value `v` to write to the WOR. If any of the
@@ -206,24 +208,16 @@ algorithm proceeds as follows:
    the highest-numbered proposal. If no previously `accept`ed
    proposals are present in the `promise` replies, then it can select
    the value that the client is trying to write.
-2. The writer sends `propose(n, v)` to all the storage servers that
-   replied in Phase 1.
+2. The writer sends `propose(n, v)` to all the storage servers from
+   Phase 1.
 3. When a storage server receives a `propose(n, v)`, it accepts the
    proposal unless it has responded to a `prepare` request with a
    number greater than `n`. Upon acceptance, it saves `n` and `v` to
    storage, and replies to the writer with `accept(n)`.
-4. Once the writer receives `accept(n)` from a majority of storage
-   servers, the write has either set a value or was a no-op, and the
-   writer can return success to the client. Otherwise if it times out,
-   it will retry Phase 1 with a greater proposal number.
-   
-TODO: "majority" in 2.4 is a bit misleading, maybe change algo to
-write to all acceptors in phase 2. Actually change it the other way:
-select a majority of acceptors to communicate with in 1.1, then the
-correctness criterion is receiving a response from all the acceptors
-it contacted. That's the simplest version of the algo, the one I have
-already introduce an optimisation by broadcasting and taking the
-fastest majority
+4. Once the writer receives `accept(n)` from all the storage servers
+   it contacted , the write has either set a value or was a no-op, and
+   the writer can return success to the client. Otherwise if it times
+   out, it will retry Phase 1 with a greater proposal number.
 
 Crystal clear, right 😛 ? When I first read this algorithm, I
 found it absolutely mistifying. It's not that the rules are
@@ -231,10 +225,9 @@ particularly hard to follow, but... what are they for?
 
 For example:
 - Why are there 2 phases?
-- Moving from Phase 1 to Phase 2 and from Phase 2 to completion is
-  predicated on receiving a response from a _majority_ of storage
-  servers. Why a majority? Why not just one, or all of them, or 40% of
-  them?
+- Progress is predicated on receiving a response from a _majority_ of
+  storage servers. Why a majority? Why not just one, or all of them,
+  or 40% of them?
 - There are rules about proposal numbers, what's the point of that?
 - The writer in some cases proposes a value that's not the one the
   client sent. Why?
