@@ -317,16 +317,19 @@ Let's add more storage servers. Let's say we're tolerating 2 failures,
 so `f = 2`, and we have 8 storage servers. How many of those does a
 writer need to write to before returning success?
 
-We could try 4 of 8, so that:
+We could try 4 out of 8, so that:
 - if there are `f = 2` explosions before a write, the writer still has
   enough storage servers to write to.
 - if `f = 2` out of the 4 storage servers that contain the value
   explode after a write, the value is still stored by the other 2.
   
-We have fault tolerance! Except...we now break serialisability even
+We have fault tolerance! Except...we now break linearisability even
 without any failures.
 
-The issue is that two writers that are competing to write different values to the WOR can reach disjoint sets of 4 storage servers, and so they both succeed. Then different reads will return different values
+The issue is that two writers that are competing to write different
+values to the WOR can reach disjoint sets of 4 storage servers, and so
+they both succeed. Then different reads will return different values
+depending on which set they hit.
 
 ### 2-Phase Locking
 
