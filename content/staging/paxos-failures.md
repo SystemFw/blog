@@ -59,6 +59,7 @@ linearisability is always respected.
 This post will focus on `write`, which highlights all the core ideas.
 Reading does have a couple of subtleties as well though, it might be
 the topic of a future post.
+TODO: review if this remark is necessary
 
 ## System and Fault model
 
@@ -139,7 +140,7 @@ implemented by a set of processes. Paxos divides these processes into
 _proposers_ (writers), _acceptors_ (storage servers), and _learners_
 (readers), although these roles don't have to be disjoint. We are
 focusing on `write` here, so we'll only talk about writers and storage
-servers.
+servers. TODO: rephrase if initial remark `write` focus goes away.
 
 How many instances of each of these processes should we have? Paxos
 mandates lower bounds based on the number `f` of failures we want to
