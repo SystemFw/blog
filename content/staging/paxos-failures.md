@@ -251,6 +251,70 @@ it means that it provides the following strong consistency guarantees:
 ### Replication
 
 The obvious implementation for the WOR rules is to have a single
+storage server with stable storage, and the following logic:
+
+- On `write(v)`, check if there's already a value saved to stable
+  storage. If so, return success. If there is no value, write `v` to
+  stable storage. After `v` is durable, return success.
+- On `read`, read the value from stable storage.
+
+This is simple and correct but not fault-tolerant: if our storage
+server explodes then the WOR no longer works.
+
+Nothing can withstand an infinite amount of permanent failures, so
+we'll parameterise our system with the maximum number `f` of faults it
+can tolerate. We'll then have a number of storage servers that's
+greater than `f`, so that even if `f` storage servers explode after
+the value has been written, readers can still read it from the
+remaining ones.
+
+Each storage server will have the same logic as above, but we have to
+make sure that a writer only returns success once the value has been
+written to all the storage servers. This is the first big idea in
+Paxos: _synchronous replication_.
+
+This poses an issue though: if a write only completes once it's
+acknowledged by _all_ the storage servers, then the explosion of even
+just one storage server when the WOR is still empty will prevent any
+writes from succeeding.
+
+We'd like to modify the rule to require acks from _all the storage
+servers that have not exploded_, but this is a dead end: there is no
+way to reliably distinguish an exploded process from message loss or
+delay.
+
+Instead, we have to consider a write complete once it writes to a
+_subset_ of storage servers, which begs the question, how big should
+this subset be?
+
+the rule is to write to _all_ storage servers, then if even one of them explodes when the WOR is still empty, no writes will every be possible since the writer won't be able to reach all the storage servers
+
+So to tolerate 4 failures, we'd have 5 storage servers, and a writer
+would write to all 5 before returning success. But now we have another
+issue: if even just one storage server explodes _before_ any value has
+been written, then no write would ever complete, as it would never be
+able to write to 5 storage servers!
+
+You might be thinking that if one storage server has exploded, then
+writing to 4 of them and returning success is fine since our model
+only allows another 3 to fail, but remember that in the asynchronous
+model we cannot reliably distinguish explosions from message loss or
+delay.
+
+  
+So, to summarise:
+- if the rule is to write to all storage servers, then one early
+  explosion prevents any future writes. Instead, we're going to have
+  to consider a write valid even if it writes to a subset of storage
+  servers.
+- If we write to number of storage servers that is `< f`, then reads
+  aren't fault-tolerant. Therefore, `f + 1` storage servers are not
+  enough.
+
+
+### Replication
+
+The obvious implementation for the WOR rules is to have a single
 storage server with stable storage:
 
 - `write(v)` checks if there's already a value saved to stable
