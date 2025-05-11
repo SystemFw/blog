@@ -180,7 +180,7 @@ algorithm proceeds as follows:
 
 **Phase 1**:
 1. The writer generates a new proposal number `n`.
-2. The writer selects a _ majority quorum_ of half the storage servers
+2. The writer selects a _majority quorum_ of half the storage servers
    plus one, and sends `prepare(n)` to them.
 3. When a storage server receives `prepare(n)`, if `n` is greater or
    equal than any `prepare` request it has previously responded to, it
