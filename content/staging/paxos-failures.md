@@ -295,10 +295,11 @@ this subset be?
 The issue with writing to a subset of storage servers is that multiple
 writers can write different values to different subsets.
 
-For example, in a cluster of 6 storage servers, we could have Writer A
-write `v1` to 3 storage servers, and Writer B write `v2` to another 3,
-which would then violate the WOR rules: two different calls to `read`
-will get different values depending on which storage server they hit.
+For example, in a cluster of 6 storage servers, we could have writer W1
+write `v1` to 3 storage servers, and writer W2 write `v2` to another
+3, which would then violate the WOR rules: two different calls to
+`read` will get different values depending on which storage server
+they hit.
 
 We cannot guarantee that the same value is written to all the storage
 servers, but what we can guarantee is that all readers draw the same
