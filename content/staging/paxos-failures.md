@@ -259,8 +259,10 @@ storage server with stable storage, and the following logic:
   stable storage. After `v` is durable, return success.
 - On `read`, read the value from stable storage.
 
-This is simple and correct but not fault-tolerant: if our storage
-server explodes then the WOR no longer works.
+Assuming that the implementation of single-machine concurrency and
+persistence is bug-free, the above implements a correct WOR. Alas, it
+is not fault-tolerant: if our storage server explodes then the WOR no
+longer works.
 
 Nothing can withstand an infinite amount of permanent failures, so
 we'll parameterise our system with the maximum number `f` of faults it
