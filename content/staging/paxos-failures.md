@@ -314,18 +314,17 @@ servers plus one. The simplest way to implement this requirement is to
 select a majority quorum of servers to send a write message to, and
 expect a successful response from all of them.
 
-Since there can only be _one_ absolute majority by definition, only
-one value will win and be considered the WOR value, even though some
-storage servers may contain another value or no value at all. However,
-we need `read` to be a quorum read as well, with implications that
-will become clear later.
+This guarantees linearisability because there can only be _one_
+absolute majority by definition, so only one value will win and be
+considered the WOR value, even though some storage servers may contain
+another value or no value at all. However, we need `read` to be a
+quorum read as well, with implications that will become clear later.
 
-We now have a clear requirement for writes: they need a majority of
-storage servers to succeed, so this idea only works if less than half
-of the storage servers explode. In other words, we need `2f + 1`
+Since writes need a reply from majority of storage servers to succeed,
+this idea only works if less than half of the storage servers explode.
+This gives us a size requirement for our cluster: we need `2f + 1`
 storage servers to tolerate `f` failures. We will later see that this
 requirement is not only necessary, but also sufficient.
-
 
 ### 2-Phase Locking
 
