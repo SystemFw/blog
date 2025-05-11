@@ -287,29 +287,34 @@ Instead, we have to consider a write complete once it writes to a
 _subset_ of storage servers, which begs the question, how big should
 this subset be?
 
-the rule is to write to _all_ storage servers, then if even one of them explodes when the WOR is still empty, no writes will every be possible since the writer won't be able to reach all the storage servers
+### Quorums
 
-So to tolerate 4 failures, we'd have 5 storage servers, and a writer
-would write to all 5 before returning success. But now we have another
-issue: if even just one storage server explodes _before_ any value has
-been written, then no write would ever complete, as it would never be
-able to write to 5 storage servers!
+The issue with writing to a subset of storage servers is that multiple
+writers can write different values to different subsets.
 
-You might be thinking that if one storage server has exploded, then
-writing to 4 of them and returning success is fine since our model
-only allows another 3 to fail, but remember that in the asynchronous
-model we cannot reliably distinguish explosions from message loss or
-delay.
+For example, in a cluster of 6 storage servers, we could have Writer A
+write `v1` to 3 storage servers, and Writer B write `v2` to another 3,
+which would then violate the WOR rules: two different calls to `read`
+will get different values depending on which storage server they hit.
 
-  
-So, to summarise:
-- if the rule is to write to all storage servers, then one early
-  explosion prevents any future writes. Instead, we're going to have
-  to consider a write valid even if it writes to a subset of storage
-  servers.
-- If we write to number of storage servers that is `< f`, then reads
-  aren't fault-tolerant. Therefore, `f + 1` storage servers are not
-  enough.
+
+ Solving this problem requires the
+second big idea in Paxos: _majority quorums_.
+
+The idea is that since we cannot guarantee that the same value is
+written to all the storage servers, we have to guarantee that each
+reader draws the _same_ conclusion about what the overall value of the
+WOR should be.
+
+We can achieve that by requiring writes to be _quorum_ writes a write only succeeds if it can write the value of half the storage servers plus one, i.e. an absolute majority of servers: Since there cannot be two absolute majorities, we have a guarantee that only a single value is 
+
+
+
+Let's instead say that the winner requires an _absolute_ majority,
+i.e. it has to be written to half the storage servers plus one.
+This means that `write` has to be a _quorum_ write: it can only succeed
+- This guarantees only one value is chosen as the value of the WOR
+  since there cannot be two absolute majorities.
 
 
 ### Replication
