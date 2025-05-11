@@ -310,6 +310,12 @@ enough.
 
 ### Quorums
 
+TODO: this section should not make precise claims about fault
+tolerance or you need to get into write repair. Instead, we'd just say
+we increase storage servers, and then talk about consistency. We can
+then frame the 2f + 1 acceptors as a requirements for writes to be
+possible.
+
 Let's add more storage servers. Say we're tolerating 2 failures, so `f
 = 2`, and we have 8 storage servers. How many of those does a writer
 need to write to before returning success?
@@ -333,6 +339,8 @@ The idea is that since we cannot guarantee that the same value is
 written to all the storage servers, we have to guarantee that each
 reader draws the _same_ conclusion about what the overall value of the
 WOR should be.
+
+We can achieve that by requiring writes to be _quorum_ writes a write only succeeds if it can write the value of half the storage servers plus one, i.e. an absolute majority of servers: Since there cannot be two absolute majorities, we have a guarantee that only a single value is 
 
 One way we could do that is to say that the value that is written to a
 relative majority of storage servers wins: e.g. if we have `A` on 3
