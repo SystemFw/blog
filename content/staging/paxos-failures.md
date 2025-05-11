@@ -290,25 +290,39 @@ only allows another 3 to fail, but remember that in the asynchronous
 model we cannot reliably distinguish explosions from message loss or
 delay.
 
+TODO: these sections ^ v have the same issue as the quorums section, I
+need to clearly explain quorums for consistency before I go too deep
+into fault tolerance, or we need to talk about majority quorums for
+durability, and then that requires talking about write repair early.
+Talking about `f + 1` rather than `g > f` also leads to wanting to
+talk about durability quorums and then eventually write repair.
+
 So here's what can happen:
-- A writer writes `v` to 4 storage servers, but doesn't get a reply from
+1) A writer writes `v` to 4 storage servers, but doesn't get a reply from
   the 5th. After waiting for a while and/or retrying, it declares it
   exploded and returns success.
-- The 5th storage server is still running, but all messages to and
+2) The 5th storage server is still running, but all messages to and
   from it were dropped.
-- The 4 servers that contain the value all explode, which is allowed
+3) The 4 servers that contain the value all explode, which is allowed
   by our model since `f = 4`.
-- A reader reaches the 5th server, and reads `null`.
-- This breaks rule 2) : we cannot read `null` after a write has
-  succeeded.
+4) A reader reaches the 5th server, and reads `null`.
+5) This breaks WOR rule no.2: we cannot read `null` after a write has
+   succeeded.
   
-So, to summarise, if the rule is to write to all storage servers, then
-one early explosion prevents any future writes, but if we write to a
-number of storage servers that is `< f`, then reads aren't
-fault-tolerant. The conclusion is that `f + 1` storage servers are not
-enough.
+So, to summarise:
+- if the rule is to write to all storage servers, then one early
+  explosion prevents any future writes. Instead, we're going to have
+  to consider a write valid even if it writes to a subset of storage
+  servers.
+- If we write to number of storage servers that is `< f`, then reads
+  aren't fault-tolerant. Therefore, `f + 1` storage servers are not
+  enough.
+
 
 ### Quorums
+
+We need to increase the number of storage servers, but now this poses a problem of consistency: since we 
+
 
 TODO: this section should not make precise claims about fault
 tolerance or you need to get into write repair. Instead, we'd just say
