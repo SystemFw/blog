@@ -329,6 +329,42 @@ they both succeed. Then different reads will return different values
 depending on which set they hit. Solving this problem requires the
 second big idea in Paxos: _majority quorums_.
 
+The idea is that since we cannot guarantee that the same value is
+written to all the storage servers, we have to guarantee that each
+reader draws the _same_ conclusion about what the overall value of the
+WOR should be.
+
+One way we could do that is to say that the value that is written to a
+relative majority of storage servers wins: e.g. if we have `A` on 3
+storage servers, `B` on 2 and `C` on 2, then `A` wins. However, this
+requires having a complete picture of the state of _all_ the storage
+servers, which is again not resilient to explosions.
+
+Let's instead say that the winner requires an _absolute_ majority,
+i.e. it has to be written to half the storage servers plus one.
+This means that `write` has to be a _quorum_ write: it can only succeed
+- This guarantees only one value is chosen as the value of the WOR
+  since there cannot be two absolute majorities.
+- It's also fault tolerant: since we can ignore any values written on
+  a minority of servers, we can allow a minority to fail and still
+  have the real value.
+  
+^ This view is confusing since it then gets into needing write repair
+to complete reads.
+
+
+
+For this to work, we need quorum reads and quorum writes, i.e. a write is only successful if it 
+
+
+This requires `read` to only contact half the storage servers plus one: it can ignore the others because they 
+
+The idea is that we don't need to have the same value written to all
+the storage servers , which would require unanymous writes and 
+, _as long as each reader can draw the same
+conclusion about what the value of the WOR should be_.
+
+
 I think i have to spell out the idea that we will allow multiple values on different acceptors
 
 This is best understood by thinking of `read`: multiple writers
