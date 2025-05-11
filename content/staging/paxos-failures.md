@@ -321,11 +321,11 @@ considered the WOR value, even though some storage servers may contain
 another value or no value at all. However, we need `read` to be a
 quorum read as well, with implications that will become clear later.
 
-Since writes need a reply from majority of storage servers to succeed,
-this idea only works if less than half of the storage servers explode.
-This gives us a size requirement for our cluster: we need `2f + 1`
-storage servers to tolerate `f` failures. We will later see that this
-requirement is not only necessary, but also sufficient.
+Since writes need a reply from a majority of storage servers to
+succeed, this idea only works if less than a majority of storage
+servers explode. This gives us a size requirement for our cluster: we
+need `2f + 1` storage servers to tolerate `f` failures. We will later
+see that this requirement is not only necessary, but also sufficient.
 
 ### 2-Phase Locking
 
