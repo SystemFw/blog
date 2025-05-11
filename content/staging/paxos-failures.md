@@ -210,7 +210,7 @@ algorithm proceeds as follows:
    number greater than `n`. Upon acceptance, it saves `n` and `v` to
    storage, and replies to the writer with `accept(n)`.
 4. Once the writer receives `accept(n)` from all the storage servers
-   it sent a `propose(n, ..)` to , the write has either set a value or
+   it sent a `propose(n, v)` to, the write has either set a value or
    was a no-op, and the writer can return success to the client.
    Otherwise if it times out, it will retry Phase 1 with a greater
    proposal number.
