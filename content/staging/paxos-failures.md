@@ -492,9 +492,14 @@ But this hints at a solution too: we want the writer to succeeds
 ### Lock stealing
 
 ### Write repair
+this section can make the point about majorities having one acceptor
+in common, after explaining the full mechanism: i.e. we cannot just
+ignore and succeed if we see an old value (violates rule about success
+if set), but also we cannot override it, (quorum loss on read). I then
+have to explain the multiple values in different epochs, that's the
+bit the requires the acceptor in common property.
 
-
-
+---
 
 
 So clearly we need to write the value of the WOR to storage in multiple processes.
