@@ -163,7 +163,7 @@ gives us a uniform strategy to deal with all kinds of errors or
 uncertainty: we will just attempt the write again. Assuming there are
 no more than `f` failures, eventually an attempt will succeed, either
 setting the value, or with a no-op if another attempt has succeeded
-unbeknownst to us.
+unbeknownst to it.
 
  We'll call each attempt a _proposal_, and it will have the value `v`
 we're trying to write, and a _proposal number_ `n`. Proposal numbers
