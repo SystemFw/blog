@@ -374,8 +374,8 @@ yet it contains a surprising amount of extremely deep ideas.
 
 In fact, I look at Paxos in general not as an algorithm, but rather a
 set of foundational ideas that can be assembled into a variety of
-solutions, from Jacks of all trades like Raft to [very specialised
-ones](https://neon.tech/blog/paxos).
+solutions to consensus, from Jacks of all trades like Raft to [very
+specialised ones](https://neon.tech/blog/paxos).
 
 We looked at some of these ideas today, teasing them out from their
 initially cryptic formulation with the help of the Distributed Systems
