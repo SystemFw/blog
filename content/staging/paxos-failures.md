@@ -203,16 +203,17 @@ algorithm proceeds as follows:
    the highest-numbered proposal. If no previously `accept`ed
    proposals are present in the `promise` replies, then it can select
    the value that the client is trying to write.
-2. The writer sends `propose(n, v)` to all the storage servers from
-   Phase 1.
+2. The writer sends `propose(n, v)` to all the storage servers
+   selected in Phase 1.
 3. When a storage server receives a `propose(n, v)`, it accepts the
    proposal unless it has responded to a `prepare` request with a
    number greater than `n`. Upon acceptance, it saves `n` and `v` to
    storage, and replies to the writer with `accept(n)`.
 4. Once the writer receives `accept(n)` from all the storage servers
-   it contacted , the write has either set a value or was a no-op, and
-   the writer can return success to the client. Otherwise if it times
-   out, it will retry Phase 1 with a greater proposal number.
+   it sent a `propose(n, ..)` to , the write has either set a value or
+   was a no-op, and the writer can return success to the client.
+   Otherwise if it times out, it will retry Phase 1 with a greater
+   proposal number.
 
 Crystal clear, right 😛 ? When I first read this algorithm, I
 found it absolutely mistifying. It's not that the rules are
@@ -231,7 +232,7 @@ For example:
 
 And yet, believe it or not, this is the simplest thing that could
 possibly work if we want fault-tolerance, and we will show that by
-trying simpler algorithms and then relentlessly breaking them.
+trying simpler algorithms and relentlessly breaking them.
 
 ## Failing our way to Paxos
 
