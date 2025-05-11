@@ -290,7 +290,7 @@ Instead, we have to consider a write complete once it writes to a
 _subset_ of storage servers, which begs the question, how big should
 this subset be?
 
-### Quorums
+### Majority Quorums
 
 The issue with writing to a subset of storage servers is that multiple
 writers can write different values to different subsets.
@@ -300,10 +300,35 @@ write `v1` to 3 storage servers, and Writer B write `v2` to another 3,
 which would then violate the WOR rules: two different calls to `read`
 will get different values depending on which storage server they hit.
 
+We cannot guarantee that the same value is written to all the storage
+servers, but what we can guarantee is that all readers draw the same
+conclusion about what the overall value of the WOR should be.
 
- Solving this problem requires the
-second big idea in Paxos: _majority quorums_.
+This leads us straight to the second big idea in Paxos: _majority
+quorums_.
 
+Basically, a `write` should only succeed if it has a _quorum_, i.e. a
+minimum number of storage servers that acknowledge that write, and
+that quorum must be an _absolute majority_ , i.e. half of the storage
+servers plus one. The simplest way to implement this requirement is to
+select a majority quorum of servers to send a write message to, and
+expect a successful response from all of them.
+
+Since there can only be _one_ absolute majority by definition, only
+one value will win and be considered the WOR value, even though some
+storage servers may contain another value or no value at all. However,
+we need `read` to be a quorum read as well, with implications that
+will become clear later.
+
+We now have a requirement for writes: they need a majority of storage
+servers to succeed, so this idea only works if less than half the
+storage servers explode. In other words, we need `2f + 1` storage
+servers to tolerate `f` failures. We will later see that size
+requirement is not only necessary, but also sufficient.
+
+
+
+--
 The idea is that since we cannot guarantee that the same value is
 written to all the storage servers, we have to guarantee that each
 reader draws the _same_ conclusion about what the overall value of the
