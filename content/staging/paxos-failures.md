@@ -329,6 +329,35 @@ they both succeed. Then different reads will return different values
 depending on which set they hit. Solving this problem requires the
 second big idea in Paxos: _majority quorums_.
 
+I think i have to spell out the idea that we will allow multiple values on different acceptors
+
+This is best understood by thinking of `read`: multiple writers
+have written different values to different storage servers, how does
+`read` decide which value is the actual value of the WOR?
+
+We could say that whatever value is written to a relative majority of storage server "wins", but this would require knowing the state of _all_ storage servers
+absolute majority
+
+if multiple writers are competing to write different values to different sets of storage servers, how does th
+
+
+Let's call _quorum_ the group of storage servers that a writer has to
+write a value `v` to before returning success. When a whole quorum replies to the writer of a value `v`, we can say that the qu
+
+The issue is that two quorum that are disjoint can take different decisions on what the value of the WOR should be
+
+A majority quorum is defined as half the storage servers plus one,
+which guarantees the key property that any two such quorums would have
+at least one storage server in common: it's impossible for two quorums
+to be disjoint (see it `servers =`)
+
+A majority quorum is defined as half the storage servers plus one,
+which guarantees the key property that any two such quorums would have
+at least one storage server in common: it's impossible for two quorums
+to be disjoint (see it `servers =`)
+
+For example, if we have storage servers A, B, C, possible quorums are {A, B}, {A, C}, {B, C}, 
+
 But this hints at a solution too: we want the writer to succeeds 
 
 ### 2-Phase Locking
