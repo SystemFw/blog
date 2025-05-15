@@ -329,6 +329,32 @@ see that this requirement is not only necessary, but also sufficient.
 
 ### 2-Phase Locking
 
+Let's say we have 3 writers `{W1, W2, W3}` trying to write different
+values to an empty WOR made of 3 storage servers `{S1, S2, S3}`.
+
+All the writers start their write concurrently, and imagine that the
+first 3 events to happen are:
+
+- `W1` writes `v1` to `S1`.
+- `W2` writes `v2` to `S2`.
+- `W3`writes `v3` to `S3`.
+
+now there is no way for the algorithm to proceed correctly: no writer
+has a quorum, and they will never get one as the storage servers don't
+allow overriding a value once written.
+
+Just allowing overrides trivially breaks the write-once property: `W1`
+could successfully write `v1` to an empty WOR, a reader would read
+`v1`, then 10 minutes later `W2` arrives, overrides all the values to
+successfully set `v2`, and then the next reader reads `v2`.
+
+
+
+
+
+
+
+
 ### Lock stealing
 
 ### Write completion
