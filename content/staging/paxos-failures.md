@@ -366,7 +366,8 @@ writes arrive, there is no way for the algorithm to proceed correctly.
 We're on the right path though, we just need a read from writer `w` to
 prevent further reads until `w` has had a chance to acquire a quorum,
 which leads us to the third bid idea in Paxos: _2-phase locking_.
-
+ 
+Actually I don't like talking about read then write, it gets into either write repair or short circuiting idempotency, introduce locking directly 
 add summary of the idea before going into details
 
 When a client process contacts a writer to issue a write, the
