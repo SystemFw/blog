@@ -348,6 +348,7 @@ could successfully write `v1` to an empty WOR, a reader would read
 `v1`, then 10 minutes later `w2` arrives, overwrites all the values to
 successfully set `v2`, and then the next reader reads `v2`.
 
+Maybe talk about 2 phases at this stage.
 A better solution would be replacing blind writes with a
 read-then-write approach: a writer reads the value of a majority of
 storage servers, and only writes to them if they are all empty. But
@@ -366,7 +367,31 @@ We're on the right path though, we just need a read from writer `w` to
 prevent further reads until `w` has had a chance to acquire a quorum,
 which leads us to the third bid idea in Paxos: _2-phase locking_.
 
+add summary of the idea before going into details
 
+When a client process contacts a writer to issue a write, the
+algorithm we'll proceed in two phases:
+
+**Phase 1:**
+1. The writer selects a majority of storage servers and sends a
+  `lock(process_id)` to them.
+2. When a storage server receives `lock(process_id)`,it replies
+  `locked` unless it has already replied to a `lock` message with a
+  different process id. It also sends the value `v` in case a `write`
+  has already happened. Storage servers remember their lock status and
+  the `process_id` that issued the lock, and write those values to
+  stable storage before issuing any replies (to be robust against
+  restarts).
+3. If the writer receives `locked` from all the storage servers it
+  contacted, it means that it has managed to reserve a majoproceeds to Phase 2.
+  
+  Otherwise it if times out, it
+  will send `unlock(process_id)` to all the storage servers it
+  contacted, and then it will retry Phase 1.
+**Phase 2:**
+1. 
+
+In both pahses
 
 
 
