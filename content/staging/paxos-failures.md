@@ -341,13 +341,12 @@ first 3 events to happen are:
 
 now there is no way for the algorithm to proceed correctly: no writer
 has a quorum, and they will never get one as the storage servers don't
-allow overriding a value once written.
+allow overwriting a value once written.
 
-Just allowing overrides trivially breaks the write-once property: `W1`
+Just allowing overwrites trivially breaks the write-once property: `W1`
 could successfully write `v1` to an empty WOR, a reader would read
-`v1`, then 10 minutes later `W2` arrives, overrides all the values to
+`v1`, then 10 minutes later `W2` arrives, overwrites all the values to
 successfully set `v2`, and then the next reader reads `v2`.
-
 
 
 
