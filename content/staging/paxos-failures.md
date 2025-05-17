@@ -357,11 +357,11 @@ the writers.
 
 The core of the issue is that writers write to storage servers _too
 eagerly_: a WOR write is only valid if its value is written to a
-majority of storage servers, but by the time the writer realises it
+majority of storage servers, but by the time a writer realises it
 doesn't have a majority, the damage is already done as some storage
 servers have already been set.
 
-Writer cannot actually find out whether or not it has a majority:
+A writer cannot actually find out whether or not it has a majority:
 even if it queries the storage servers, their state might change right
 after the writer has received its response, but before it can act on
 it.
@@ -369,7 +369,7 @@ it.
 Enter the third big idea in Paxos: _2-phase locking_.
 
 The idea is that instead of trying to find out whether it has a
-majority, the writer will try to _reserve_ one. Only once a majority
+majority, a writer will try to _reserve_ one. Only once a majority
 has been reserved will the writer send the value to storage servers,
 hence why the process has 2 phases. The key component here is that
 concurrent writers can retry the reserve phase multiple times until
