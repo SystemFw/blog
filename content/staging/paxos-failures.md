@@ -361,7 +361,7 @@ majority of storage servers, but by the time the writer realises it
 doesn't have a majority, the damage is already done as some storage
 servers have already been set.
 
-A writer cannot actually find out whether or not it has a majority:
+Writer cannot actually find out whether or not it has a majority:
 even if it queries the storage servers, their state might change right
 after the writer has received its response, but before it can act on
 it.
@@ -377,7 +377,24 @@ one wins, without writing any value to storage servers until it is
 safe to do so. The way we reserve a storage server is by preventing
 further reservations until we're done, i.e. by _locking_ it.
 
+The algorithm proceeds as follows:
 
+**Phase 1:**
+1. The writer selects a majority of storage servers, and sends
+  `lock(process_id)` to them with its `process_id`.
+2. Storage servers persist their lock status to stable storage. When a
+  storage servers receives `lock(process_id)`, it replies with
+  `locked(process_id)` unless its lock status is
+  `locked(another_process_id)`. The new lock status is saved to
+  storage before replying.
+3. If the writer receives `locked` replies from all the storage
+   servers it contacted, it proceeds to Phase 2. If not, it sends
+   `unlock(process_id)` to the storage servers it contacted, and
+   retries Phase 1.
+4. When a storage server receives `unlock(process_id)`, it resets its
+   lock status if the `process_id` matches.
+
+**Phase 2:**
 
 in the sequential case it's equivalent to the single storage server algorithm.
 but it also works in the concurrent case:
@@ -419,7 +436,6 @@ algorithm we'll proceed in two phases:
   restarts).
 3. If the writer receives `locked` from all the storage servers it
   contacted, it means that it has managed to reserve a majoproceeds to Phase 2.
-  
   Otherwise it if times out, it
   will send `unlock(process_id)` to all the storage servers it
   contacted, and then it will retry Phase 1.
@@ -435,6 +451,11 @@ In both pahses
 (it also works for the concurrent case by retrying)
 Well, that way a lie
 
+## Fencing
+
+This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
+
+
 ### Write completion
 this section can make the point about majorities having one acceptor
 in common, after explaining the full mechanism: i.e. we cannot just
@@ -447,7 +468,7 @@ bit the requires the acceptor in common property.
 ---
 
 
-do I talk about fencing anywhere
+
 
 So clearly we need to write the value of the WOR to storage in multiple processes.
 
