@@ -369,7 +369,7 @@ it.
 Enter the third big idea in Paxos: _2-phase locking_.
 
 The idea is that instead of trying to find out whether it has a
-majority, the writer will try to _reserve_ one. Ony once a majority
+majority, the writer will try to _reserve_ one. Only once a majority
 has been reserved will the writer send the value to storage servers,
 hence why the process has 2 phases. The key component here is that
 concurrent writers can retry the reserve phase multiple times until
