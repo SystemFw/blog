@@ -347,10 +347,40 @@ now there is no way for the algorithm to proceed correctly: no writer
 has a quorum, and they will never get one as the storage servers don't
 allow overwriting a value once written.
 
-Just allowing overwrites trivially breaks the write-once property: `w1`
-could successfully write `v1` to an empty WOR, a reader would read
-`v1`, then 10 minutes later `w2` arrives, overwrites all the values to
-successfully set `v2`, and then the next reader reads `v2`.
+Overwrites are a no-go because they trivially break the write-once
+property even without any concurrency: `w1` could successfully set an
+empty WOR to `v1`, a reader would read `v1`, then 10 minutes later
+`w2` arrives, overwrites all the values to successfully set `v2`, and
+then the next reader reads `v2`. So, since we want to keep writes
+idempotent on the storage servers, we'll have to change the logic of
+the writers.
+
+The core of the issue is that writers write to storage servers _too
+eagerly_: a WOR write is only valid if its value is written to a
+majority of storage servers, but by the time the writer realises it
+doesn't have a majority, the damage is already done as some storage
+servers have already been set.
+
+A writer cannot actually find out whether or not it has a majority:
+even if it queries the storage servers, their state might change right
+after the writer has received its response, but before it can act on
+it.
+
+Enter the third big idea in Paxos: _2-phase locking_.
+
+The idea is that instead of trying to find out whether it has a
+majority, the writer will try to _reserve_ one. Ony once a majority
+has been reserved will the writer send the value to storage servers,
+hence why the process has 2 phases. The key component here is that
+concurrent writers can retry the reserve phase multiple times until
+one wins, without writing any value to storage servers until it is
+safe to do so. The way we reserve a storage server is by preventing
+further reservations until we're done, i.e. by _locking_ it.
+
+
+
+in the sequential case it's equivalent to the single storage server algorithm.
+but it also works in the concurrent case:
 
 Maybe talk about 2 phases at this stage.
 A better solution would be replacing blind writes with a
@@ -402,6 +432,8 @@ In both pahses
 
 
 ### lock stealing
+(it also works for the concurrent case by retrying)
+Well, that way a lie
 
 ### Write completion
 this section can make the point about majorities having one acceptor
