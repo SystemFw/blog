@@ -56,6 +56,10 @@ these conditions no longer hold, `read` and `write` will return an
 error or time out, but they will never give inconsistent results:
 linearisability is always respected.
 
+A WOR might not seem like much, but we can use a sequence of WORs to
+build a fault-tolerant, strongly consistent log, which can then be
+used to replicate the commands of an arbitrary state machine.
+
 ## System and Fault model
 
 When describing a distributed algorithm, we have to specify a _fault
@@ -332,7 +336,7 @@ see that this requirement is not only necessary, but also sufficient.
 Let's say we have 3 writers `{w1, w2, w3}` trying to write different
 values to an empty WOR made of 3 storage servers `{s1, s2, s3}`.
 
-All the writers start their write concurrently, and imagine that the
+All the writers start their writes concurrently, and imagine that the
 first 3 events to happen are:
 
 - `w1` writes `v1` to `s1`.
