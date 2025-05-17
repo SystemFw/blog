@@ -58,7 +58,7 @@ linearisability is always respected.
 
 A WOR might not seem like much, but we can use a sequence of WORs to
 build a fault-tolerant, strongly consistent log, which can then be
-used to replicate the commands of an arbitrary state machine.
+used to persist the commands of an arbitrary state machine.
 
 ## System and Fault model
 
