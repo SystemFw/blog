@@ -400,14 +400,13 @@ the value unless they already have one, and then return success.
 2-phase locking works because writers can retry Phase 1 multiple times
 until one writer succeeds in locking a majority of storage servers.
 Well, can they? Retrying the locking phase assumes that writers
-release any lock they acquired in a failed attempt by sending an
+release any locks they acquired during a failed attempt by sending an
 `unlock` message to the respective storage servers.
 
 Maybe you see where we're going with this: there's no guarantee that
-those `unlock` messages will ever be received! 
-
-In particular, a writer can explode before being able to send the
-`unlock` messages it needs to send.
+those `unlock` messages will ever be received! In particular, a writer
+can explode before being able to send the `unlock` messages it needs
+to send.
 
 
 
