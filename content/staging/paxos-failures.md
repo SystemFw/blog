@@ -319,6 +319,7 @@ servers plus one. The simplest way to implement this requirement is to
 select a majority quorum of servers to send a write message to, and
 expect a successful response from all of them.
 
+TODO: improve this phrasing, smth like impossible for 2 values to both have absolute majorities
 This guarantees linearisability because there can only be _one_
 absolute majority by definition, so only one value will win and be
 considered the WOR value, even though some storage servers may contain
