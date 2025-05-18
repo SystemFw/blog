@@ -296,13 +296,13 @@ this subset be?
 
 ### Majority Quorums
 
-The issue with writing to a subset of storage servers is that multiple
-writers can write different values to different subsets.
+The immediate issue with writing to a subset of storage servers is
+that multiple writers can write different values to different subsets.
 
-For example, in a cluster of 6 storage servers, we could have writer W1
-write `v1` to 3 storage servers, and writer W2 write `v2` to another
-3, which would then violate the WOR rules: two different calls to
-`read` will get different values depending on which storage server
+For example, in a cluster of 6 storage servers, we could have writer
+`w1` write `v1` to 3 storage servers, and writer `w2` write `v2` to
+another 3, which would then violate the WOR rules: two different calls
+to `read` will get different values depending on which storage server
 they hit.
 
 We cannot guarantee that the same value is written to all the storage
@@ -317,19 +317,14 @@ minimum number of storage servers that acknowledge that write, and
 that quorum must be an _absolute majority_ , i.e. half of the storage
 servers plus one. The simplest way to implement this requirement is to
 select a majority quorum of servers to send a write message to, and
-expect a successful response from all of them.
+expect a successful response from all of them. Similarly, we want
+`read` to be a quorum read, and only succeed if it reads the same
+value from an absolute majority of storage servers.
 
-TODO: maybe talk about quorum reads here
-
-This guarantees linearisability because it's impossible for two values
-to _both_ be written to an _absolute_ majority of storage servers:
-storage servers only accept the first value that's written to them, so
-even in the worst case one storage server will have the deciding
-"vote" on which value will be considered the WOR value, even though
-some other minority of storage servers may contain another value or no
-value at all. However, we need `read` to be a quorum read as well,
-with implications that will become clear later.
-TODO: still not satisfied with this.
+This is correct because storage servers only persist the first value
+that's sent to them, so it's impossible for _two_ values to be written
+to an _absolute_ majority of storage servers, at least one server will
+break any ties.
 
 Since writes need a reply from a majority of storage servers to
 succeed, this idea only works if less than a majority of storage
