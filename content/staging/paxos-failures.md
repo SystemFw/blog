@@ -388,13 +388,19 @@ status to stable storage before replying to any messages.
 If the writer receives `locked` replies from all the storage servers
 it contacted, it proceeds to Phase 2. If not, it sends
 `unlock(process_id)` to the storage servers it contacted, and retries
-Phase 1.
+Phase 1. TODO: just reiterate the point about retries here
 
 Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers, which persist the value unless there
 already is one, and then return success. The only difference is that
 the storage servers also reset their lock status after receiving a
 write.
+
+TODO: remove the point about unlocking after writes, and conclude this section here after addressing retries above once again.
+
+
+In the non-concurrent case, this algorithm works like before: `w1` will arrive, lock a majority of servers, then write `v1` to them.
+Then `w2` will arrive, lock a majority of servers, the write `v2` to them, except `v2` won't be persisted as the storage servers
 s
 
 
@@ -490,6 +496,8 @@ ignore and succeed if we see an old value (violates rule about success
 if set), but also we cannot override it, (quorum loss on read). I then
 have to explain the multiple values in different epochs, that's the
 bit the requires the acceptor in common property.
+
+btw we can explain the happy path case first, where we just contact a different majority of servers.
 
 ### Write Repair (we do allow rewriting)
 ---
