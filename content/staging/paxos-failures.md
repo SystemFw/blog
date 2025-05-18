@@ -319,12 +319,15 @@ servers plus one. The simplest way to implement this requirement is to
 select a majority quorum of servers to send a write message to, and
 expect a successful response from all of them.
 
-TODO: improve this phrasing, smth like impossible for 2 values to both have absolute majorities
-This guarantees linearisability because there can only be _one_
-absolute majority by definition, so only one value will win and be
-considered the WOR value, even though some storage servers may contain
-another value or no value at all. However, we need `read` to be a
-quorum read as well, with implications that will become clear later.
+This guarantees linearisability because it's impossible for two values
+to _both_ be written to an _absolute_ majority of storage servers:
+storage servers only accept the first value that's written to them, so
+even in the worst case one storage server will have the deciding
+"vote" on which value will be considered the WOR value, even though
+some other minority of storage servers may contain another value or no
+value at all. However, we need `read` to be a quorum read as well,
+with implications that will become clear later.
+TODO: still not satisfied with this.
 
 Since writes need a reply from a majority of storage servers to
 succeed, this idea only works if less than a majority of storage
