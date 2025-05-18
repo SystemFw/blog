@@ -378,6 +378,29 @@ one wins, without writing any value to storage servers until it is
 safe to do so. The way we reserve a storage server is by preventing
 further reservations until we're done, i.e. by _locking_ it.
 
+So in Phase 1 the writer selects a majority of storage servers, and
+sends `lock(process_id)` to them with its `process_id`. When a storage
+servers receives `lock(process_id)`, it replies with
+`locked(process_id)` unless its lock status is
+`locked(another_process_id)`. Storage servers persist their lock
+status to stable storage before replying to any messages.
+
+If the writer receives `locked` replies from all the storage servers
+it contacted, it proceeds to Phase 2. If not, it sends
+`unlock(process_id)` to the storage servers it contacted, and retries
+Phase 1.
+
+Phase 2 is the actual write: the writer that holds the lock sends the
+value to the storage servers, which persist the value unless there
+already is one, and then return success. The only difference is that
+the storage servers also reset their lock status after receiving a
+write.
+s
+
+
+
+
+ Sorag
 The algorithm proceeds as follows:
 
 **Phase 1:**
@@ -396,6 +419,9 @@ The algorithm proceeds as follows:
    lock status if the `process_id` matches.
 
 **Phase 2:**
+1. The writer sends the value to the storage servers it has locked.
+
+TODO: maybe handwave part 2 to avoid exposing write completion yet
 
 in the sequential case it's equivalent to the single storage server algorithm.
 but it also works in the concurrent case:
