@@ -319,6 +319,8 @@ servers plus one. The simplest way to implement this requirement is to
 select a majority quorum of servers to send a write message to, and
 expect a successful response from all of them.
 
+TODO: maybe talk about quorum reads here
+
 This guarantees linearisability because it's impossible for two values
 to _both_ be written to an _absolute_ majority of storage servers:
 storage servers only accept the first value that's written to them, so
