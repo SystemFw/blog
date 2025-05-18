@@ -388,11 +388,14 @@ status to stable storage before replying to any messages.
 If the writer receives `locked` replies from all the storage servers
 it contacted, it proceeds to Phase 2. If not, it sends
 `unlock(process_id)` to the storage servers it contacted, and retries
-Phase 1. TODO: just reiterate the point about retries here
+Phase 1. Eventually one writer will succeed locking a majority of
+storage servers, and advance to Phase 2.
 
 Phase 2 is the actual write: the writer that holds the lock sends the
-value to the storage servers, which persist the value unless there
-already is one, and then return success. The only difference is that
+value to the storage servers it locked. The storage servers persist
+the value unless they already have one, and then return success.
+
+The only difference is that
 the storage servers also reset their lock status after receiving a
 write.
 
