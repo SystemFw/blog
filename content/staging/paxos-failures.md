@@ -506,6 +506,12 @@ bit the requires the acceptor in common property.
 btw we can explain the happy path case first, where we just contact a different majority of servers.
 
 ### Write Repair (we do allow rewriting)
+
+this requires some inductive reasoning, show example with two
+majorities, and explain how the only way a second value could have
+appeared is if a writer didn't read any value from a majority, which
+means one doesn't exist, as per the previous rule.
+
 ---
 
 
