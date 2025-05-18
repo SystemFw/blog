@@ -395,8 +395,15 @@ Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers it locked. The storage servers persist
 the value unless they already have one, and then return success.
 
+### Lock Stealing
 
-### lock stealing
+2-phase locking works because writers can retry Phase 1 multiple times
+until one writer succeeds in locking a majority of storage servers.
+Well, can they? phrase this
+
+Turns out that locks in a distributed setting have a very significant difference with locks on a single machine: we cannot g
+
+
 (it also works for the concurrent case by retrying)
 Well, that way a lie
 
