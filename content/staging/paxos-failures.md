@@ -430,34 +430,7 @@ appeared is if a writer didn't read any value from a majority, which
 means one doesn't exist, as per the previous rule.
 
 ### Readers
----
 
-
-
-
-So clearly we need to write the value of the WOR to storage in multiple processes.
-
-
-more than `f`. All machines, we cannot write if one fails (no oracle).
-how many? if a random number, then we don't have linear..ty. we need
-quorums so that one machine is a decider (reads have quorums). but
-then we get stuck with minorities, and rejected writes. If writes can
-be overriden, they will both override it (with a read in between). we
-need locking to avoid early visibility
-
-write to all machines --> unavailable for writes
-quorums --> one machine decides ultimately, requires quorum reads
-one failure --> stuck forever. Actually use 6 storage 3 writers for
-this rather than failure, so that I can explain completing writes
-later.
-overwrite proposals --> lin broken if it gets read the critical
-machine crashes. Maybe skip this as it gets into completing writes as
-well, just talk about writes being too eager.
-overwrite proposals: two writers both override, with a read in between
-2pl --> unlock failures
-lock stealing --> completing writes
-completing writes --> multiple failed writes
-that's full paxos
 
 ## Conclusion
 
