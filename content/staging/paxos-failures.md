@@ -378,7 +378,7 @@ one wins, without writing any value to storage servers until it is
 safe to do so. The way we reserve a storage server is by preventing
 further reservations until we're done, i.e. by _locking_ it.
 
-So in Phase 1 the writer selects a majority of storage servers, and
+So in Phase 1 the writer selects a majority of storage servers and
 sends `lock(process_id)` to them with its `process_id`. When a storage
 servers receives `lock(process_id)`, it replies with
 `locked(process_id)` unless its lock status is
@@ -394,93 +394,6 @@ storage servers, and advance to Phase 2.
 Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers it locked. The storage servers persist
 the value unless they already have one, and then return success.
-
-The only difference is that
-the storage servers also reset their lock status after receiving a
-write.
-
-TODO: remove the point about unlocking after writes, and conclude this section here after addressing retries above once again.
-
-
-In the non-concurrent case, this algorithm works like before: `w1` will arrive, lock a majority of servers, then write `v1` to them.
-Then `w2` will arrive, lock a majority of servers, the write `v2` to them, except `v2` won't be persisted as the storage servers
-s
-
-
-
-
- Sorag
-The algorithm proceeds as follows:
-
-**Phase 1:**
-1. The writer selects a majority of storage servers, and sends
-  `lock(process_id)` to them with its `process_id`.
-2. Storage servers persist their lock status to stable storage. When a
-  storage servers receives `lock(process_id)`, it replies with
-  `locked(process_id)` unless its lock status is
-  `locked(another_process_id)`. The new lock status is saved to
-  storage before replying.
-3. If the writer receives `locked` replies from all the storage
-   servers it contacted, it proceeds to Phase 2. If not, it sends
-   `unlock(process_id)` to the storage servers it contacted, and
-   retries Phase 1.
-4. When a storage server receives `unlock(process_id)`, it resets its
-   lock status if the `process_id` matches.
-
-**Phase 2:**
-1. The writer sends the value to the storage servers it has locked.
-
-TODO: maybe handwave part 2 to avoid exposing write completion yet
-
-in the sequential case it's equivalent to the single storage server algorithm.
-but it also works in the concurrent case:
-
-Maybe talk about 2 phases at this stage.
-A better solution would be replacing blind writes with a
-read-then-write approach: a writer reads the value of a majority of
-storage servers, and only writes to them if they are all empty. But
-this doesn't quite work either, we could have this sequence of events:
-
-- `w1` reads an empty state from `s1` and `s2`.
-- `w2` reads an empty state from `s2` and `s3`.
-- `w3` reads an empty state from `s3` and `s1`.
-- `w1` writes to `s1`.
-- `w2` writes to `s2`.
-- `w3` writes to `s3`.
-
-and we have the same situation as before where by the time the other
-writes arrive, there is no way for the algorithm to proceed correctly.
-We're on the right path though, we just need a read from writer `w` to
-prevent further reads until `w` has had a chance to acquire a quorum,
-which leads us to the third bid idea in Paxos: _2-phase locking_.
- 
-Actually I don't like talking about read then write, it gets into either write repair or short circuiting idempotency, introduce locking directly 
-add summary of the idea before going into details
-
-When a client process contacts a writer to issue a write, the
-algorithm we'll proceed in two phases:
-
-**Phase 1:**
-1. The writer selects a majority of storage servers and sends a
-  `lock(process_id)` to them.
-2. When a storage server receives `lock(process_id)`,it replies
-  `locked` unless it has already replied to a `lock` message with a
-  different process id. It also sends the value `v` in case a `write`
-  has already happened. Storage servers remember their lock status and
-  the `process_id` that issued the lock, and write those values to
-  stable storage before issuing any replies (to be robust against
-  restarts).
-3. If the writer receives `locked` from all the storage servers it
-  contacted, it means that it has managed to reserve a majoproceeds to Phase 2.
-  Otherwise it if times out, it
-  will send `unlock(process_id)` to all the storage servers it
-  contacted, and then it will retry Phase 1.
-**Phase 2:**
-1. 
-
-In both pahses
-
-
 
 
 ### lock stealing
@@ -509,6 +422,7 @@ majorities, and explain how the only way a second value could have
 appeared is if a writer didn't read any value from a majority, which
 means one doesn't exist, as per the previous rule.
 
+### Readers
 ---
 
 
