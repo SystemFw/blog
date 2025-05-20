@@ -362,10 +362,10 @@ majority of storage servers, but by the time a writer realises it
 doesn't have a majority, the damage is already done as some storage
 servers have already been set.
 
-A writer cannot actually find out whether or not it has a majority:
-even if it queries the storage servers, their state might change right
-after the writer has received its response, but before it can act on
-it.
+A writer cannot actually find out whether or not it has a majority
+before writing: even if it queries the storage servers, their state
+might change right after the writer has received its response, but
+before it can act on it.
 
 Enter the third big idea in Paxos: _2-phase locking_.
 
