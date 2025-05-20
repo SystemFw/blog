@@ -403,10 +403,9 @@ Well, can they? Retrying the locking phase assumes that writers
 release any locks they have acquired during a failed attempt by
 sending an `unlock` message to the respective storage servers.
 
-Maybe you see where we're going with this: there's no guarantee that
-those `unlock` messages will ever be received! In particular, a writer
-can explode before being able to send the `unlock` messages it needs
-to send.
+But wait, there's no guarantee that those `unlock` messages will ever
+be received! In particular, a writer can explode before being able to
+send the `unlock` messages it needs to send.
 
 This is a fundamental limitation of locks in a distributed setting,
 and it motivates the next big idea in Paxos: _lock stealing_.
