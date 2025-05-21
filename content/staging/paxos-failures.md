@@ -395,6 +395,8 @@ Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers it locked. The storage servers persist
 the value unless they already have one, and then return success.
 
+TODO: remove process_id
+
 ### Lock Stealing
 
 2-phase locking works because writers can retry Phase 1 multiple times
@@ -402,6 +404,8 @@ until one writer succeeds in locking a majority of storage servers.
 Well, can they? Retrying the locking phase assumes that writers
 release any locks they have acquired during a failed attempt by
 sending an `unlock` message to the respective storage servers.
+
+TODO: a lot more failure modes, highlight some
 
 But wait, there's no guarantee that those `unlock` messages will ever
 be received! In particular, a writer can explode before being able to
@@ -415,6 +419,7 @@ and it motivates the next big idea in Paxos: _lock stealing_.
 
 This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
 
+TODO: should I also describe this process in terms of leader election?
 
 ### Write completion
 this section can make the point about majorities having one acceptor
@@ -454,3 +459,4 @@ Engineer's constant companion: failure.
 If you enjoyed this post, we're reimagining what it means to program
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
+
