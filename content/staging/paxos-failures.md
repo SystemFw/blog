@@ -420,9 +420,13 @@ and it motivates the next big idea in Paxos: _lock stealing_.
 This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
 
 
+First reconstruct the paxos messages from the locks we've discussed, then say what we're missing are value selection rules,
+but before that, an interlude
+
 ### An alternate view: leaders and epochs (or maybe terms)
 
-First reconstruct the paxos messages from the locks we've discussed
+more intuitive, but less granular, useful to connect the dots, leaders and terms
+
 
 ### Write completion
 this section can make the point about majorities having one acceptor
