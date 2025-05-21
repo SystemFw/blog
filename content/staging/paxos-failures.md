@@ -415,11 +415,14 @@ This is a fundamental limitation of locks in a distributed setting,
 and it motivates the next big idea in Paxos: _lock stealing_.
 
 
-## Fencing
+### Fencing
 
 This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
 
-TODO: should I also describe this process in terms of leader election?
+
+### An alternate view: leaders and epochs (or maybe terms)
+
+First reconstruct the paxos messages from the locks we've discussed
 
 ### Write completion
 this section can make the point about majorities having one acceptor
