@@ -398,7 +398,25 @@ sent its write to, then the WOR write succeeds.
 
 ### Lock Stealing
 
-2-phase locking solves the fundamental issue with concurrency control in the presence of 
+2-phase locking provides fundamental concurrency control in the
+presence of multiple writers, but our formulation in terms of
+conventional locks assumes reliable execution of `lock` and `unlock`
+commands so that locks are always in a consistent state whenever Phase
+1 is retried.
+
+This assumption is hilariously broken in a distributed setting though,
+for example:
+- `w1` and `w1` execute Phase 1 but fail to achieve quorum, which
+  requires a retry. `w1` explodes before being able to send `unlock`
+  messages, leaving some storage servers permanently locked, so `w2`
+  cannot proceed.
+- `w1` sends a `lock` message to `s1`, but doesn't receive a reply.
+   Was the `lock` message dropped, and so `w1` didn't lock `s1`, or was
+   the `locked` _reply_ dropped, and so `w1` did lock `s1`?
+- An `unlock` message sent during a previous attempt gets duplicated,
+  reordered, and arrives again much later, unlocking a storage server
+  that was supposed to stay locked.
+
 
 2-phase locking works because writers can retry Phase 1 multiple times
 until one writer succeeds in locking a majority of storage servers.
@@ -425,6 +443,8 @@ First reconstruct the paxos messages from the locks we've discussed, then say wh
 but before that, an interlude
 
 ### An alternate view: leaders and epochs (or maybe terms)
+
+maybe name this section as "dueling leaders", and use that as a way to introduce the alternate view on locking
 
 more intuitive, but less granular, useful to connect the dots, leaders and terms
 
