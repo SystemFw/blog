@@ -396,7 +396,9 @@ value to the storage servers it locked. The storage servers persist
 the value unless they already have one, reset their lock status, and
 then return success. If the writer receives success responses from all
 the storage servers it sent its write to, then the WOR write succeeds.
-TODO: remove this as it gets too much into write repair
+TODO: remove this as it gets too much into write repair. Well, not
+sure about this actually.
+
 
 ### Lock Stealing
 
@@ -489,6 +491,7 @@ and it motivates the next big idea in Paxos: _lock stealing_.
 
 This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
 
+I can talk about the need for waiting for responses in Phase 2 here
 
 First reconstruct the paxos messages from the locks we've discussed, then say what we're missing are value selection rules,
 but before that, an interlude
