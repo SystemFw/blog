@@ -392,9 +392,9 @@ to Phase 2.
 
 Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers it locked. The storage servers persist
-the value unless they already have one, and then return success. If
-the writer receives success responses from all the storage servers it
-sent its write to, then the WOR write succeeds.
+the value unless they already have one, reset their lock status, and
+then return success. If the writer receives success responses from all
+the storage servers it sent its write to, then the WOR write succeeds.
 
 ### Lock Stealing
 
