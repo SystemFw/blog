@@ -406,7 +406,7 @@ commands so that locks are always in a consistent state whenever Phase
 
 This assumption is hilariously broken in a distributed setting though,
 for example:
-- `w1` and `w1` execute Phase 1 but fail to achieve quorum, which
+- `w1` and `w2` execute Phase 1 but fail to achieve quorum, which
   requires a retry. `w1` explodes before being able to send `unlock`
   messages, leaving some storage servers permanently locked, so `w2`
   cannot proceed.
@@ -416,6 +416,38 @@ for example:
 - An `unlock` message sent during a previous attempt gets duplicated,
   reordered, and arrives again much later, unlocking a storage server
   that was supposed to stay locked.
+
+So how do we get around the lack of consistency between `lock` and
+`unlock`? The solution is surprising: we just eliminate `unlock`
+messages. However, we'll need a way to retry Phase 1 even when a
+previous attempt left some storage servers locked.
+
+This is the fourth big idea in Paxos: _lock stealing_.
+
+Essentially, the lock state for each storage server will no longer be
+a boolean, but rather a version number, and writers will try to lock
+at a certain version number `n` by sending a `lock(n)` message. The
+rule will then be that a greater version number can still successfully
+lock a storage server that's locked at a lower version number, or in
+other words, that lower-versioned locks can be stolen.
+
+So, a writer will try and achieve a quorum of `locked(n)`, and if it
+fails, it will retry with a greater `n`.
+
+So Phase 1 becomes:
+- A writer selects a version number `n`, and it sends `lock(n)` to a
+  majority of storage servers.
+- When a storage server receives `lock(n)`, it replies with
+  `locked(n)` if `n` is greater or equal than the server's current
+  lock version. Storage servers persist their lock version to stable
+  storage before replying to any messages.
+- If a writer receives `locked(n)` from all the storage servers it
+  contacted, it proceeds with the write in Phase 2. If not, it will
+  retry Phase 1 with a greater version number.
+
+
+
+
 
 
 2-phase locking works because writers can retry Phase 1 multiple times
