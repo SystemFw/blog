@@ -386,15 +386,17 @@ status to stable storage before replying to any messages.
 
 If the writer receives `locked` replies from all the storage servers
 it contacted, it proceeds to Phase 2. If not, it sends `unlock` to the
-storage servers it contacted, and retries Phase 1. Eventually one
+storage servers it locked, and retries Phase 1. Eventually one
 writer will succeed locking a majority of storage servers, and advance
-to Phase 2.
+to Phase 2, which is the actual write: the writer that holds the lock
+sends the value it wants to write to the storage servers it locked.
 
 Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers it locked. The storage servers persist
 the value unless they already have one, reset their lock status, and
 then return success. If the writer receives success responses from all
 the storage servers it sent its write to, then the WOR write succeeds.
+TODO: remove this as it gets too much into write repair
 
 ### Lock Stealing
 
