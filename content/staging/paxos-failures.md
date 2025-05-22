@@ -379,25 +379,26 @@ safe to do so. The way we reserve a storage server is by preventing
 further reservations until we're done, i.e. by _locking_ it.
 
 So in Phase 1 the writer selects a majority of storage servers and
-sends `lock(process_id)` to them with its `process_id`. When a storage
-servers receives `lock(process_id)`, it replies with
-`locked(process_id)` unless its lock status is
-`locked(another_process_id)`. Storage servers persist their lock
+sends them a `lock` messages. When a storage server which isn't
+already locked receives a `lock` message, it will update its lock
+status and reply with `locked`. Storage servers persist their lock
 status to stable storage before replying to any messages.
 
 If the writer receives `locked` replies from all the storage servers
-it contacted, it proceeds to Phase 2. If not, it sends
-`unlock(process_id)` to the storage servers it contacted, and retries
-Phase 1. Eventually one writer will succeed locking a majority of
-storage servers, and advance to Phase 2.
+it contacted, it proceeds to Phase 2. If not, it sends `unlock` to the
+storage servers it contacted, and retries Phase 1. Eventually one
+writer will succeed locking a majority of storage servers, and advance
+to Phase 2.
 
 Phase 2 is the actual write: the writer that holds the lock sends the
 value to the storage servers it locked. The storage servers persist
-the value unless they already have one, and then return success.
-
-TODO: remove process_id
+the value unless they already have one, and then return success. If
+the writer receives success responses from all the storage servers it
+sent its write to, then the WOR write succeeds.
 
 ### Lock Stealing
+
+2-phase locking solves the fundamental issue with concurrency control in the presence of 
 
 2-phase locking works because writers can retry Phase 1 multiple times
 until one writer succeeds in locking a majority of storage servers.
