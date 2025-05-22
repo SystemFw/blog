@@ -445,6 +445,23 @@ So Phase 1 becomes:
   contacted, it proceeds with the write in Phase 2. If not, it will
   retry Phase 1 with a greater version number.
 
+It's crucial to understand the nature of version numbers: they need to
+be unique and support a `<` comparison, but _they don't have to be
+consecutive_. Providing consecutive version numbers consistently with
+distributed writers would be akin to consensus, and so we'd be back to
+square one, but non consecutive numbers are much easier: each writer
+has a static `process_id`, and a monotonically increasing integer
+`counter` which is persisted to storage on each increment. The
+proposal number is then `(counter, process_id)`, and storage server
+compare `counter` first, and use `process_id` as a discriminator. This
+specific scheme is not very fair since a writer with low `process_id`
+will win any ties, and also not super performant as each attempt
+requires a write to stable storage, but there are more advanced
+schemes that fare better on both axes.
+
+But we've recovered the property we're interested in: writers can
+retry Phase 1 until they succeed in reserving a majority, and then
+send their writes to storage servers in Phase 2.
 
 
 
