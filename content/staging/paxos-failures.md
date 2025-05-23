@@ -418,7 +418,7 @@ for example:
 So how do we get around the lack of consistency between `lock` and
 `unlock`? The solution is surprising: we just eliminate `unlock`
 messages. However, we'll need a way to retry Phase 1 even when a
-previous attempt left some storage servers locked.
+previous attempt has left some storage servers locked.
 
 This is the fourth big idea in Paxos: _lock stealing_.
 
