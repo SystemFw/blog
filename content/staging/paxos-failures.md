@@ -402,8 +402,8 @@ conventional locks assumes reliable execution of `lock` and `unlock`
 commands so that locks are always in a consistent state whenever Phase
 1 is retried.
 
-This assumption is hilariously broken in a distributed setting though,
-for example:
+In a distributed settings, this assumption is hilariously broken. For
+example:
 - `w1` and `w2` execute Phase 1 but fail to achieve quorum, which
   requires a retry. `w1` explodes before being able to send `unlock`
   messages, leaving some storage servers permanently locked, so `w2`
@@ -415,24 +415,22 @@ for example:
   reordered, and arrives again much later, unlocking a storage server
   that was supposed to stay locked.
 
-So how do we get around the lack of consistency between `lock` and
+How do we get around the lack of consistency between `lock` and
 `unlock`? The solution is surprising: we just eliminate `unlock`
 messages. However, we now need a way to retry Phase 1 even when a
 previous attempt has left some storage servers locked.
 
 This is the fourth big idea in Paxos: _lock stealing_.
 
-Essentially, the lock state for each storage server will no longer be
-a boolean, but rather a version number, and writers will try to lock
-at a certain version number `n` by sending a `lock(n)` message. The
-rule will then be that a greater version number can still successfully
-lock a storage server that's locked at a lower version number, or in
-other words, that lower-versioned locks can be stolen.
+Instead of a boolean, the lock state on each storage server will be a
+_version number_, and writers will try to lock at a certain version
+number `n` by sending a `lock(n)` message. The key rule is that a
+storage server locked at a certain version number can be locked again
+by a _greater_ version number, or in other words, that lower-versioned
+locks can be stolen. This allows writers to retry Phase 1 with a
+greater version number if they cannot achieve a quorum.
 
-So, a writer will try and achieve a quorum of `locked(n)`, and if it
-fails, it will retry with a greater `n`.
-
-So Phase 1 becomes:
+Phase 1 becomes:
 - A writer selects a version number `n`, and it sends `lock(n)` to a
   majority of storage servers.
 - When a storage server receives `lock(n)`, it replies with
@@ -447,15 +445,20 @@ It's crucial to understand the nature of version numbers: they need to
 be unique and support a `<` comparison, but _they don't have to be
 consecutive_. Providing consecutive version numbers consistently with
 distributed writers would be akin to consensus, and so we'd be back to
-square one, but non consecutive numbers are much easier: each writer
-has a static `process_id`, and a monotonically increasing integer
-`counter` which is persisted to storage on each increment. The
-proposal number is then `(counter, process_id)`, and storage server
-compare `counter` first, and use `process_id` as a discriminator. This
-specific scheme is not very fair since a writer with low `process_id`
-will win any ties, and also not super performant as each attempt
-requires a write to stable storage, but there are more advanced
-schemes that fare better on both axes.
+square one, but non-consecutive numbers are much easier.
+
+Here's a basic scheme: each writer has a static `process_id`, and a
+monotonically increasing integer `counter` which is persisted to
+storage on each increment. The proposal number is then `(counter,
+process_id)`, and storage servers compare `counter` first, and use
+`process_id` as a discriminator. This specific scheme is not very fair
+since a writer with low `process_id` will win any ties, and also not
+super performant as each attempt requires a write to stable storage,
+but there are more advanced schemes that fare better on both axes.
+
+
+
+
 
 But we've recovered the property we're interested in: writers can
 retry Phase 1 until they succeed in reserving a majority, and then
