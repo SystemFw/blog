@@ -444,7 +444,7 @@ Phase 1 becomes:
 It's crucial to understand the nature of version numbers: they need to
 be unique and support a `<` comparison, but _they don't have to be
 consecutive_. Providing consecutive version numbers consistently with
-distributed writers would be akin to consensu,s and so we'd be back to
+distributed writers would be akin to consensus, and so we'd be back to
 square one.
 
 Here's a basic scheme for version numbers: each writer has a static
