@@ -169,7 +169,7 @@ no more than `f` failures, eventually an attempt will succeed, either
 setting the value, or with a no-op if another attempt has succeeded
 unbeknownst to it.
 
- We'll call each attempt a _proposal_, and it will have the value `v`
+We'll call each attempt a _proposal_, and it will have the value `v`
 we're trying to write, and a _proposal number_ `n`. Proposal numbers
 should be unique and support a `<` comparison, but they don't have to
 be consecutive. Paxos doesn't mandate a specific way of generating
@@ -463,6 +463,8 @@ reserving a majority, and then send their writes to storage servers in
 Phase 2.
 
 ### Fencing
+
+When a writer 
 
 This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
 
