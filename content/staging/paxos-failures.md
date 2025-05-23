@@ -378,26 +378,20 @@ one wins, without writing any value to storage servers until it is
 safe to do so. The way we reserve a storage server is by preventing
 further reservations until we're done, i.e. by _locking_ it.
 
-So in Phase 1 the writer selects a majority of storage servers and
-sends them a `lock` messages. When a storage server which isn't
-already locked receives a `lock` message, it will update its lock
-status and reply with `locked`. Storage servers persist their lock
-status to stable storage before replying to any messages.
+So in Phase 1 the writer selects a majority of storage servers,
+and sends them a `lock` message. When a storage server which isn't already
+locked receives a `lock` message, it updates its lock status in
+stable storage, and replies with `locked`.
 
 If the writer receives `locked` replies from all the storage servers
-it contacted, it proceeds to Phase 2. If not, it sends `unlock` to the
-storage servers it locked, and retries Phase 1. Eventually one
-writer will succeed locking a majority of storage servers, and advance
-to Phase 2, which is the actual write: the writer that holds the lock
-sends the value it wants to write to the storage servers it locked.
+it contacted, it proceeds to Phase 2. Otherwise if it times out, it
+sends an `unlock` message to the storage servers it locked, and
+retries Phase 1.
 
-Phase 2 is the actual write: the writer that holds the lock sends the
-value to the storage servers it locked. The storage servers persist
-the value unless they already have one, reset their lock status, and
-then return success. If the writer receives success responses from all
-the storage servers it sent its write to, then the WOR write succeeds.
-TODO: remove this as it gets too much into write repair. Well, not
-sure about this actually.
+Eventually one writer will succeed locking a majority of storage
+servers and advance to Phase 2, where it'll send `write(v)` to the
+storage servers so that they can perform their idempotent write logic
+as usual.
 
 
 ### Lock Stealing
