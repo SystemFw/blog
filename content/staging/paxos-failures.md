@@ -444,45 +444,23 @@ Phase 1 becomes:
 It's crucial to understand the nature of version numbers: they need to
 be unique and support a `<` comparison, but _they don't have to be
 consecutive_. Providing consecutive version numbers consistently with
-distributed writers would be akin to consensus, and so we'd be back to
-square one, but non-consecutive numbers are much easier.
+distributed writers would be akin to consensu,s and so we'd be back to
+square one.
 
-Here's a basic scheme: each writer has a static `process_id`, and a
-monotonically increasing integer `counter` which is persisted to
-storage on each increment. The proposal number is then `(counter,
-process_id)`, and storage servers compare `counter` first, and use
-`process_id` as a discriminator. This specific scheme is not very fair
-since a writer with low `process_id` will win any ties, and also not
-super performant as each attempt requires a write to stable storage,
-but there are more advanced schemes that fare better on both axes.
+Here's a basic scheme for version numbers: each writer has a static
+`process_id`, and a monotonically increasing integer `counter` which
+is persisted to storage on each increment. The proposal number is then
+`(counter, process_id)`, and storage servers compare `counter` first,
+and use `process_id` as a discriminator. This specific scheme is not
+very fair since a writer with low `process_id` will win any ties, and
+also not super performant as each attempt requires a write to stable
+storage, but there are more advanced schemes that fare better on both
+axes.
 
-
-
-
-
-But we've recovered the property we're interested in: writers can
-retry Phase 1 until they succeed in reserving a majority, and then
-send their writes to storage servers in Phase 2.
-
-
-
-
-
-2-phase locking works because writers can retry Phase 1 multiple times
-until one writer succeeds in locking a majority of storage servers.
-Well, can they? Retrying the locking phase assumes that writers
-release any locks they have acquired during a failed attempt by
-sending an `unlock` message to the respective storage servers.
-
-TODO: a lot more failure modes, highlight some
-
-But wait, there's no guarantee that those `unlock` messages will ever
-be received! In particular, a writer can explode before being able to
-send the `unlock` messages it needs to send.
-
-This is a fundamental limitation of locks in a distributed setting,
-and it motivates the next big idea in Paxos: _lock stealing_.
-
+Lock stealing gives us a fault tolerant version of the property we're
+interested in: writers can retry Phase 1 until they succeed in
+reserving a majority, and then send their writes to storage servers in
+Phase 2.
 
 ### Fencing
 
