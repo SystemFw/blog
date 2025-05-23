@@ -523,7 +523,7 @@ We looked at some of these ideas today, teasing them out from their
 initially cryptic formulation with the help of the Distributed Systems
 Engineer's constant companion: failure.
 
-If you enjoyed this post, we're reimagining what it means to program
+If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
 
