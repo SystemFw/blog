@@ -452,10 +452,10 @@ Here's a basic scheme for version numbers: each writer has a static
 is persisted to storage on each increment. The proposal number is then
 `(counter, process_id)`, and storage servers compare `counter` first,
 and use `process_id` as a discriminator. This specific scheme is not
-very fair since a writer with low `process_id` will win any ties, and
-also not super performant as each attempt requires a write to stable
-storage, but there are more advanced schemes that fare better on both
-axes.
+very fair since a writer with a high `process_id` will win any ties,
+and also not super performant as each attempt requires a write to
+stable storage, but there are more advanced schemes that fare better
+on both axes.
 
 Lock stealing gives us a fault tolerant version of the property we're
 interested in: writers can retry Phase 1 until they succeed in
