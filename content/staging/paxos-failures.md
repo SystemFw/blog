@@ -464,6 +464,24 @@ Phase 2.
 
 ### Fencing
 
+Recall that every time a storage servers receives a `write(v)` message
+in Phase 2, it replies with a successful `written` messages, even
+though `v` is only written on the very first write.
+
+This makes sense because writing to a WOR that's already set is a
+no-op and not a failure, and the way we guarantee safety is via Phase
+1, which requires writers to hold the lock when they send the write.
+
+
+Recall that during Phase 2, storage servers _accept every write they receive_, i.e when they receive a `write(v)` message, they only write `v` to storage if this is the first write they have received, but the do reply (with a `written` message) 
+The first time a storage server receives a `write(v)` message, it persists `v` to stable storage, and replies with `written`.
+Subsequent
+
+Recall that during Phase 2, storage servers give successful responses
+to every write they receive. This makes sense because writing to a WOR that's already set is a no-op, and not an error, and it's safe
+
+
+
 When a writer 
 
 This is a good spot to talk about fencing, it wasn't required until lock stealing as writes were totally driven by the de-facto leader
