@@ -472,8 +472,46 @@ This makes sense because writing to a WOR that's already set should be
 a no-op, not a failure, and Phase 1 guarantees safety by requiring
 writers to acquire the lock before they send the write.
 
-TODO: think about a nice split in terms of typography
-What about this then:
+For example, say we have a cluster with 3 storage servers `{s1, s2, s3}`,
+and 2 writers `{w1, w2}` which are racing to write `v1` and `v2` respectively.
+Let's look at a possible timeline:
+
+1) `w1` generates version number `n1 = (0, w1)`, selects `{s1, s2}` as
+   its target majority, and sends them `lock(n1)`. It receives
+  `locked(n1)` replies from both, and so it starts Phase 2 and sends
+  them `write(v1)`.
+2) `w2` generates version number `n2 = (0, w2)`, also selects `{s1, s2}` 
+   as its target majority, and sends them `lock(n2)`. The lock stealing
+   rules mandate that `(0, w2) > (0, w1)`, so `w2` receives `locked(n2)`
+   from `s1` and `s2`, and it starts Phase 2 by sending them `write(v2)`.
+3) `s1` receives `write(v1)` first, so it writes `v1` to storage, and
+   replies `written` to `w1`. It then receives `write(v2)`, it ignores
+  `v2` since it has already written `v1` to storage, and replies
+  `written` to `w2`.
+4) `s2` on the other hand receives `write(v2)` first, so it writes
+  `v2` to storage, and replies `written` to `w2`. It then receives
+  `write(v1)`, it ignores `v1` since it has already written `v2` to
+  storage, and replies `written` to `w1`.
+5) `w1` and `w2` receive `written` messages from `s1` and `s2`, so
+  they both return success to their respective clients.
+
+... but wait, neither `v1` nor `v2` have been written to an absolute
+majority of storage servers! Where did we go wrong?
+
+
+
+According to the
+lock stealing rules `(0, w2) > (0, w1)`, so `s1` and `s2` both reply
+to `w2` with `locked(n2)`, so `w2` starts Phase and sends them
+`write(v2)`.
+
+We have a cluster with 2 writers `{w1, w2}`
+and 3 storage servers `{s1, s2, s3}`, and `w1` is trying to write
+`v1` concurrently with `w2` trying to write `w2`.
+
+
+TODO: think about a
+nice split in terms of typography What about this then:
 - We have a cluster with 2 writers `{w1, w2}`, and 3 storage servers
   `{s1, s2, s3}`
 - A client contacts `w1` to write `v1`.
