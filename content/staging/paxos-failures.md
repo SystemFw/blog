@@ -465,8 +465,8 @@ Phase 2.
 ### Fencing
 
 Every time a storage server receives a `write(v)` message in Phase 2,
-it replies with a successful `written` message, even though `v` is
-only written on the very first write.
+it replies with an `ack` message, even though `v` is only persisted on
+the very first write.
 
 This makes sense because writing to a WOR that's already set should be
 a no-op, not a failure, and Phase 1 guarantees safety by requiring
@@ -478,22 +478,23 @@ Let's look at a possible timeline:
 
 1) `w1` generates version number `n1 = (0, w1)`, selects `{s1, s2}` as
    its target majority, and sends them `lock(n1)`. It receives
-  `locked(n1)` replies from both, and so it starts Phase 2 and sends
-  them `write(v1)`.
-2) `w2` generates version number `n2 = (0, w2)`, also selects `{s1, s2}` 
-   as its target majority, and sends them `lock(n2)`. The lock stealing
-   rules mandate that `(0, w2) > (0, w1)`, so `w2` receives `locked(n2)`
-   from `s1` and `s2`, and it starts Phase 2 by sending them `write(v2)`.
+   `locked(n1)` replies from both, and so it starts Phase 2 and sends
+   them `write(v1)`.
+2) `w2` generates version number `n2 = (0, w2)`, also selects `{s1,
+   s2}` as its target majority, and sends them `lock(n2)`. The lock
+   stealing rules mandate that `(0, w2) > (0, w1)`, so `w2` receives
+   `locked(n2)` from `s1` and `s2`, and it starts Phase 2 by sending
+   them `write(v2)`.
 3) `s1` receives `write(v1)` first, so it writes `v1` to storage, and
-   replies `written` to `w1`. It then receives `write(v2)`, it ignores
-  `v2` since it has already written `v1` to storage, and replies
-  `written` to `w2`.
+   replies `ack` to `w1`. It then receives `write(v2)`, it ignores
+   `v2` since it has already written `v1` to storage, and replies
+   `ack` to `w2`.
 4) `s2` on the other hand receives `write(v2)` first, so it writes
-  `v2` to storage, and replies `written` to `w2`. It then receives
+  `v2` to storage, and replies `ack` to `w2`. It then receives
   `write(v1)`, it ignores `v1` since it has already written `v2` to
-  storage, and replies `written` to `w1`.
-5) `w1` and `w2` receive `written` messages from `s1` and `s2`, so
-  they both return success to their respective clients.
+  storage, and replies `ack` to `w1`.
+5) `w1` and `w2` receive `ack` messages from `s1` and `s2`, so they
+  both return success to their respective clients.
 
 ... but wait, neither `v1` nor `v2` have been written to an absolute
 majority of storage servers! Where did we go wrong?
