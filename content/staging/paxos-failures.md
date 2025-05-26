@@ -470,7 +470,8 @@ though `v` is only written on the very first write.
 
 This makes sense because writing to a WOR that's already set is a
 no-op and not a failure, and the way we guarantee safety is via Phase
-1, which requires writers to hold the lock when they send the write.
+1, which requires writers to acquire the lock before they send the
+write.
 
 
 Recall that during Phase 2, storage servers _accept every write they receive_, i.e when they receive a `write(v)` message, they only write `v` to storage if this is the first write they have received, but the do reply (with a `written` message) 
