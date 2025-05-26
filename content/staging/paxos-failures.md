@@ -464,14 +464,43 @@ Phase 2.
 
 ### Fencing
 
-Recall that every time a storage servers receives a `write(v)` message
-in Phase 2, it replies with a successful `written` messages, even
-though `v` is only written on the very first write.
+Every time a storage server receives a `write(v)` message in Phase 2,
+it replies with a successful `written` message, even though `v` is
+only written on the very first write.
 
-This makes sense because writing to a WOR that's already set is a
-no-op and not a failure, and the way we guarantee safety is via Phase
-1, which requires writers to acquire the lock before they send the
-write.
+This makes sense because writing to a WOR that's already set should be
+a no-op, not a failure, and Phase 1 guarantees safety by requiring
+writers to acquire the lock before they send the write.
+
+TODO: think about a nice split in terms of typography
+What about this then:
+- We have a cluster with 2 writers `{w1, w2}`, and 3 storage servers
+  `{s1, s2, s3}`
+- A client contacts `w1` to write `v1`.
+- `w1` generates version number `n1 = (0, w1)`, selects `{s1, s2}` as
+  its target majority, and sends them `lock(n1)`.
+- `w1` receives `locked(n1)` replies from both, and so it starts Phase
+  2 and sends `write(v1)` to `s1` and `s2`.
+- A different client contacts `w2` to write `v2`.
+- `w2` generates version number `n2 = (0, w2)`, also selects `{s1, s2}` as
+  its target majority and sends them `lock(n2)`.
+- According to the lock stealing rules, `(0, w2) > (0, w1)`, so `s1`
+  and `s2` both reply to `w2` with `locked(n2)`.
+- `w2` receives `locked(n2)` replies from `s1` and `s2`, and so it starts Phase
+  2 and sends them `write(v2)`.
+- In this particular timeline, `s1` receives `write(v1)` from `w1` first, so it writes `v1` to storage, and replies `written` to `w1`.
+- Then, `s1` receives `write(v2)` from `w2`, it ignores `v2` since it
+  has already written a value, and replies `written` to `w2` since an
+  idempotent write to a WOR is not an error.
+- `s2` experiences the opposite, it receives `write(v2)` from `w2` first, so it writes `v2` to storage, and replies `written` to `w2`.
+- It then receives `write(v1)` from `w1`, it ignores `v1` since it has
+  already written a value, and replies `written` to `w1` since an
+  idempotent write to a WOR is not an error.
+- `w1` receives `written` from both `s1` and `s2`, and so it returns success to its client.
+- `w2` receives `written` from both `s1` and `s2`, and so it returns success to its client.
+
+... but wait, there's no value that has been written to an absolute
+majority of storage servers! Where did we go wrong?
 
 
 Recall that during Phase 2, storage servers _accept every write they receive_, i.e when they receive a `write(v)` message, they only write `v` to storage if this is the first write they have received, but the do reply (with a `written` message) 
