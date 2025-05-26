@@ -499,7 +499,10 @@ Let's look at a possible timeline:
 ... but wait, neither `v1` nor `v2` have been written to an absolute
 majority of storage servers! Where did we go wrong?
 
-
+The issue is that Phase 2 writes have failed to account for lock
+stealing: just because a writer acquired the lock before starting
+Phase 2, it doesn't mean it still holds the lock by the time its
+writes arrive to storage servers.
 
 According to the
 lock stealing rules `(0, w2) > (0, w1)`, so `s1` and `s2` both reply
