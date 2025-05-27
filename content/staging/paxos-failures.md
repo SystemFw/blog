@@ -565,14 +565,26 @@ Current WIP order:
 - Write repair
 - Readers
 
-Considering an alternative order:
-
+Possible alternative orders:
+1)
 - Sync replication
 - Majority Quorums
 - 2PL
 - Lock stealing
 - Write completion
 - Fencing
+- Write repair
+- ~~Recap/paxos structure~~
+- Leadership pov and dueling
+- Readers
+
+2)
+- Sync replication
+- Majority Quorums
+- 2PL
+- Lock stealing
+- Fencing
+- Write completion
 - Write repair
 - ~~Recap/paxos structure~~
 - Leadership pov and dueling
