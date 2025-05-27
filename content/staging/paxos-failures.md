@@ -470,8 +470,8 @@ since writers should interpret it as a successful no-op rather than a
 failure. Phase 1 guarantees the safety of this logic by requiring
 writers to acquire the lock before they send any write.
 
-Let's say we have a cluster with 3 storage servers `{s1, s2, s3}`, and
-2 writers `{w1, w2}` that are racing to write `v1` and `v2`
+Say we have a cluster with 3 storage servers `{s1, s2, s3}`, and 2
+writers `{w1, w2}`, which are racing to write `v1` and `v2`
 respectively. Let's look at a possible timeline:
 
 1) `w1` generates version number `n1 = (0, w1)`, selects `{s1, s2}` as
@@ -485,14 +485,12 @@ respectively. Let's look at a possible timeline:
    them `write(v2)`.
 3) `s1` receives `write(v1)` first, so it writes `v1` to storage, and
    replies `ack` to `w1`. It then receives `write(v2)`, it ignores
-   `v2` since it has already written `v1` to storage, and replies
-   `ack` to `w2`.
+   `v2` , and replies `ack` to `w2`.
 4) `s2` on the other hand receives `write(v2)` first, so it writes
-  `v2` to storage, and replies `ack` to `w2`. It then receives
-  `write(v1)`, it ignores `v1` since it has already written `v2` to
-  storage, and replies `ack` to `w1`.
-5) `w1` and `w2` receive `ack` messages from `s1` and `s2`, so they
-  both return success to their respective clients.
+  `v2` to storage and replies `ack` to `w2`. It then receives
+  `write(v1)`, it ignores `v1`, and replies `ack` to `w1`.
+5) Both `w1` and `w2` receive `ack` messages from `s1` _and_ `s2`, so
+  they return success to their respective clients.
 
 ... but wait, neither `v1` nor `v2` have been written to an absolute
 majority of storage servers! Where did we go wrong?
@@ -501,6 +499,28 @@ The issue is that Phase 2 writes have failed to account for lock
 stealing: just because a writer acquired the lock before starting
 Phase 2, it doesn't mean it still holds the lock by the time its
 writes arrive to storage servers.
+
+This issue is addressed by the fifth big idea in Paxos: _fencing_.
+
+If a writer has had its lock stolen, that means that at least one
+member of the majority it selected in Phase 1 has now been locked at a
+higher version number. So, if we enable storage servers to not accept
+writes that acquired a lower-versioned lock, writers will fail to
+achieve a quorum of `ack` messages, and they will know their write is
+invalid.
+
+This can be done by changing the `write(v)` message to `write(v, n)`,
+where `n` is the version number the writer used to complete Phase 1
+successfully. Storage servers will then only accept and `ack` a
+`write(v, n)` if their own version number is `<= n`. The role of `n`
+in `write(v, n)` is that of a _fencing token_, because storage servers
+use it to _fence off_ writers that have an outdated view of their lock
+status, due to lock stealing.
+
+
+
+
+
 
 According to the
 lock stealing rules `(0, w2) > (0, w1)`, so `s1` and `s2` both reply
