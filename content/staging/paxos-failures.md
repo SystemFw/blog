@@ -522,8 +522,8 @@ storage servers they wrote to? We don't want them to fail on a no-op
 write, but they cannot unconditionally succeed either since the writer
 that stole their lock could have crashed right after completing
 Phase 1. The solution is to retry Phase 1 with a higher version
-number, which eventually will steal the lock back, and either perform
-their write, or have certainty that it is is a no-op.
+number, which eventually will steal the lock back and either perform
+their write or have certainty that it is a no-op.
 
 ### An alternate view: leaders and epochs (or maybe terms)
 
