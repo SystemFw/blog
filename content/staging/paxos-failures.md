@@ -517,6 +517,14 @@ in `write(v, n)` is that of a _fencing token_, because storage servers
 use it to _fence off_ writers that have an outdated view of their lock
 status, due to lock stealing.
 
+What should a writer do when they fail to receive `acks` from all the
+storage servers they wrote to? We don't want them to fail on a no-op
+write, but they cannot unconditionally succeed either since the writer
+that stole their lock could have crashed right after completing
+Phase 1. The solution is to retry Phase 1 with a higher version
+number, which eventually will steal the lock back, and either perform
+theri write, or have certainty that it is is a no-op.
+
 
 
 
