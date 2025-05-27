@@ -551,6 +551,33 @@ means one doesn't exist, as per the previous rule.
 
 ### Readers
 
+### Plan
+
+Current WIP order:
+- Sync replication
+- Majority Quorums
+- 2PL
+- Lock stealing
+- Fencing
+- Recap/paxos structure
+- Leadership pov and dueling
+- Write completion
+- Write repair
+- Readers
+
+Considering an alternative order:
+
+- Sync replication
+- Majority Quorums
+- 2PL
+- Lock stealing
+- Write completion
+- Fencing
+- Write repair
+- ~~Recap/paxos structure~~
+- Leadership pov and dueling
+- Readers
+
 
 ## Conclusion
 
