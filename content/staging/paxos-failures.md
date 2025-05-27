@@ -464,36 +464,15 @@ Phase 2.
 
 ### Fencing
 
-Because we want writes to a WOR that's already set to be a no-op, and
-not a failure, storage servers reply with an `ack` message _every
-time_ they receive a `write(v)` message, even though `v` is only
-written on the very first write. Phase 1 guarantees the safety of this
-logic by requiring writers to acquire the lock before they send any
-write.
-
-Although storage servers only persist the first value they receive,
-they signal success with an `ack` reply to _every_ subsequent write
-they receive, since we want those writes to be a no-op rather than a
+Storage servers only persist the first value they receive, but they
+reply with an `ack` message to _every_ subsequent `write(v)` request,
+since writers should interpret it as a successful no-op rather than a
 failure. Phase 1 guarantees the safety of this logic by requiring
 writers to acquire the lock before they send any write.
 
-Although storage servers only persist the first value they receive,
-they reply with an `ack` message to _every_ subsequent write they
-receive, since writers should interpret their request as a successful
-no-op rather than a failure. Phase 1 guarantees the safety of this logic
-by requiring writers to acquire the lock before they send any write.
-
-
-Every time a storage server receives a `write(v)` message in Phase 2,
-it replies with an `ack` message, even though `v` is only persisted on
-the very first write. This makes sense because writing to a WOR that's
-already set should be a no-op, not a failure, and Phase 1 guarantees
-safety by requiring writers to acquire the lock before they send the
-write.
-
-For example, say we have a cluster with 3 storage servers `{s1, s2, s3}`,
-and 2 writers `{w1, w2}` which are racing to write `v1` and `v2` respectively.
-Let's look at a possible timeline:
+Let's say we have a cluster with 3 storage servers `{s1, s2, s3}`, and
+2 writers `{w1, w2}` that are racing to write `v1` and `v2`
+respectively. Let's look at a possible timeline:
 
 1) `w1` generates version number `n1 = (0, w1)`, selects `{s1, s2}` as
    its target majority, and sends them `lock(n1)`. It receives
