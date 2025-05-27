@@ -470,8 +470,8 @@ since writers should interpret it as a successful no-op rather than a
 failure. Phase 1 guarantees the safety of this logic by requiring
 writers to acquire the lock before they send any write.
 
-Say we have a cluster with 3 storage servers `{s1, s2, s3}`, and 2
-writers `{w1, w2}`, which are racing to write `v1` and `v2`
+Say we have a cluster with 3 storage servers `{s1, s2, s3}` and 2
+writers `{w1, w2}` that are racing to write `v1` and `v2`
 respectively. Let's look at a possible timeline:
 
 1) `w1` generates version number `n1 = (0, w1)`, selects `{s1, s2}` as
@@ -517,7 +517,7 @@ in `write(v, n)` is that of a _fencing token_, because storage servers
 use it to _fence off_ writers that have an outdated view of their lock
 status, due to lock stealing.
 
-What should a writer do when they fail to receive `acks` from all the
+What should writers do when they fail to receive `acks` from all the
 storage servers they wrote to? We don't want them to fail on a no-op
 write, but they cannot unconditionally succeed either since the writer
 that stole their lock could have crashed right after completing
