@@ -529,7 +529,35 @@ perform the write, or have certainty that it is a no-op.
 
 You can see how the shape of the messages in Paxos is starting to
 emerge: `prepare` is `lock`, `promise` is `locked`, `propose` is
-`write`, `accept` is `ack`.
+`write`, `accept` is `ack`. Here's an annotated summary of the
+description from earlier in the post:
+
+**Phase 1**:
+- The writer generates a new proposal number `n` (_lock stealing_) and
+  sends `prepare(n)` (_2-phase locking_) to a _majority quorum_ of
+  storage servers.
+- If `n` is `>=` than any previous `prepare` request(_lock stealing_),
+  storage servers reply with `promise(n, ...)` (_2-phase locking_),
+  which is a promise to never `accept` any proposals numbered less
+  than `n` (_fencing_).
+- If the writer receives `promise(n, ...)` from all the storage
+  servers it contacted (_majority quorums_), it proceeds to Phase 2
+  (_2-phase locking_). Otherwise it will retry Phase 1 (_2-phase
+  locking_) with a greater proposal number (_lock stealing_).
+
+**Phase 2**:
+-  The writer selects a value `v` to write to the WOR. [...] (_value
+   selection to be discussed_).
+-  The writer sends `propose(n, v)` (_synchronous replication_) to all
+   the storage servers selected in Phase 1 (_2-phase locking_).
+-  Storage servers reply to the writer with `accept(n)` (_synchronous
+   replication_), unless they have responded to a `prepare` request
+   with a number greater than `n` (_fencing_).
+-  The writer returns success to the client once it receives
+   `accept(n)` (_synchronous replication_) from all the storage
+   servers it sent a `propose(n, v)` to (_majority quorums_).
+   Otherwise it will retry Phase 1 (_2-phase locking_) with a greater
+   proposal number (_lock stealing_).
 
 Here's a brief summary of the full description from earlier in the
 post, annotated with the ideas we've seen: **SR** (synchronous replication), **MQ**
@@ -557,7 +585,7 @@ and **FNC** (fencing):
    proposal unless it has responded to a `prepare` request with a
    number greater than `n` (**FNC**), and replies to the writer with `accept(n)` (**SR**).
 -  Once the writer receives `accept(n)` from all the storage servers 
-   it sent a `propose(n, v)` (**MQ**), it can return success to the client (**SR**)
+   it sent a `propose(n, v)` to (**MQ**), it can return success to the client (**SR**)
    Otherwise if it times out, it will retry Phase 1  (**2PL**) with a greater
    proposal number (**LS**).
 
