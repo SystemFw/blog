@@ -527,10 +527,10 @@ perform the write, or have certainty that it is a no-op.
 
 ### The shape of Paxos
 
-You can see how the shape of the messages in Paxos is starting to
-emerge: `prepare` is `lock`, `promise` is `locked`, `propose` is
-`write`, `accept` is `ack`. Here's an annotated summary of the
-description from earlier in the post:
+You can see how the shape of Paxos is starting to emerge: `prepare` is
+`lock`, `promise` is `locked`, `propose` is `write`, `accept` is
+`ack`. Here's an annotated summary of the description from earlier in
+the post:
 
 **Phase 1**:
 - The writer generates a new proposal number `n` (_lock stealing_) and
