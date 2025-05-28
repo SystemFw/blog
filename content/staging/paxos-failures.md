@@ -536,7 +536,7 @@ the post:
 - The writer generates a new proposal number `n` (_lock stealing_) and
   sends `prepare(n)` (_2-phase locking_) to a _majority quorum_ of
   storage servers.
-- If `n` is `>=` than any previous `prepare` request(_lock stealing_),
+- If `n` is `>=` than any previous `prepare` request (_lock stealing_),
   storage servers reply with `promise(n, ...)` (_2-phase locking_),
   which is a promise to never `accept` any proposals numbered less
   than `n` (_fencing_).
