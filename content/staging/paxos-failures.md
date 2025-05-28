@@ -500,7 +500,7 @@ stealing: just because a writer acquired the lock before starting
 Phase 2, it doesn't mean it still holds the lock by the time its
 writes arrive to storage servers.
 
-This issue is addressed by the fifth big idea in Paxos: _fencing_.
+This is addressed by the fifth big idea in Paxos: _fencing_.
 
 If a writer has had its lock stolen, that means that at least one
 member of the majority it selected in Phase 1 has now been locked at a
@@ -515,15 +515,15 @@ successfully. Storage servers will then only accept and `ack` a
 `write(v, n)` if their own version number is `<= n`. The role of `n`
 in `write(v, n)` is that of a _fencing token_, because storage servers
 use it to _fence off_ writers that have an outdated view of their lock
-status, due to lock stealing.
+status caused by lock stealing.
 
 What should writers do when they fail to receive `acks` from all the
 storage servers they wrote to? We don't want them to fail on a no-op
 write, but they cannot unconditionally succeed either since the writer
 that stole their lock could have crashed right after completing
 Phase 1. The solution is to retry Phase 1 with a higher version
-number, which eventually will steal the lock back and either perform
-their write or have certainty that it is a no-op.
+number, which eventually will steal the lock back and then either
+perform the write, or have certainty that it is a no-op.
 
 ### The shape of Paxos
 
