@@ -570,7 +570,7 @@ maybe name this section as "dueling leaders", and use that as a way to introduce
 more intuitive, but less granular, useful to connect the dots, leaders and terms
 
 
-### Write completion
+### Write repair
 this section can make the point about majorities having one acceptor
 in common, after explaining the full mechanism: i.e. we cannot just
 ignore and succeed if we see an old value (violates rule about success
@@ -580,7 +580,7 @@ bit the requires the acceptor in common property.
 
 btw we can explain the happy path case first, where we just contact a different majority of servers.
 
-### Write Repair (we do allow rewriting)
+### Write completion
 
 this requires some inductive reasoning, show example with two
 majorities, and explain how the only way a second value could have
