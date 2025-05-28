@@ -527,36 +527,39 @@ their write or have certainty that it is a no-op.
 
 ### The shape of Paxos
 
+You can see how the shape of the messages in Paxos is starting to
+emerge: `prepare` is `lock`, `promise` is `locked`, `propose` is
+`write`, `accept` is `ack`.
+
+Here's a brief summary of the full description from earlier in the
+post, annotated with the ideas we've seen: **SR** (synchronous replication), **MQ**
+(majority quorums), **2PL** (2-Phase Locking), **LS** (lock stealing),
+and **FNC** (fencing):
+
 **Phase 1**:
-- The writer generates a new proposal number `n` selects a _majority
-  quorum_ of storage servers, and sends `prepare(n)` to them (_lock
-  acquisition_).
-- When a storage server receives `prepare(n)`, if `n` is greater or
-  equal than any `prepare` request it has previously responded to
-  (_lock stealing_), it replies with `promise(n, ...)`, which is a
-  promise to never `accept` any proposals numbered less than `n`
-  (_fencing_).
+- The writer generates a new proposal number `n` (**LS**) and sends
+  `prepare(n)` (**2PL**) to a majority quorum (**MQ**) of storage
+  servers.
+- If `n` is greater or equal than any `prepare` request they have
+  previously responded to (**LS**), storage servers reply
+  with `promise(n, ...)` (**2PL**), which is a promise to never
+  `accept` any proposals numbered less than `n` (**FNC**).
 - If the writer receives `promise(n, ...)` from all the storage
-  servers it contacted, it proceeds to Phase 2. Otherwise if it times
-  out, it will retry Phase 1 with a greater proposal number (_2 phase
-  locking_).
+  servers it contacted (**MQ**), it proceeds to Phase 2 (**2PL**).
+  Otherwise if it times out, it will retry Phase 1 (**2PL**) with a
+  greater proposal number (**LS**).
 
 **Phase 2**:
--  The writer selects a value `v` to write to the WOR. [...]
--  The writer sends `propose(n, v)` to all the storage servers
-   selected in Phase 1 (_synchronous replication_).
+-  The writer selects a value `v` to write to the WOR. [...] (_to be discussed_)
+-  The writer sends `propose(n, v)` (**SR**) to all the storage servers
+   selected in Phase 1 (**2PL**).
 -  When a storage server receives a `propose(n, v)`, it accepts the
    proposal unless it has responded to a `prepare` request with a
-   number greater than `n` (_fencing_).
-3. When a storage server receives a `propose(n, v)`, it accepts the
-   proposal unless it has responded to a `prepare` request with a
-   number greater than `n`. Upon acceptance, it saves `n` and `v` to
-   storage, and replies to the writer with `accept(n)`.
--  Once the writer receives `accept(n)` from all the storage servers
-   it sent a `propose(n, v)` it can return success to the client
-   (_synchronous replication_).
-   Otherwise if it times out, it will retry Phase 1 with a greater
-   proposal number (_2 phase locking_).
+   number greater than `n` (**FNC**), and replies to the writer with `accept(n)` (**SR**).
+-  Once the writer receives `accept(n)` from all the storage servers 
+   it sent a `propose(n, v)` (**MQ**), it can return success to the client (**SR**)
+   Otherwise if it times out, it will retry Phase 1  (**2PL**) with a greater
+   proposal number (**LS**).
 
 ### An alternate view: leaders and epochs (or maybe terms)
 
