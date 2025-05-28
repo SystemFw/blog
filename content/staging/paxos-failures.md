@@ -525,6 +525,39 @@ Phase 1. The solution is to retry Phase 1 with a higher version
 number, which eventually will steal the lock back and either perform
 their write or have certainty that it is a no-op.
 
+### The shape of Paxos
+
+**Phase 1**:
+- The writer generates a new proposal number `n` selects a _majority
+  quorum_ of storage servers, and sends `prepare(n)` to them (_lock
+  acquisition_).
+- When a storage server receives `prepare(n)`, if `n` is greater or
+  equal than any `prepare` request it has previously responded to
+  (_lock stealing_), it replies with `promise(n, ...)`, which is a
+  promise to never `accept` any proposals numbered less than `n`
+  (_fencing_).
+- If the writer receives `promise(n, ...)` from all the storage
+  servers it contacted, it proceeds to Phase 2. Otherwise if it times
+  out, it will retry Phase 1 with a greater proposal number (_2 phase
+  locking_).
+
+**Phase 2**:
+-  The writer selects a value `v` to write to the WOR. [...]
+-  The writer sends `propose(n, v)` to all the storage servers
+   selected in Phase 1 (_synchronous replication_).
+-  When a storage server receives a `propose(n, v)`, it accepts the
+   proposal unless it has responded to a `prepare` request with a
+   number greater than `n` (_fencing_).
+3. When a storage server receives a `propose(n, v)`, it accepts the
+   proposal unless it has responded to a `prepare` request with a
+   number greater than `n`. Upon acceptance, it saves `n` and `v` to
+   storage, and replies to the writer with `accept(n)`.
+-  Once the writer receives `accept(n)` from all the storage servers
+   it sent a `propose(n, v)` it can return success to the client
+   (_synchronous replication_).
+   Otherwise if it times out, it will retry Phase 1 with a greater
+   proposal number (_2 phase locking_).
+
 ### An alternate view: leaders and epochs (or maybe terms)
 
 maybe name this section as "dueling leaders", and use that as a way to introduce the alternate view on locking
@@ -609,4 +642,5 @@ Engineer's constant companion: failure.
 If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
+
 
