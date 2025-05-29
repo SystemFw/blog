@@ -11,8 +11,8 @@ say: which specific failure mode is addressed by each idea in Paxos?
 What makes each one necessary?
 
 This post does not assume strong knowledge of distributed systems, and
-it strives to explain common jargon to enable you to go read the
-relevant papers directly. Let's dive in.
+it strives to explain jargon to enable you to go read the relevant
+papers directly. Let's dive in.
 
 ## What is Paxos?
 
