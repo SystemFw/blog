@@ -60,8 +60,8 @@ A WOR might not seem like much, but we can use a sequence of WORs to
 build a fault-tolerant log: each WOR represents a specific position of
 the log, and each log position can be written once, which makes the
 log strongly consistent. Logs can then be used to persist commands for
-an arbitrary state machine, opening the way for general purpose
-fault-tolerant distributed systems.
+an arbitrary state machine, enabling fault tolerance for general
+purpose distributed systems.
 
 
 ## System and Fault model
