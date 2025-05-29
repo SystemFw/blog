@@ -558,8 +558,8 @@ an annotated summary of the description from earlier in the post:
    Otherwise it will retry Phase 1 (_2-phase locking_) with a greater
    proposal number (_lock stealing_).
 
-However, writers always propose their own value in our version of
-the algorithm, whereas Paxos has precise rules for value selection.
+However, in our version of the algorithm writers always propose their
+own value, whereas Paxos has precise rules for value selection.
 Understanding them requires us to look at some trickier failures, but
 before we do that, let's quickly talk about _dueling leaders_.
 
