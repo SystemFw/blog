@@ -134,7 +134,7 @@ realistic, but it's worth spelling out which faults it does not cover:
 
 Let's have a look at the simplest, least optimised version of Paxos.
 What follows is a _description_ of the algorithm, rather than an
-attempt at an explanation:
+attempt at an explanation.
 
 We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
