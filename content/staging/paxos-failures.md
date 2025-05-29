@@ -655,6 +655,8 @@ Possible alternative orders:
 - Leadership pov and dueling
 - Readers
 
+maybe move leadership section at the top as the "default" explanation?
+or maybe as an appendix?
 
 ## Conclusion
 
