@@ -132,11 +132,9 @@ realistic, but it's worth spelling out which faults it does not cover:
     
 ## The Paxos Algorithm
 
-Let's have a look at the actual algorithm, using the simplest, least
-optimised version possible. What we're targeting here is a description
-of what Single-Decree Paxos does, rather than an explanation of why it
-does it. We will then see how each idea is necessary by showing which
-failures it addresses.
+Let's have a look at the simplest, least optimised version of Paxos.
+What follows is a _description_ of the algorithm, rather than an
+attempt at an explanation:
 
 We have client processes interacting with our WOR, which is in turn
 implemented by a set of processes. Paxos divides these processes into
