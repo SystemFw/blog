@@ -565,6 +565,33 @@ before we do that, let's quickly talk about _dueling leaders_.
 
 ### Dueling leaders
 
+In this section we won't be changing the algorithm we have so far in
+any way, we'll just look at at it from a slightly different point of view.
+
+In particular, whilst the explanation above highlights the role of each
+individual idea, we'll use a more holistic perspective which will help
+connect the dots with more full-fledged algorithms such as MultiPaxos
+and Raft.
+
+The starting point is that we want to replicate a written value to
+multiple storage servers, whilst ensuring that only a single value
+gets chosen even when there are concurrent writes.
+
+In order to do that, we need to make sure that only one writer, the
+_leader_, can complete writes.
+Any writer can try to become leader at any point by triggering an
+election for a new _term_.
+A writer is elected leader for a given term if it gets a vote from an
+absolute majority of storage servers, which ensures there's only one
+leader per term.
+Such a writer 
+
+
+
+
+
+
+
 maybe name this section as "dueling leaders", and use that as a way to introduce the alternate view on locking
 
 more intuitive, but less granular, useful to connect the dots, leaders and terms
