@@ -223,9 +223,8 @@ algorithm proceeds as follows:
    Otherwise if it times out, it will retry Phase 1 with a greater
    proposal number.
 
-Crystal clear, right 😛 ? When I first read this algorithm, I
-found it absolutely mistifying. It's not that the rules are
-particularly hard to follow, but... what are they for?
+Crystal clear, right 😛 ? It's not that the rules are particularly
+hard to follow, but... their purpose is mistifying.
 
 For example:
 - Why are there 2 phases?
