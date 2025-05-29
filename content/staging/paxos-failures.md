@@ -235,9 +235,9 @@ For example:
 - In those cases, there's mention of _multiple_ such values. Why are
   there multiple values if the register is write-once?
 
-And yet, believe it or not, this is the simplest thing that could
-possibly work if we want fault-tolerance, and we will show that by
-trying simpler algorithms and relentlessly breaking them.
+And yet believe it or not, this is the simplest thing that could
+possibly work, and we'll show it by trying simpler algorithms and
+relentlessly breaking them, until we're back at Paxos.
 
 ## Failing our way to Paxos
 
