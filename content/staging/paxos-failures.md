@@ -561,9 +561,54 @@ an annotated summary of the description from earlier in the post:
 However, in our version of the algorithm writers always propose their
 own value, whereas Paxos has precise rules for value selection.
 Understanding them requires us to look at some trickier failures, but
-before we do that, let's quickly talk about _dueling leaders_.
+before we do that, let's talk about _dueling leaders_.
 
 ### Dueling leaders
+
+There is a correspondence between _2-phase locking with lock stealing
+and fencing_ and _leader election_, which is worth highlighting because
+several more fully fledged consensus algorithms are termed explicitly
+as leader-based.
+
+The idea is that we guarantee consistency by making sure that only one
+writer, the _leader_, can complete writes. Any writer can try to
+become leader at any point by triggering an election for a new _term_.
+A writer is elected leader for a given term if it gets a vote from an
+absolute majority of storage servers, ensuring that there's only one
+leader per term. Writes are marked with their _term number_, so that
+writes from an expired term can be discarded if a new leader got
+elected before the old one could complete its write.
+
+So, `prepare(n)` can be seen as `lock(lock_version)` or
+`start_term(term_number)`, and `promise(n)` can be seen as
+`locked(lock_version)` or `elect(term_number)`. Similarly, the
+`propose(n, v)` can be seen as being marked with the current lock
+version or the current term number.
+
+This framing lets us introduce the next issue at hand: what happens if
+two writers keep stealing the lock from each other, impeding progress
+by causing all writes to be fenced off?
+
+This scenario is rather poetically named _dueling leaders_, and it
+turns out it's an unavoidable consequence of a theoretical milestone
+called the _FLP result_.
+
+It is however tolerable in practice, for example we can introduce
+exponential backoff between Phase 1 retries, or have a load balancer
+that sends all writes to a designated writer as long as it's healthy,
+avoiding contention.
+
+Crucially, these approaches only function as a performance
+optimisation, and don't have to deal with correctness: even if they
+mess up under failure, the underlying algorithm still guarantees that
+the WOR behaves correctly.
+
+For example, even if the load balancer sends two writes to two
+different writers because it incorrectly suspected one to have
+crashed, in the worst case they just slow things down a bit because of
+lock stealing, without compromising consistency.
+
+
 
 In this section we won't be changing the algorithm we have so far in
 any way, we'll just look at at it from a slightly different point of view.
