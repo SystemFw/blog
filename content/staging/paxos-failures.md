@@ -608,40 +608,6 @@ different writers because it incorrectly suspected one to have
 crashed, in the worst case they just slow things down a bit because of
 lock stealing, without compromising consistency.
 
-
-
-In this section we won't be changing the algorithm we have so far in
-any way, we'll just look at at it from a slightly different point of view.
-
-In particular, whilst the explanation above highlights the role of each
-individual idea, we'll use a more holistic perspective which will help
-connect the dots with more full-fledged algorithms such as MultiPaxos
-and Raft.
-
-The starting point is that we want to replicate a written value to
-multiple storage servers, whilst ensuring that only a single value
-gets chosen even when there are concurrent writes.
-
-In order to do that, we need to make sure that only one writer, the
-_leader_, can complete writes.
-Any writer can try to become leader at any point by triggering an
-election for a new _term_.
-A writer is elected leader for a given term if it gets a vote from an
-absolute majority of storage servers, which ensures there's only one
-leader per term.
-Such a writer 
-
-
-
-
-
-
-
-maybe name this section as "dueling leaders", and use that as a way to introduce the alternate view on locking
-
-more intuitive, but less granular, useful to connect the dots, leaders and terms
-
-
 ### Write repair
 this section can make the point about majorities having one acceptor
 in common, after explaining the full mechanism: i.e. we cannot just
@@ -661,47 +627,6 @@ means one doesn't exist, as per the previous rule.
 
 ### Readers
 
-### Plan
-
-Current WIP order:
-- Sync replication
-- Majority Quorums
-- 2PL
-- Lock stealing
-- Fencing
-- Recap/paxos structure
-- Leadership pov and dueling
-- Write completion
-- Write repair
-- Readers
-
-Possible alternative orders:
-1)
-- Sync replication
-- Majority Quorums
-- 2PL
-- Lock stealing
-- Write completion
-- Fencing
-- Write repair
-- ~~Recap/paxos structure~~
-- Leadership pov and dueling
-- Readers
-
-2)
-- Sync replication
-- Majority Quorums
-- 2PL
-- Lock stealing
-- Fencing
-- Write completion
-- Write repair
-- ~~Recap/paxos structure~~
-- Leadership pov and dueling
-- Readers
-
-maybe move leadership section at the top as the "default" explanation?
-or maybe as an appendix?
 
 ## Conclusion
 
