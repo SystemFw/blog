@@ -567,9 +567,9 @@ before we do that, let's talk about _dueling leaders_.
 ### Dueling leaders
 
 There is a correspondence between _2-phase locking with lock stealing
-and fencing_ and _leader election_, which is worth highlighting because
-several more fully fledged consensus algorithms are termed explicitly
-as leader-based.
+and fencing_ and _leader election_, which is worth highlighting
+because several of the more fully fledged consensus algorithms are
+explicitly leader-based.
 
 The idea is that we guarantee consistency by making sure that only one
 writer, the _leader_, can complete writes. Any writer can try to
