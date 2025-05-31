@@ -222,7 +222,7 @@ algorithm proceeds as follows:
    proposal number.
 
 Crystal clear, right 😛 ? It's not that the rules are particularly
-hard to follow, but... their purpose is mistifying.
+hard to follow, but... their purpose is mystifying.
 
 For example:
 - Why are there 2 phases?
