@@ -89,7 +89,7 @@ message will be processed.
 We do assume that eventually messages will arrive and be processed, or
 the algorithm cannot progress, but we won't be able to rely on this
 information for correctness since we don't know when that will happen.
-(In technical jargon: we are relying on partial synchrony for
+(In formal terminology: we are relying on partial synchrony for
 liveness, but we provide safety under asynchrony).
 
 Processes are allowed to restart and keep participating in the
@@ -100,7 +100,7 @@ written when it was previously running.
 However, processes are also allowed to crash, which means they stop
 working and never resume working again. Their state is also
 permanently lost. Calling this type of fault a _crash_ is common in
-academic jargon, but crashing in general parlance indicates a
+academic literature, but crashing in general parlance indicates a
 temporary failure, so we will use the word _explosion_ to avoid any
 confusion.
 
