@@ -553,7 +553,8 @@ an annotated summary of the description from earlier in the post:
    the storage servers selected in Phase 1 (_2-phase locking_).
 -  Storage servers reply to the writer with `accept(n)` (_synchronous
    replication_), unless they have responded to a `prepare` request
-   with a number greater than `n` (_fencing_).
+   with a number greater than `n` (_fencing_). [...] (_value
+   persistence to be discussed_).
 -  The writer returns success to the client once it receives
    `accept(n)` (_synchronous replication_) from all the storage
    servers it sent a `propose(n, v)` to (_majority quorums_).
