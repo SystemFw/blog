@@ -521,10 +521,11 @@ status caused by lock stealing.
 What should writers do when they fail to receive `acks` from all the
 storage servers they wrote to? We don't want them to fail on a no-op
 write, but they cannot unconditionally succeed either since the writer
-that stole their lock could have crashed right after completing
-Phase 1. The solution is to retry Phase 1 with a higher version
-number, which eventually will steal the lock back and then either
-perform the write, or have certainty that it is a no-op.
+that stole their lock could have crashed right after completing Phase
+1 without writing anything to the storage servers. The solution is to
+retry Phase 1 with a higher version number, which eventually will
+steal the lock back and then either perform the write, or have
+certainty that it is a no-op.
 
 ### The shape of Paxos
 
