@@ -626,6 +626,8 @@ this requires some inductive reasoning, show example with two
 majorities, and explain how the only way a second value could have
 appeared is if a writer didn't read any value from a majority, which
 means one doesn't exist, as per the previous rule.
+Also highlight the fact that writes can be overridden, as per our
+description.
 
 ### Readers
 
