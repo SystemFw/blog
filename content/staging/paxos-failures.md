@@ -349,15 +349,13 @@ now there is no way for the algorithm to proceed correctly: no writer
 has a quorum, and they will never get one as the storage servers don't
 allow overwriting a value once written.
 
-Overwrites are a no-go because they trivially break the write-once
-property even without any concurrency: `w1` could successfully set an
-empty WOR to `v1`, a reader would read `v1`, then 10 minutes later
-`w2` arrives, overwrites all the values to successfully set `v2`, and
-then the next reader reads `v2`. So, since we want to keep writes
-idempotent on the storage servers, we'll have to change the logic of
-the writers.
+Blind overwrites are a no-go, however, because they trivially break
+the write-once property even without any concurrency: `w1` could
+successfully set an empty WOR to `v1`, a reader would read `v1`, then
+10 minutes later `w2` arrives, overwrites all the values to
+successfully set `v2`, and then the next reader reads `v2`.
 
-The core of the issue is that writers write to storage servers _too
+The immediate issue is that writers write to storage servers _too
 eagerly_: a WOR write is only valid if its value is written to a
 majority of storage servers, but by the time a writer realises it
 doesn't have a majority, the damage is already done as some storage
