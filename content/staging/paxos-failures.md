@@ -652,7 +652,7 @@ after a successful write.
 
 It seems like `w2` is stuck: it cannot ignore `v1` as the potential
 value for the WOR, but it cannot assume it is the value either. The
-surprising solution to this conundrum is that since it cannot be sure
+surprising solution to this conundrum is that since `w2` cannot be sure
 whether `v1` is the actual WOR value or not, it can _make_ sure by
 writing it to a majority itself.
 
@@ -661,8 +661,7 @@ After a writer has successfully locked a majority of storage servers
 in Phase 1, it will ask them whether they store any value: if all the
 selected storage servers are empty, then the writer can write its own
 value (let's call it `v2`). If instead a storage server already
-contains a value `v1`, the writer will `propose` to write `v1`
-instead.
+contains a value `v1`, the writer will attempt to write `v1` instead.
 
 There is an obvious optimisation to this idea: instead of locking the
 selected majority of storage servers in one roundtrip, and then asking
@@ -676,7 +675,7 @@ where `v_` if the value stored by the storage server, if any, with its
 proposal number `n_`. The writer will then select `v_` if it exists,
 or its own value `v`, and send `propose(n, selected_value)`, and
 return success if all the selected storage servers reply with
-`accept(n)`. As before, `n` is used for lock stealing adn fencing to
+`accept(n)`. As before, `n` is used for lock stealing and fencing to
 deal with any other concurrent writer that might be doing the same.
 
 
