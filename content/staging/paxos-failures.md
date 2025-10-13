@@ -647,7 +647,8 @@ written to `s1`, but the message to write it to `s3` was dropped, and
 the writer who was proposing `v1` exploded before it could retry. So,
 `v1` was never written to a majority of storage servers, the WOR has
 never been set, and we want a write to only succeed if the WOR has
-_definitely_ been set.
+_definitely_ been set, since readers aren't allowed to return `null`
+after a successful write.
 
 It seems like `w2` is stuck: it cannot ignore `v1` as the potential
 value for the WOR, but it cannot assume it is the value either. The
