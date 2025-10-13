@@ -661,20 +661,22 @@ in Phase 1, it will ask them whether they store any value: if all the
 selected storage servers are empty, then the writer can write its own
 value (let's call it `v2`). If instead a storage server already
 contains a value `v1`, the writer will `propose` to write `v1`
-instead, and return success if all the selected storage servers
-`accept` it. The rest of the algorithm remains the same, with lock
-stealing, fencing and retries used to deal with any other concurrent
-writer that might be doing the same.
+instead.
 
 There is an obvious optimisation to this idea: instead of locking the
 selected majority of storage servers in one roundtrip, and then asking
 them to send over their current value in another roundtrip, the
 storage servers can simply include that information when they respond
-to the locking messages. Specifically, the writer will send a
-`prepare(n)` with proposal number `n`, and the storage servers will
-reply with `promise(n, maybe<n_, v_>)`, where `v_` if the value stored
-by the storage server, if any, with its proposal number `n_`.
+to the locking messages. 
 
+Specifically, the writer will send a `prepare(n)` with proposal number
+`n`, and the storage servers will reply with `promise(n, maybe<n_,v_>)`, 
+where `v_` if the value stored by the storage server, if any, with its
+proposal number `n_`. The writer will then select `v_` if it exists,
+or its own value `v`, and send `propose(n, selected_value)`, and
+return success if all the selected storage servers reply with
+`accept(n)`. As before, `n` is used for lock stealing adn fencing to
+deal with any other concurrent writer that might be doing the same.
 
 
 
