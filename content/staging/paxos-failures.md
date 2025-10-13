@@ -610,6 +610,84 @@ crashed, in the worst case they just slow things down a bit because of
 lock stealing, without compromising consistency.
 
 ### Write repair
+
+We have a cluster with 3 storage servers `{s1, s2, s3}`, and we're
+considering a majority quorum made of `s1` and `s2`: `s1` stores the
+value `v1` with proposal number `n`, `s2` stores no value. Would you
+say that the WOR has been set?
+
+This depends entirely on `s3`: if `s3` also stores `v1` with proposal
+number `n`, then `v1` has been written to an absolute majority of
+storage servers (`s1` and `s3`), if instead it doesn't store any value
+or stores a value that isn't `v1`, then the WOR isn't set.
+
+This uncertainty poses an issue when later on a `w2` writer arrives
+with the intention to write `v2`, and successfully locks `s1` and `s2`
+as its target majority in Phase 1: what is `w2` supposed to do at this
+point?
+
+Our first instinct might be to contact `s3` to be certain, but this is
+a dead end: our failure model allows a minority of servers to explode,
+so `s3` might have well exploded at this point.
+
+Another option would be to have `w2` override `v1` with its own value
+`v2` on `s1`, and write `v2` to `s2`, thereby establishing a majority.
+However, this is a fatal bug: _if_ `s3` did store `v1` at any point,
+it means that the WOR has been set, and by writing `v2` we violate the
+write-once property. In particular, a reader could have read `v1` from
+the `{s1, s3}` majority before `s3` exploded, and it could now read
+`v2` from the `{s1, s2}` majority after the override.
+In other words, the correctness guarantee of Paxos is strict, not
+probabilistic, so since `v1` _could_ have been written to a majority,
+we cannot ignore it.
+
+Well, can we just have `w2` succeed then, since the WOR is set with
+`v1`? This is incorrect as well, because it could be that `v1` got
+written to `s1`, but the message to write it to `s3` was dropped, and
+the writer who was proposing `v1` exploded before it could retry. So,
+`v1` was never written to a majority of storage servers, the WOR has
+never been set, and we want a write to only succeed if the WOR has
+_definitely_ been set.
+
+It seems like `w2` is stuck: it cannot ignore `v1` as the potential
+value for the WOR, but it cannot assume it is the value either. The
+surprising solution to this conundrum is that since it cannot be sure
+whether `v1` is the actual WOR value or not, it can _make_ sure by
+writing it to a majority itself.
+
+This is the sixth big idea in Paxos: _write repair_.
+After a writer has successfully locked a majority of storage servers
+in Phase 1, it will ask them whether they store any value: if all the
+selected storage servers are empty, then the writer can write its own
+value (let's call it `v2`). If instead a storage server already
+contains a value `v1`, the writer will `propose` to write `v1`
+instead, and return success if all the selected storage servers
+`accept` it. The rest of the algorithm remains the same, with lock
+stealing, fencing and retries used to deal with any other concurrent
+writer that might be doing the same.
+
+There is an obvious optimisation to this idea: instead of locking the
+selected majority of storage servers in one roundtrip, and then asking
+them to send over their current value in another roundtrip, the
+storage servers can simply include that information when they respond
+to the locking messages. Specifically, the writer will send a
+`prepare(n)` with proposal number `n`, and the storage servers will
+reply with `promise(n, maybe<n_, v_>)`, where `v_` if the value stored
+by the storage server, if any, with its proposal number `n_`.
+
+
+
+
+
+
+
+We have our cluster with 3 storage servers `{s1, s2, s3}`, and a
+writer `w2` that wants to write the value `v2` to a majority quorum of
+`s1` and `s2`. In this scenario, let's say that `s1` stores the value
+`v1` written by a previous writer `w1`, `s2` stores no value.
+
+Question: is the WOR set?
+
 this section can make the point about majorities having one acceptor
 in common, after explaining the full mechanism: i.e. we cannot just
 ignore and succeed if we see an old value (violates rule about success
