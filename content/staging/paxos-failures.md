@@ -673,10 +673,11 @@ Specifically, the writer will send a `prepare(n)` with proposal number
 `n`, and the storage servers will reply with `promise(n, maybe<n_,v_>)`, 
 where `v_` if the value stored by the storage server, if any, with its
 proposal number `n_`. The writer will then select `v_` if it exists,
-or its own value `v`, and send `propose(n, selected_value)`, and
-return success if all the selected storage servers reply with
-`accept(n)`. As before, `n` is used for lock stealing and fencing to
-deal with any other concurrent writer that might be doing the same.
+or its own value `v` otherwise. It will then send `propose(n,
+selected_value)`, and return success if all the selected storage
+servers reply with `accept(n)`. As before, `n` is used for lock
+stealing and fencing to deal with any other concurrent writer that
+might be doing the same.
 
 #### Understanding write repair
 
