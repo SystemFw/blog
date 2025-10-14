@@ -618,7 +618,7 @@ say that the WOR has been set?
 
 This depends entirely on `s3`: if `s3` also stores `v1` with proposal
 number `n`, then `v1` has been written to an absolute majority of
-storage servers (`s1` and `s3`), if instead it doesn't store any value
+storage servers (`s1` and `s3`), if instead `s3` doesn't store any value
 or stores a value that isn't `v1`, then the WOR isn't set.
 
 This uncertainty poses an issue when later on a `w2` writer arrives
@@ -632,7 +632,7 @@ so `s3` might have well exploded at this point.
 
 Another option would be to have `w2` override `v1` with its own value
 `v2` on `s1`, and write `v2` to `s2`, thereby establishing a majority.
-However, this is a fatal bug: _if_ `s3` did store `v1` at any point,
+However, this is a fatal bug: if `s3` _did_ store `v1` at any point,
 it means that the WOR has been set, and by writing `v2` we violate the
 write-once property. In particular, a reader could have read `v1` from
 the `{s1, s3}` majority before `s3` exploded, and it could now read
@@ -679,6 +679,12 @@ return success if all the selected storage servers reply with
 deal with any other concurrent writer that might be doing the same.
 
 #### Understanding write repair
+
+It should be clear that adopting an existing value is unavoidable to
+preserve Paxos' safety guarantees, yet some consequences of this
+behaviour might appear peculiar at first, so let's spell them out.
+
+
 
 maybe just make one point about when v1 wasn't actually written, whether it's fair to make it win at all,
 and whether it's fair to make it win without its original writer knowning
