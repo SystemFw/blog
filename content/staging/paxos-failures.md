@@ -678,10 +678,27 @@ return success if all the selected storage servers reply with
 `accept(n)`. As before, `n` is used for lock stealing and fencing to
 deal with any other concurrent writer that might be doing the same.
 
+#### Understanding write repair
+
+maybe just make one point about when v1 wasn't actually written, whether it's fair to make it win at all,
+and whether it's fair to make it win without its original writer knowning
+Is it ok to just discard v2? yes, racy semantics are intrinsic to a WOR
+Isn't v1 somehow stale? racy semantics?
+v1 doesn't know its original value has succeeded? general point about failure == unknown in distribution
+
+selecting v1 is necessary, is it sufficient? yes, cluster intersection
+
+super important point about the fact you cannot miss
 
 
 
+### Induction on proposal numbers
 
+show cluster, explain induction
+
+One point to make is this schrodinger effect about which value gets picked, again it boils down to a race.
+
+explain that writers now override, but it's safe because of fencing, write repair and induction on proposal numbers
 
 We have our cluster with 3 storage servers `{s1, s2, s3}`, and a
 writer `w2` that wants to write the value `v2` to a majority quorum of
@@ -729,5 +746,4 @@ Engineer's constant companion: failure.
 If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
-
 
