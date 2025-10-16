@@ -755,5 +755,3 @@ If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
 
-
-### Appendix: Flexible Quorums
