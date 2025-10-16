@@ -723,6 +723,7 @@ bit the requires the acceptor in common property.
 
 btw we can explain the happy path case first, where we just contact a different majority of servers.
 
+
 ### Write completion
 
 this requires some inductive reasoning, show example with two
@@ -754,3 +755,5 @@ If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
 
+
+### Appendix: Flexible Quorums
