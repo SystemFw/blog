@@ -693,6 +693,9 @@ Is it ok to just discard v2? yes, racy semantics are intrinsic to a WOR
 Isn't v1 somehow stale? racy semantics?
 v1 doesn't know its original value has succeeded? general point about failure == unknown in distribution
 
+also add/merge point about two possible outcomes depending on which majority is selected.
+Start with that actually
+
 selecting v1 is necessary, is it sufficient? yes, cluster intersection
 
 super important point about the fact you cannot miss
