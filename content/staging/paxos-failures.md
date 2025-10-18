@@ -758,3 +758,21 @@ If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
 
+### Appending on formal paxos?
+
+The view above is helpful in understanding Paxos since we know it's correct, but if we didn't, how would we know we haven't forgotten any failure?
+Formal treatment helps with that by just establishing invariants.
+We need replication. Quorums help with concurrency. If one acceptor explodes after a value is chosen, we cannot recover it anymore, and also the cluster is stuck since it cannot accept any more proposal.
+So, we do need to accept further proposal, but to preserve the write-once property, we want to guarantee that if a value was ever chosen before, the same value will be chosen in every subsequent proposal.
+Before & subsequent --> ordered proposal numbers.
+We query for previous values. We have to consider an existing value has a previously chosen one.
+We cannot miss it because of quorum intersection. 
+We can pick the latest because of induction.
+Then make the point about replies and future acceptances with stable predicates.
+
+I got a crucial insight:
+the knowledge the proposer has of past rounds is based on the replies about previous rounds
+by the acceptors.
+However, since proposers can pick different majority, an acceptor has not necessarily voted in all
+previous rounds. Furthermore, it could vote in a previous round after replying to the current round, invalidating the view of the past the current round's proposer has to make a decision.
+Since it's not possible to predict whether an acceptor will vote in a previous round after replying to the current round, we can extract a promise to not do so instead.
