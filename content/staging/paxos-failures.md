@@ -758,7 +758,7 @@ If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
 
-### Appending on formal paxos?
+### Appendix on formal paxos?
 
 The view above is helpful in understanding Paxos since we know it's correct, but if we didn't, how would we know we haven't forgotten any failure?
 Formal treatment helps with that by just establishing invariants.
