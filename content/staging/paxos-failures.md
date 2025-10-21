@@ -698,6 +698,9 @@ any two majority quorums intersect, which means a writer will always
 receive any value which has been written to the WOR, and then adopt
 that value as per the write repair idea.
 
+so it has false positives but no false negatives, which is the correct tradeoffs, but the behaviour of false positives can be puzzling, let's take a look
+
+Conversely, the behaviour induced by write repair when an observed value wasn't actually part of a majority can be inintuitive, so let's look at 
 
 
 
