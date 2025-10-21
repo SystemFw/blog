@@ -684,14 +684,14 @@ might be doing the same.
 We saw how write repair is necessary to preserve safety, but it turns
 out that it's also sufficient. 
 
-To see why, consider that in order to be written to the
-WOR, a value must be written to a majority of storage servers. A later
-writer will then send a `prepare` request, also to a majority of
-storage servers. These two majorities might not be exactly the same,
-but any two majorities will have at least one storage server in common
-(or they wouldn't be majorities), which means the writer will receive
-the WOR value from at least one storage servers, and then adopt that
-value as per the write repair idea.
+To see why, consider that in order for the WOR to be set, its value
+must be written to a majority of storage servers. A later writer will
+then send a `prepare` request, also to a majority of storage servers.
+These two majorities might not be exactly the same, but any two
+majorities will have at least one storage server in common (or they
+wouldn't be majorities), which means the writer will receive the WOR
+value from at least one storage servers, and then adopt that value as
+per the write repair idea.
 
 In other words, because of this _quorum intersection_ property, write
 repair can never experience false negatives: if a value has been
