@@ -679,6 +679,8 @@ servers reply with `accept(n)`. As before, `n` is used for lock
 stealing and fencing to deal with any other concurrent writer that
 might be doing the same.
 
+### Understanding write repair
+
 remarkable property is that it's not just necessary, also sufficient
 you cannot miss it because of quorum overlap
 otoh, it's possible that the value which ends up in the WOR is one whose writer didn't originally win.
@@ -686,7 +688,7 @@ and insert example in the next section, which can then go
 or maybe move these last 3 points in the next section for length management reasons, but the ordering is better: first the important one, then the other two
 (finishing with outcome of failure is unknown)
 
-#### Understanding write repair
+
 
 Although write repair is strictly necessary to preserve safety, some
 facets of its behaviour can be counterintuitive.
