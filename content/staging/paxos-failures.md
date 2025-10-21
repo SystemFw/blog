@@ -689,20 +689,21 @@ must be written to a majority of storage servers. A later writer will
 then send a `prepare` request, also to a majority of storage servers.
 These two majorities might not be exactly the same, but any two
 majorities will have at least one storage server in common (or they
-wouldn't be majorities), which means the writer will receive the WOR
-value from at least one storage servers, and then adopt that value as
-per the write repair idea.
+wouldn't be majorities), which means that the writer will receive the
+WOR value from at least one storage servers, and then adopt that value
+as per the write repair idea.
 
 In other words, because of this _quorum intersection_ property, write
-repair can never experience false negatives: if a value has been
-written to the WOR, **there is no way for a later writer to miss it**.
+repair can never experience false negatives: if the WOR has been set
+with a value, **there is no way for a later writer to miss it**.
 
-On the other hand, it's possible that write repair will experience
-false positives, i.e. adopt values that were not written to the WOR
-but only to a minority of storage servers, so let's have a look at why
-that is acceptable.
+On the other hand, it's possible for write repair to experience false
+positives, i.e. adopt values that didn't set the WOR, and insted were
+only written to a minority of storage servers due to failure, so let's
+have a look at why that is acceptable.
 
-if a value has been written to the WOR
+i
+f a value has been written to the WOR
 This crucial property is a consequence of _quorum intersection_.
 Essentially, in order for a value to be written to the WOR, it has to
 be written to a majority of storage servers. Later writers also send
