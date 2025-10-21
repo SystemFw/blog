@@ -682,9 +682,9 @@ might be doing the same.
 ### Quorum intersection
 
 We saw how write repair is necessary to preserve safety, but it turns
-out that it's also _sufficient_. 
+out that it's also sufficient. 
 
-To see why, consider that in order for a value to be written to the
+To see why, consider that in order to be written to the
 WOR, a value must be written to a majority of storage servers. A later
 writer will then send a `prepare` request, also to a majority of
 storage servers. These two majorities might not be exactly the same,
@@ -695,8 +695,7 @@ value as per the write repair idea.
 
 In order words, because of this _quorum intersection_ property, write
 repair can never experience false negatives: if a value has been
-written to the WOR, **there is no way for a writer to miss it** when
-gathering `promise` messages from storage servers.
+written to the WOR, **there is no way for a later writer to miss it**.
 
 On the other hand, it's possible that write repair will experience
 false positives, i.e. adopt values that were not written to the WOR
