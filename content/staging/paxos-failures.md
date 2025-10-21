@@ -693,7 +693,7 @@ but any two majorities will have at least one storage server in common
 the WOR value from at least one storage servers, and then adopt that
 value as per the write repair idea.
 
-In order words, because of this _quorum intersection_ property, write
+In other words, because of this _quorum intersection_ property, write
 repair can never experience false negatives: if a value has been
 written to the WOR, **there is no way for a later writer to miss it**.
 
