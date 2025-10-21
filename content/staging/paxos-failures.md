@@ -679,7 +679,31 @@ servers reply with `accept(n)`. As before, `n` is used for lock
 stealing and fencing to deal with any other concurrent writer that
 might be doing the same.
 
-### Understanding write repair
+### Quorum intersection
+
+We saw how write repair is necessary to preserve safety, but it turns
+out that it's also _sufficient_.
+In other words, if a value has been written to the WOR, *there is no
+way for a writer to miss it* when gathering `promise` messages from
+storage servers.
+
+This crucial property is a consequence of _quorum intersection_.
+Essentially, in order for a value to be written to the WOR, it has to
+be written to a majority of storage servers. Later writers also send
+`prepare` requests to a majority of storage servers, and even if they
+target a different majority from the one that contains the value of
+the WOR, any two majorities have at least one storage server in
+common, by the very definition of being a majority. In other words,
+any two majority quorums intersect, which means a writer will always
+receive any value which has been written to the WOR, and then adopt
+that value as per the write repair idea.
+
+
+
+
+
+Write repair is strictly necessary to preserve safety, but it also has the non-obvious property of being _sufficient_.
+In other words, 
 
 remarkable property is that it's not just necessary, also sufficient
 you cannot miss it because of quorum overlap
