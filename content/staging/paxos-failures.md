@@ -679,7 +679,24 @@ servers reply with `accept(n)`. As before, `n` is used for lock
 stealing and fencing to deal with any other concurrent writer that
 might be doing the same.
 
+remarkable property is that it's not just necessary, also sufficient
+you cannot miss it because of quorum overlap
+otoh, it's possible that the value which ends up in the WOR is one whose writer didn't originally win.
+and insert example in the next section, which can then go
+or maybe move these last 3 points in the next section for length management reasons, but the ordering is better: first the important one, then the other two
+(finishing with outcome of failure is unknown)
+
 #### Understanding write repair
+
+Although write repair is strictly necessary to preserve safety, some
+facets of its behaviour can be counterintuitive.
+Let's consider a cluster with 3 storage servers `{s1, s2, s3}` : `s1`
+stores the value `v1` written by writer `w1` with proposal number `n`,
+`s2` and `s3` store no value. The next day a writer `w2` arrives,
+wishing to write value `v2` (with a higher proposal number), and let's
+assume it succeeds.
+
+
 
 It should be clear that adopting an existing value is unavoidable to
 preserve Paxos' safety guarantees, yet some consequences of this
@@ -734,7 +751,7 @@ majorities, and explain how the only way a second value could have
 appeared is if a writer didn't read any value from a majority, which
 means one doesn't exist, as per the previous rule.
 Also highlight the fact that writes can be overridden, as per our
-description.
+description. The property still holds in that writers can write at most once per-round, and then decisions are propagated from rounds to round
 
 ### Readers
 
