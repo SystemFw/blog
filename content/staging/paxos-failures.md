@@ -682,11 +682,28 @@ might be doing the same.
 ### Quorum intersection
 
 We saw how write repair is necessary to preserve safety, but it turns
-out that it's also _sufficient_.
-In other words, if a value has been written to the WOR, *there is no
-way for a writer to miss it* when gathering `promise` messages from
-storage servers.
+out that it's also _sufficient_. 
 
+To see why, consider that in order for a value to be written to the
+WOR, a value must be written to a majority of storage servers. A later
+writer will then send a `prepare` request, also to a majority of
+storage servers. These two majorities might not be exactly the same,
+but any two majorities will have at least one storage server in common
+(or they wouldn't be majorities), which means the writer will receive
+the WOR value from at least one storage servers, and then adopt that
+value as per the write repair idea.
+
+In order words, because of this _quorum intersection_ property, write
+repair can never experience false negatives: if a value has been
+written to the WOR, **there is no way for a writer to miss it** when
+gathering `promise` messages from storage servers.
+
+On the other hand, it's possible that write repair will experience
+false positives, i.e. adopt values that were not written to the WOR
+but only to a minority of storage servers, so let's have a look at why
+that is acceptable.
+
+if a value has been written to the WOR
 This crucial property is a consequence of _quorum intersection_.
 Essentially, in order for a value to be written to the WOR, it has to
 be written to a majority of storage servers. Later writers also send
@@ -822,3 +839,6 @@ by the acceptors.
 However, since proposers can pick different majority, an acceptor has not necessarily voted in all
 previous rounds. Furthermore, it could vote in a previous round after replying to the current round, invalidating the view of the past the current round's proposer has to make a decision.
 Since it's not possible to predict whether an acceptor will vote in a previous round after replying to the current round, we can extract a promise to not do so instead.
+
+
+---
