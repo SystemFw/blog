@@ -702,40 +702,6 @@ positives, i.e. adopt values that didn't set the WOR, and insted were
 only written to a minority of storage servers due to failure, so let's
 have a look at why that is acceptable.
 
-i
-f a value has been written to the WOR
-This crucial property is a consequence of _quorum intersection_.
-Essentially, in order for a value to be written to the WOR, it has to
-be written to a majority of storage servers. Later writers also send
-`prepare` requests to a majority of storage servers, and even if they
-target a different majority from the one that contains the value of
-the WOR, any two majorities have at least one storage server in
-common, by the very definition of being a majority. In other words,
-any two majority quorums intersect, which means a writer will always
-receive any value which has been written to the WOR, and then adopt
-that value as per the write repair idea.
-
-so it has false positives but no false negatives, which is the correct tradeoffs, but the behaviour of false positives can be puzzling, let's take a look
-
-Conversely, the behaviour induced by write repair when an observed value wasn't actually part of a majority can be inintuitive, so let's look at 
-
-
-
-
-Write repair is strictly necessary to preserve safety, but it also has the non-obvious property of being _sufficient_.
-In other words, 
-
-remarkable property is that it's not just necessary, also sufficient
-you cannot miss it because of quorum overlap
-otoh, it's possible that the value which ends up in the WOR is one whose writer didn't originally win.
-and insert example in the next section, which can then go
-or maybe move these last 3 points in the next section for length management reasons, but the ordering is better: first the important one, then the other two
-(finishing with outcome of failure is unknown)
-
-
-
-Although write repair is strictly necessary to preserve safety, some
-facets of its behaviour can be counterintuitive.
 Let's consider a cluster with 3 storage servers `{s1, s2, s3}` : `s1`
 stores the value `v1` written by writer `w1` with proposal number `n`,
 `s2` and `s3` store no value. The next day a writer `w2` arrives,
@@ -743,10 +709,6 @@ wishing to write value `v2` (with a higher proposal number), and let's
 assume it succeeds.
 
 
-
-It should be clear that adopting an existing value is unavoidable to
-preserve Paxos' safety guarantees, yet some consequences of this
-behaviour might appear peculiar at first, so let's spell them out.
 
 
 
@@ -759,35 +721,16 @@ v1 doesn't know its original value has succeeded? general point about failure ==
 also add/merge point about two possible outcomes depending on which majority is selected.
 Start with that actually
 
-selecting v1 is necessary, is it sufficient? yes, cluster intersection
 
-super important point about the fact you cannot miss
-
-
+One point to make is this schrodinger effect about which value gets picked, again it boils down to a race.
 
 ### Induction on proposal numbers
 
 show cluster, explain induction
 
-One point to make is this schrodinger effect about which value gets picked, again it boils down to a race.
+
 
 explain that writers now override, but it's safe because of fencing, write repair and induction on proposal numbers
-
-We have our cluster with 3 storage servers `{s1, s2, s3}`, and a
-writer `w2` that wants to write the value `v2` to a majority quorum of
-`s1` and `s2`. In this scenario, let's say that `s1` stores the value
-`v1` written by a previous writer `w1`, `s2` stores no value.
-
-Question: is the WOR set?
-
-this section can make the point about majorities having one acceptor
-in common, after explaining the full mechanism: i.e. we cannot just
-ignore and succeed if we see an old value (violates rule about success
-if set), but also we cannot override it, (quorum loss on read). I then
-have to explain the multiple values in different epochs, that's the
-bit the requires the acceptor in common property.
-
-btw we can explain the happy path case first, where we just contact a different majority of servers.
 
 
 ### Write completion
