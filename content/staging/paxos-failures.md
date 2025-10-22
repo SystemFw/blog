@@ -729,66 +729,6 @@ successful operation is success, and the outcome of a failed operation
 is _unknown_.
 
 
-
-
-
-
-
-It's irrelevant that _we_ know that `w2` has exploded: from the point
-of the view of the actual system, this scenario is indistinguishable
-from `w2` simply being a bit slower.
-
-
-
-Similarly, without an omniscient oracle which isn't allowed to exist in our system model, it's impossible to distinguish `v1` winning because `w1` was faster to complete Phase 2, or because it exploded 
-
-In our model we cannot distingui
-
-You might also object that `v1` shouldn't be allowed to win because it was originally written to a storage server a day before `v2`.
-But again, this is equivalent to a race between `w1` and `w2`: the ordering of the race derives from safety rules of Paxos, the difference in wall-clock time is irrelevant: would you have the same objection if `v1` had been written 10ns before?
-
-You might also object to the fact that `v1` is somehow "stale" because
-it was originally written to a storage server a day before. However,
-this behaviour is also exactly equivalent to a race between `w1` and
-`w2`: 
-the earliest value to be written to a majority wins, regardless of whether the lo
-the winner is decided by relative ordering
-the fastest value that can obtain a majority wins can "fastest" of the two writers wins, regardless of whether
-the two writers are separated by 24hrs or 10ns.
-
-
-
-In other words, because of this _quorum intersection_ property, write
-repair can never experience false negatives: if the WOR has been set
-with a value, **there is no way for a later writer to miss it**.
-
-On the other hand, it's possible for write repair to experience false
-positives, i.e. adopt values that didn't set the WOR, and insted were
-only written to a minority of storage servers due to failure, so let's
-have a look at why that is acceptable.
-
-Let's consider a cluster with 3 storage servers `{s1, s2, s3}` : `s1`
-stores the value `v1` written by writer `w1` with proposal number `n`,
-`s2` and `s3` store no value. The next day a writer `w2` arrives,
-wishing to write value `v2` (with a higher proposal number), and let's
-assume it succeeds.
-
-
-
-
-
-maybe just make one point about when v1 wasn't actually written, whether it's fair to make it win at all,
-and whether it's fair to make it win without its original writer knowning
-Is it ok to just discard v2? yes, racy semantics are intrinsic to a WOR
-Isn't v1 somehow stale? racy semantics?
-v1 doesn't know its original value has succeeded? general point about failure == unknown in distribution
-
-also add/merge point about two possible outcomes depending on which majority is selected.
-Start with that actually
-
-
-One point to make is this schrodinger effect about which value gets picked, again it boils down to a race.
-
 ### Induction on proposal numbers
 
 show cluster, explain induction
