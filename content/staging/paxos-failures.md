@@ -681,8 +681,8 @@ might be doing the same.
 
 ### Quorum intersection
 
-We saw how write repair is necessary to preserve safety, but it turns
-out that it's also sufficient. 
+We saw that write repair is necessary to preserve safety, it turns out
+that it is also _sufficient_.
 
 To see why, consider that in order for the WOR to be set, its value
 must be written to a majority of storage servers. A later writer will
@@ -703,10 +703,42 @@ only written to a minority of storage servers due to failure.
 
 Let's have a look at why false positives are acceptable by considering
 a cluster with 3 storage servers `{s1, s2, s3}` : `s1` stores the
-value `v1` written by writer `w1` with proposal number `n`, `s2` and
-`s3` store no value. The next day a writer `w2` arrives, wishing to
-write value `v2` (with a higher proposal number), and let's assume it
-succeeds in setting the WOR.
+value `v1` written by writer `w1`, which has since exploded, whereas
+`s2` and `s3` store no value. Then, writer `w2` arrives wishing to
+write value `v2`, and let's assume it succeeds in setting the WOR.
+Which value did it set it to?
+
+If `w2` selects `{s2, s3}` as its target majority, it will read no
+previous values, and set the WOR to `v2`.
+If instead if selects `{s1, s2}` or `{s1, s3}`, it will read `v1`,
+adopt it, and set the WOR to `v1`.
+
+Now, you might object to the fact that the value of the WOR depends on
+which majority `w2` selects, but from a semantic point of view, this
+behavior is exactly equivalent to a race between `w1` and `w2`: in
+both scenarios either `v1` or `v2` can win, non-deterministically. 
+It's irrelevant that _we_ know that `w2` has exploded: from the point
+of the view of the actual system, this scenario is indistinguishable
+from `w2` simply being a bit slower.
+
+
+
+Similarly, without an omniscient oracle which isn't allowed to exist in our system model, it's impossible to distinguish `v1` winning because `w1` was faster to complete Phase 2, or because it exploded 
+
+In our model we cannot distingui
+
+You might also object that `v1` shouldn't be allowed to win because it was originally written to a storage server a day before `v2`.
+But again, this is equivalent to a race between `w1` and `w2`: the ordering of the race derives from safety rules of Paxos, the difference in wall-clock time is irrelevant: would you have the same objection if `v1` had been written 10ns before?
+
+You might also object to the fact that `v1` is somehow "stale" because
+it was originally written to a storage server a day before. However,
+this behaviour is also exactly equivalent to a race between `w1` and
+`w2`: 
+the earliest value to be written to a majority wins, regardless of whether the lo
+the winner is decided by relative ordering
+the fastest value that can obtain a majority wins can "fastest" of the two writers wins, regardless of whether
+the two writers are separated by 24hrs or 10ns.
+
 
 
 In other words, because of this _quorum intersection_ property, write
