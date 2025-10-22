@@ -690,8 +690,24 @@ then send a `prepare` request, also to a majority of storage servers.
 These two majorities might not be exactly the same, but any two
 majorities will have at least one storage server in common (or they
 wouldn't be majorities), which means that the writer will receive the
-WOR value from at least one storage servers, and then adopt that value
+WOR value from at least one storage server, and then adopt that value
 as per the write repair idea.
+
+In other words, this _majority quorum intersection_ property ensures that
+writers with write repair never observe false negatives: if the WOR
+has been set with a value, **there is no way for them to miss it**.
+
+On the other hand, it's possible for them to observe false
+positives, i.e. adopt values that didn't set the WOR, and instead were
+only written to a minority of storage servers due to failure.
+
+Let's have a look at why false positives are acceptable by considering
+a cluster with 3 storage servers `{s1, s2, s3}` : `s1` stores the
+value `v1` written by writer `w1` with proposal number `n`, `s2` and
+`s3` store no value. The next day a writer `w2` arrives, wishing to
+write value `v2` (with a higher proposal number), and let's assume it
+succeeds in setting the WOR.
+
 
 In other words, because of this _quorum intersection_ property, write
 repair can never experience false negatives: if the WOR has been set
