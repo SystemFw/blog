@@ -559,10 +559,10 @@ an annotated summary of the description from earlier in the post:
    Otherwise it will retry Phase 1 (_2-phase locking_) with a greater
    proposal number (_lock stealing_).
 
-However, in our version of the algorithm writers always propose their
-own value, whereas Paxos has precise rules for value selection.
-Understanding them requires us to look at some trickier failures, but
-before we do that, let's talk about _dueling leaders_.
+However, in the current version of our algorithm writers always
+propose their own value, whereas Paxos has precise rules for value
+selection. Understanding them requires us to look at some trickier
+failures, but before we do that, let's talk about _dueling leaders_.
 
 ### Dueling leaders
 
@@ -789,4 +789,3 @@ previous rounds. Furthermore, it could vote in a previous round after replying t
 Since it's not possible to predict whether an acceptor will vote in a previous round after replying to the current round, we can extract a promise to not do so instead.
 
 
----
