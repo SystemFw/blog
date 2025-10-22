@@ -681,8 +681,8 @@ might be doing the same.
 
 ### Quorum intersection
 
-We saw that write repair is necessary to preserve safety, it turns out
-that it is also _sufficient_.
+We saw that write repair is necessary to preserve safety, but
+crucially, it is also _sufficient_.
 
 To see why, consider that in order for the WOR to be set, its value
 must be written to a majority of storage servers. A later writer will
@@ -693,7 +693,7 @@ wouldn't be majorities), which means that the writer will receive the
 WOR value from at least one storage server, and then adopt that value
 as per the write repair idea.
 
-In other words, this _majority quorum intersection_ property ensures that
+In other words, this _quorum intersection_ property ensures that
 writers with write repair never observe false negatives: if the WOR
 has been set with a value, **there is no way for them to miss it**.
 
@@ -703,10 +703,10 @@ only written to a minority of storage servers due to failure.
 
 Let's have a look at why false positives are acceptable by considering
 a cluster with 3 storage servers `{s1, s2, s3}` : `s1` stores the
-value `v1` written by writer `w1`, which has since exploded, whereas
-`s2` and `s3` store no value. Then, writer `w2` arrives wishing to
-write value `v2`, and let's assume it succeeds in setting the WOR.
-Which value did it set it to?
+value `v1` written by writer `w1`, whereas `s2` and `s3` store no
+value. Then, writer `w2` arrives wishing to write value `v2`, and
+let's assume it succeeds in setting the WOR. Which value did it set it
+to?
 
 If `w2` selects `{s2, s3}` as its target majority, it will read no
 previous values, and set the WOR to `v2`.
@@ -716,7 +716,24 @@ adopt it, and set the WOR to `v1`.
 Now, you might object to the fact that the value of the WOR depends on
 which majority `w2` selects, but from a semantic point of view, this
 behavior is exactly equivalent to a race between `w1` and `w2`: in
-both scenarios either `v1` or `v2` can win, non-deterministically. 
+both scenarios either `v1` or `v2` can win, non-deterministically.
+
+It also doesn't matter that `v1` can win without its original writer
+`w1` being aware of it. In fact, this scenario can happen regardless
+of write repair or even concurrency: a writer could successfully set
+the WOR, and then explode before receiving the relevant `accept`
+messages. This is a general truth: in a non-distributed system, the
+outcome of a successful operation is success, and the outcome of a
+failed operation is failure. In a distributed system, the outcome of a
+successful operation is success, and the outcome of a failed operation
+is _unknown_.
+
+
+
+
+
+
+
 It's irrelevant that _we_ know that `w2` has exploded: from the point
 of the view of the actual system, this scenario is indistinguishable
 from `w2` simply being a bit slower.
