@@ -710,7 +710,7 @@ to?
 
 If `w2` selects `{s2, s3}` as its target majority, it will read no
 previous values, and set the WOR to `v2`.
-If instead if selects `{s1, s2}` or `{s1, s3}`, it will read `v1`,
+If instead it selects `{s1, s2}` or `{s1, s3}`, it will read `v1`,
 adopt it, and set the WOR to `v1`.
 
 Now, you might object to the fact that the value of the WOR depends on
