@@ -789,3 +789,8 @@ previous rounds. Furthermore, it could vote in a previous round after replying t
 Since it's not possible to predict whether an acceptor will vote in a previous round after replying to the current round, we can extract a promise to not do so instead.
 
 
+
+
+The Appendix moves us and it's called Paxos from the ground up. 
+Rename article to Decomposing Single Degree Paxos.
+We can just say, after the "approach is fault-driven" paragraph, that once we understand how paxos works for a variety of failures, we can more easily understtand a bottom up explanation
