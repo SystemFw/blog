@@ -1,5 +1,5 @@
 ---
-title: "A fault-driven understanding of Single-Decree Paxos"
+title: "Decomposing Single-Decree Paxos"
 ---
 
 Paxos is a mythical beast standing in the way of every budding
@@ -9,6 +9,9 @@ it uses deep ideas that resist immediate intuition.
 We'll aid our understanding with a fault-driven approach, which is to
 say: which specific failure mode is addressed by each idea in Paxos?
 What makes each one necessary?
+Once we understand how the algorithm behaves under a variety of
+faults, we'll be able to reconstruct it from first principles and
+unearth its underlying beauty.
 
 This post does not assume strong knowledge of distributed systems, and
 it strives to explain jargon to enable you to go read the relevant
