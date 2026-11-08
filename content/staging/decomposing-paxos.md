@@ -10,7 +10,7 @@ We'll aid our understanding with a fault-driven approach, which is to
 say: which specific failure mode is addressed by each idea in Paxos?
 What makes each one necessary?
 Once we understand how the algorithm behaves under a variety of
-faults, we'll be able to reconstruct it from first principles and
+faults, we'll be able to reconstruct it from first principles, and
 unearth its underlying beauty.
 
 This post does not assume strong knowledge of distributed systems, and
@@ -24,18 +24,16 @@ _consensus problem_. The specific algorithm we're discussing today is
 known interchangeably as Classic Paxos, Synod, or Single-Decree Paxos,
 but this post will often just call it Paxos for brevity.
 
-My favourite explanation of the exact kind of consensus Single-Decree
-Paxos implements is by [Mahesh
-Balakhrisnan](https://maheshba.bitbucket.io/blog/2021/11/15/Paxos.html)
-, and we'll follow it here: Paxos implements a distributed data
-structure known as a WOR, which stands for Write-Once Register.
+The exact kind of consensus provided by Single-Decree Paxos can be
+expressed as a logical data structure called a _write-once register_,
+physically implemented by multiple machines.
 
-The api of a WOR is minimal:
+The api of a write-once register (in short, WOR) is minimal:
 
 ```
-class WOR[A] {
-  def write(v: A): Unit
-  def read(): Null | A
+WOR<A> {
+  write(A): Unit
+  read(): A | Null
 }
 ```
 
