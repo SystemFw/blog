@@ -68,7 +68,7 @@ purpose distributed systems.
 When describing a distributed algorithm, we have to specify a _fault
 model_, i.e. which failure modes we are promising to deal with and
 which ones we're ignoring, and a _system model_, i.e. which
-capabilities we assume to be able to use to deal with them.
+capabilities we assume are available to deal with those failures.
 
 This part is often described in a couple of words of jargon at the
 start of each paper and so it's easy to skim over for new
