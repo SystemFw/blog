@@ -19,22 +19,14 @@ papers directly. Let's dive in.
 
 ## What is Paxos?
 
-Paxos is a family of algorithms solving various flavours of the
-_consensus problem_, and although this article will often just say
-Paxos for brevity, the specific algorithm we'll discuss today is more
-properly known as Single-Decree Paxos, or intechangeably as Classic
-Paxos or Synod.
+Paxos is a family of algorithms aimed at solving various flavours of
+the _consensus problem_. Today we will discuss the simplest but most
+foundational member of the family, known interchangeably as
+Single-Decree Paxos, Classic Paxos, or Synod, although we'll often
+just call it Paxos for brevity.
 
-Paxos is a family of algorithms solving various flavours of the
-_consensus problem_. The specific algorithm we're discussing today is
-known interchangeably as Classic Paxos, Synod, or Single-Decree Paxos,
-but this post will often just call it Paxos for brevity.
-
-The exact kind of consensus provided by Single-Decree Paxos can be
-expressed as a logical data structure called a _write-once register_,
-physically implemented by multiple machines.
-
-The api of a write-once register (in short, WOR) is minimal:
+Single-Decree Paxos implements a logical data structure called a
+_write-once register_ (WOR):
 
 ```
 WOR<A> {
@@ -43,11 +35,11 @@ WOR<A> {
 }
 ```
 
-but the types don't capture the full semantics, in particular:
-- `write` can be called sequentially or concurrently by one or
-  multiple processes, and it will only set the value once. All other
-  successful calls to `write` are a no-op. This is what it means for
-  the register to be _write-once_.
+with the following semantics:
+- `write` can be called sequentially or concurrently by multiple
+  processes, and it will only set the value once. All other successful
+  calls to `write` are a no-op. This is what it means for the register
+  to be _write-once_.
 - `read` is allowed to return `null` when the register isn't set yet,
   but once it's set with value `v`, it will always return `v` and
   won't return `null` again. It will also never return any value from
@@ -56,8 +48,8 @@ but the types don't capture the full semantics, in particular:
   single-thread, single-machine process, even though that's not the
   case internally.
 
-The reason we're implementing a WOR using multiple machines is to
-achieve _fault-tolerance_, and we will later describe exactly which
+The WOR will be physically implemented by multiple machines in order
+to achieve _fault-tolerance_, and we will later describe exactly which
 faults Paxos is designed to tolerate, and under which conditions. When
 these conditions no longer hold, `read` and `write` will return an
 error or time out, but they will never give inconsistent results:
