@@ -748,6 +748,9 @@ description. The property still holds in that writers can write at most once per
 
 ### Readers
 
+Readers can do a quorum read, if not same value, run the writer algorithm.
+Neither is particularly performant, and providing fast consistent reads is its topic with various ideas such as reader leases etc
+
 
 ## Conclusion
 
