@@ -20,6 +20,12 @@ papers directly. Let's dive in.
 ## What is Paxos?
 
 Paxos is a family of algorithms solving various flavours of the
+_consensus problem_, and although this article will often just say
+Paxos for brevity, the specific algorithm we'll discuss today is more
+properly known as Single-Decree Paxos, or intechangeably as Classic
+Paxos or Synod.
+
+Paxos is a family of algorithms solving various flavours of the
 _consensus problem_. The specific algorithm we're discussing today is
 known interchangeably as Classic Paxos, Synod, or Single-Decree Paxos,
 but this post will often just call it Paxos for brevity.
