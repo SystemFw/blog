@@ -779,27 +779,7 @@ description. The property still holds in that writers can write at most once per
 Readers can do a quorum read, if not same value, run the writer algorithm.
 Neither is particularly performant, and providing fast consistent reads is its topic with various ideas such as reader leases etc
 
-
-## Conclusion
-
-Single-Decree Paxos, especially the naively unoptimised version we
-used today, is about the simplest consensus algorithm there is, and
-yet it contains a surprising amount of extremely deep ideas.
-
-In fact, I look at Paxos in general not as an algorithm, but rather a
-set of foundational ideas that can be assembled into a variety of
-solutions to consensus, from Jacks of all trades like Raft to [very
-specialised ones](https://neon.tech/blog/paxos).
-
-We looked at some of these ideas today, teasing them out from their
-initially cryptic formulation with the help of the Distributed Systems
-Engineer's constant companion: failure.
-
-If you enjoyed this post, we're reimagining what it means to write
-distributed programs with [Unison Cloud](https://www.unison.cloud/).
-Go check it out, and see you next time!
-
-### Appendix on formal paxos?
+## Appendix on formal paxos?
 
 The view above is helpful in understanding Paxos since we know it's correct, but if we didn't, how would we know we haven't forgotten any failure?
 Formal treatment helps with that by just establishing invariants.
@@ -820,7 +800,22 @@ Since it's not possible to predict whether an acceptor will vote in a previous r
 
 
 
+## Conclusion
 
-The Appendix moves us and it's called Paxos from the ground up. 
-Rename article to Decomposing Single Degree Paxos.
-We can just say, after the "approach is fault-driven" paragraph, that once we understand how paxos works for a variety of failures, we can more easily understtand a bottom up explanation
+Single-Decree Paxos, especially the naively unoptimised version we
+used today, is about the simplest consensus algorithm there is, and
+yet it contains a surprising amount of extremely deep ideas.
+
+In fact, I look at Paxos in general not as an algorithm, but rather a
+set of foundational ideas that can be assembled into a variety of
+solutions to consensus, from Jacks of all trades like Raft to [very
+specialised ones](https://neon.tech/blog/paxos).
+
+We looked at some of these ideas today, teasing them out from their
+initially cryptic formulation with the help of the Distributed Systems
+Engineer's constant companion: failure.
+
+If you enjoyed this post, we're reimagining what it means to write
+distributed programs with [Unison Cloud](https://www.unison.cloud/).
+Go check it out, and see you next time!
+
