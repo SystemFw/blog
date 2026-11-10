@@ -37,9 +37,9 @@ WOR<A> {
 
 with the following semantics:
 - `write` can be called sequentially or concurrently by multiple
-  processes, and it will only set the value once. All other successful
-  calls to `write` are a no-op. This is what it means for the register
-  to be _write-once_.
+  distributed processes, and it will only set the value once. All
+  other successful calls to `write` are a no-op. This is what it means
+  for the register to be _write-once_.
 - `read` is allowed to return `null` when the register isn't set yet,
   but once it's set with value `v`, it will always return `v` and
   won't return `null` again. It will also never return any value from
@@ -68,7 +68,7 @@ purpose distributed systems.
 When describing a distributed algorithm, we have to specify a _fault
 model_, i.e. which failure modes we are promising to deal with and
 which ones we're ignoring, and a _system model_, i.e. which
-capabilities we assume are available to deal with those failures.
+capabilities we assume to be available to deal with those failures.
 
 This part is often described in a couple of words of jargon at the
 start of each paper and so it's easy to skim over for new
@@ -85,11 +85,11 @@ get a reply within `x` seconds, we know the message was dropped".
 Processing is also asynchronous, so we don't know exactly when a
 message will be processed.
 
-We do assume that eventually messages will arrive and be processed, or
-the algorithm cannot progress, but we won't be able to rely on this
-information for correctness since we don't know when that will happen.
-(In formal terminology: we are relying on partial synchrony for
-liveness, but we provide safety under asynchrony).
+We do assume that eventually some messages will arrive and be
+processed, or the algorithm cannot progress, but we won't be able to
+rely on this information for correctness since we don't know when that
+will happen. (In formal terminology: we are relying on partial
+synchrony for liveness, but we provide safety under asynchrony).
 
 Processes are allowed to restart and keep participating in the
 algorithm, and are assumed to have access to stable storage. This
@@ -116,7 +116,7 @@ realistic, but it's worth spelling out which faults it does not cover:
   assumption in the real world, where we want to eventually replace
   machines that have exploded, or scale a cluster up and down.
   Reconfiguration is often left as an exercise for the reader, but
-  it's actually very tricky and several papers are dedicated
+  it's actually fairly tricky and several papers are dedicated
   exclusively to it.
 - There is no storage fault model. Storage goes away when a process
   explodes, but it's assumed to work reliably when the process is
@@ -126,8 +126,10 @@ realistic, but it's worth spelling out which faults it does not cover:
 - The processes are assumed to be running the protocol correctly, and
   will not act maliciously. Similarly, messages won't be tampered
   with. In technical jargon, there are no _Byzantine faults_, which is
-  actually an acceptable tradeoff for most systems, with the exception
-  of blockchains.
+  actually an acceptable tradeoff for most systems since they elect to
+  use secure communication channels. Blockchains are a notable
+  exception.
+
     
 ## The Paxos Algorithm
 
@@ -676,7 +678,8 @@ or its own value `v` otherwise. It will then send `propose(n,
 selected_value)`, and return success if all the selected storage
 servers reply with `accept(n)`. As before, `n` is used for lock
 stealing and fencing to deal with any other concurrent writer that
-might be doing the same.
+might be doing the same. On the other hand, we're currently ignoring
+`n_`, but we'll get to that soon.
 
 ### Quorum intersection
 
