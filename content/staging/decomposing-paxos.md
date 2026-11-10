@@ -730,17 +730,42 @@ failed operation is failure. In a distributed system, the outcome of a
 successful operation is success, and the outcome of a failed operation
 is _unknown_.
 
+### Value selection and overrides
 
-### Induction on proposal numbers
+Imagine this scenario, we have our cluster with 3 storage servers
+`{s1, s2, s3}`:
+- `{s1}` contains `<n1, v1>`, where `n1` is the proposal number for
+  the proposal that wrote `v1`.
+- `{s2}` contains `<n2, v2>`, and in this case `n2 > n1`.
+- The contents of `{s3}` are currently unknown.
 
+At this point, writer `{w3}` arrives wishing to write `v3` with
+proposal number `n3`, and selects the quorum `{s1, s2}` to begin
+Phase 1. Since there are already values on the selected storage
+servers, `{w3}` needs to perform write repair and select one of them
+instead, foregoing `v3`. The question is: which one of `v1` and `v2`
+should it select?
+
+Consider how we got here
+
+Paxos has a clear answer: it should select the one with the highest
+proposal number, in this case `v2` since we said `n2 > n1`, and send
+`<v2, n3>`.
+Note that although it selects `v2` since `v2 > v1`, it needs to propose it with `n3` in order to steal the locks (our version has dump proposal number generation, but you can arrange it so that you are able to generate a)
+^^^ This should be after value selection, before override or after?
+
+
+
+These two sections are just drafts for value selection, they will go
+
+#### Induction on proposal numbers
 show cluster, explain induction
-
 
 
 explain that writers now override, but it's safe because of fencing, write repair and induction on proposal numbers
 
 
-### Write completion
+#### Write completion
 
 this requires some inductive reasoning, show example with two
 majorities, and explain how the only way a second value could have
