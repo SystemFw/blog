@@ -819,3 +819,11 @@ If you enjoyed this post, we're reimagining what it means to write
 distributed programs with [Unison Cloud](https://www.unison.cloud/).
 Go check it out, and see you next time!
 
+-----
+
+The sections on proposal numbers need some cleaning.
+I could delete the deeper description of the scheme from the intro.
+Keep the one I already have, and then in value selection (last part),
+point out that you can just jump ahead.
+I'd need to validate the statement about lack of fairness, maybe just
+caveat it with "in case of contention" or smth.
